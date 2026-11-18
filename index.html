@@ -13,7 +13,24 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% -15%,#153451 0,transparent 38%),var(--bg);color:var(--txt);font:14px Inter,system-ui,sans-serif}button,select{font:inherit}button{cursor:pointer}.wrap{max-width:1500px;margin:auto;padding:22px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;border-radius:13px;background:linear-gradient(145deg,#1b7992,#2452a0);display:grid;place-items:center;font-size:22px;box-shadow:0 8px 28px #1b799244}.brand h1{font-size:20px;letter-spacing:.12em;margin:0;font-weight:800}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.16em;margin-top:3px}.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pill,.select{border:1px solid var(--line);background:#0d1c2b;color:var(--txt);border-radius:9px;padding:9px 12px}.pill{color:var(--green);font:11px 'DM Mono';}.select{min-width:185px}.tabs{display:flex;gap:7px;overflow:auto;padding:5px 0 15px;border-bottom:1px solid var(--line);margin-bottom:18px}.tab{white-space:nowrap;background:transparent;border:1px solid transparent;color:var(--muted);padding:9px 13px;border-radius:8px}.tab.active{background:#15334a;border-color:#28506b;color:var(--cyan)}.section{display:none}.section.active{display:block}.heading{display:flex;justify-content:space-between;align-items:end;gap:14px;margin:5px 0 15px}.heading h2{margin:0;font-size:19px}.sub{color:var(--muted);font-size:12px;margin-top:5px}.grid{display:grid;gap:13px}.metrics{grid-template-columns:repeat(6,minmax(0,1fr));margin:15px 0}.card{background:linear-gradient(145deg,#102236,#0b1927);border:1px solid var(--line);border-radius:13px;padding:15px;min-width:0}.metric .k{color:var(--muted);font-size:11px}.metric .v{font-size:25px;font-weight:700;margin:9px 0 4px;letter-spacing:-.04em}.metric .u{color:var(--muted);font-size:11px}.metric .ico{float:right;font-size:17px}.two{grid-template-columns:1.4fr 1fr}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.chartbox{height:280px;position:relative}.chartbox.tall{height:350px}.chartbox canvas{width:100%!important;height:100%!important}.card h3{font-size:13px;margin:0 0 12px}.forecast{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{text-align:center;padding:12px 6px;background:#0b1927;border:1px solid var(--line);border-radius:10px}.day b{display:block;font-size:11px}.day .symbol{font-size:23px;margin:9px 0}.day strong{font-size:14px}.day small{display:block;color:var(--muted);font-size:10px;margin-top:5px}.hourly{overflow:auto}.hourrow{display:grid;grid-template-columns:repeat(12,minmax(72px,1fr));gap:7px;min-width:850px}.hour{padding:10px 7px;text-align:center;background:#0b1927;border-radius:9px;border:1px solid var(--line)}.hour span{display:block;color:var(--muted);font-size:10px}.hour b{display:block;margin:9px 0}.hour em{font-style:normal;color:var(--cyan);font-size:11px}.map{height:520px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:#0a1724}.maptools{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.action{background:#142a3e;border:1px solid #29465e;color:var(--txt);padding:8px 11px;border-radius:8px;font-size:12px}.action.active{border-color:var(--cyan);color:var(--cyan)}.note{font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px}.status{font:11px 'DM Mono';color:var(--muted)}.modelgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.modeltitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.modeltitle b{font-size:14px}.tag{font:10px 'DM Mono';color:var(--cyan);border:1px solid #28516a;border-radius:5px;padding:4px 6px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:right;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:500}.synopticgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.synoptic .chartbox{height:220px}.iframebox{height:560px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1927}.iframebox iframe{width:100%;height:100%;border:0}.footer{margin:22px 0 8px;padding-top:13px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px}.loading{color:var(--amber)}.error{color:var(--red)}.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:11px}.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 @media(max-width:1050px){.metrics{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}.three{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.wrap{padding:13px}.top{align-items:flex-start;flex-direction:column}.topright{width:100%}.select{flex:1}.metrics{grid-template-columns:repeat(2,1fr)}.three,.modelgrid,.synopticgrid{grid-template-columns:1fr}.forecast{grid-template-columns:repeat(4,1fr)}.map{height:420px}.iframebox{height:430px}.heading{align-items:flex-start;flex-direction:column}}
-.wx-alert{color:#ff657b;font-weight:800;background:rgba(255,101,123,.14);border-radius:3px;padding:0 2px}.zone-row td{text-align:left!important;background:#18354a;color:#8fe4f5;font-weight:700;letter-spacing:.04em;padding:12px 10px;border-top:1px solid #35536b}</style>
+.wx-alert{color:#ff657b;font-weight:800;background:rgba(255,101,123,.14);border-radius:3px;padding:0 2px}.zone-row td{text-align:left!important;background:#18354a;color:#8fe4f5;font-weight:700;letter-spacing:.04em;padding:12px 10px;border-top:1px solid #35536b}
+/* MeteoFox — Mapas observacionais interativos */
+.obs-map-wrap{margin:0 0 16px}
+.obs-map-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.obs-map-head h3{margin:0;font-size:15px}
+.obs-map{height:460px;border-radius:11px;border:1px solid var(--line);background:#0a1724;overflow:hidden}
+.obs-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.obs-tools .action[aria-pressed="true"]{background:#215476;border-color:#67c6ee;color:#fff}
+.obs-legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;color:var(--muted);font-size:11px}
+.obs-dot{display:inline-block;width:12px;height:12px;border:1px solid #8aa7bd;border-radius:50%;vertical-align:-2px;margin-right:5px}
+.obs-popup{font:12px Inter,system-ui,sans-serif;max-width:340px;color:#172d43}
+.obs-popup h4{margin:0 0 8px;color:#163c59;font-size:15px}
+.obs-popup .cat{display:inline-block;background:#eaf2f8;padding:5px 8px;border-radius:7px;margin:4px 3px 7px 0;font-weight:700}
+.obs-popup pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#eef4fa;color:#203f53;padding:9px;border-radius:7px;line-height:1.5;font:11px Consolas,monospace;max-height:175px;overflow:auto}
+.obs-popup p{margin:4px 0}
+.obs-notice{color:var(--muted);font-size:11px;line-height:1.5}
+@media(max-width:650px){.obs-map{height:390px}}
+</style>
 <style id="meteofox-v1-brand"> 
 /* MeteoFox professional visual refresh. Overrides only the original palette/layout. */
 :root{
@@ -176,6 +193,13 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 </section>
 <section id="aerodromes" class="section">
  <div class="heading"><div><h2>Boletins aeronáuticos originais</h2><div class="sub">Aeródromos associados à região</div></div><span class="status" id="aviationStatus">Por consultar</span></div>
+
+ <div class="card obs-map-wrap" id="aviationMapPanel">
+   <div class="obs-map-head"><h3>Mapa meteorológico de aeródromos</h3><span class="status" id="aviMapStatus">A carregar…</span></div>
+   <div id="aviationMap" class="obs-map" role="application" aria-label="Mapa de categorias meteorológicas dos aeródromos"></div>
+   <div class="obs-legend" id="aviMapLegend"><span><i class="obs-dot" style="background:#2176ff"></i>AZ</span><span><i class="obs-dot" style="background:#19aa66"></i>VD</span><span><i class="obs-dot" style="background:#ffe04d"></i>AM</span><span><i class="obs-dot" style="background:#f49b24"></i>AB</span><span><i class="obs-dot" style="background:#dc3044"></i>VM</span><span><i class="obs-dot" style="background:#8a939d"></i>Sem METAR / classificação indisponível</span></div>
+   <p class="obs-notice">Classificação visual calculada a partir do METAR disponível. AZ/VD/AM/AB/VM e VFR/MVFR/IFR/LIFR são escalas distintas. As observações podem estar desatualizadas; a categoria não substitui informação aeronáutica oficial. Ao selecionar um marcador são apresentados os boletins originais.</p>
+ </div>
  <div class="card aviation-panel">
   <div class="aviation-toolbar">
    <div class="aviation-field"><label for="airportSearch">Pesquisar aeródromo</label><input id="airportSearch" type="search" placeholder="Ex.: EGLL LFPG KJFK LPPT" autocomplete="off"></div>
@@ -189,6 +213,14 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 </section>
 <section id="synop" class="section">
  <div class="heading"><div><h2>Precipitação observada · SYNOP</h2><div class="sub">Estações civis e militares · PT e Ilhas · horas UTC</div></div><span class="status" id="synopStatus">Por consultar</span></div>
+
+ <div class="card obs-map-wrap" id="synopMapPanel">
+  <div class="obs-map-head"><h3>Mapa interativo · precipitação observada</h3><span class="status" id="synopMapStatus">A carregar…</span></div>
+  <div class="obs-tools" role="group" aria-label="Período de precipitação"><button type="button" class="action" data-synop-hours="6" aria-pressed="false">6 horas</button><button type="button" class="action" data-synop-hours="12" aria-pressed="false">12 horas</button><button type="button" class="action" data-synop-hours="24" aria-pressed="true">24 horas</button></div>
+  <div id="synopMap" class="obs-map" role="application" aria-label="Mapa de estações SYNOP e acumulados de precipitação"></div>
+  <div class="obs-legend"><span><i class="obs-dot" style="background:#a5adb5"></i>Sem observação</span><span><i class="obs-dot" style="background:#dbeafe"></i>0–1 mm</span><span><i class="obs-dot" style="background:#60a5fa"></i>1–10 mm</span><span><i class="obs-dot" style="background:#1661cf"></i>10–30 mm</span><span><i class="obs-dot" style="background:#9035c6"></i>30–60 mm</span><span><i class="obs-dot" style="background:#db2560"></i>≥60 mm</span></div>
+  <p class="obs-notice">Os marcadores representam apenas estações com localização conhecida. A tabela abaixo mantém todas as estações, incluindo as que ainda não têm coordenadas verificadas. «Traços» não é igual a zero; horas UTC do período indicadas ao clicar.</p>
+ </div>
  <div class="card"><div class="maptools"><button class="action active" id="refreshSynop">↻ Atualizar observações</button></div><div class="tablewrap"><table><thead><tr><th>Estação</th><th>WMO</th><th>6 h (mm)</th><th>12 h (mm)</th><th>24 h (mm)</th><th>Última observação UTC</th></tr></thead><tbody id="precipRows"><tr><td>A carregar…</td></tr></tbody></table></div><p class="note">Nas regiões insulares são apresentados os postos SYNOP identificados por código WMO; a cobertura pode ser incompleta, mesmo que existam aeródromos adicionais. Valores observados descodificados de SYNOP. — significa período não comunicado, não 0 mm. «Traços» significa precipitação inferior a 0,1 mm. A hora de cada acumulado pode diferir da última observação. Códigos e nomes de estação fornecidos pelo utilizador; algumas correspondências carecem de validação.</p></div>
  </section>
 <footer class="footer"><span>MeteoFox · Ferramenta de apoio à análise meteorológica</span><span>Previsão: Open-Meteo/ECMWF · Radar: RainViewer · Satélite: Windy · METAR/SYNOP: OGIMET · TAF: NOAA</span></footer>
@@ -243,7 +275,7 @@ async function loadModels(){const [lat,lon]=current,token=lat+','+lon;$('modelSt
  $('modelTable').innerHTML=ok.flatMap(m=>m.d.daily.time.slice(0,3).map((t,i)=>`<tr><td>${m.name}</td><td>${t}</td><td>${fmt(m.d.daily.temperature_2m_max?.[i],1)}</td><td>${fmt(m.d.daily.temperature_2m_min?.[i],1)}</td><td>${fmt(m.d.daily.precipitation_sum?.[i],1)}</td></tr>`)).join('');
  $('modelStatus').textContent=`${ok.length}/4 modelos disponíveis${bad.length?' · '+bad.map(m=>m.name).join(', ')+' sem dados':''}`;
 }
-const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR']};
+const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR'],Faro:['LPFR']};
 function formatTAF(raw){
  // Quebras apenas nos indicadores de mudança; preserva todos os grupos originais.
  return String(raw||'Indisponível').replace(/\s+(?=(?:TEMPO|BECMG|FM\d{6}|PROB(?:30|40))(?:\s|$))/g,(spaces,offset,whole)=>{const before=whole.slice(0,offset);return /PROB(?:30|40)\s*$/.test(before)?' ':'\n';});
@@ -301,6 +333,7 @@ const AVIATION_AIRPORTS=[
  {id:'LPCS',name:'Cascais / Tires',region:'continental'},
  {id:'LPMT',name:'Montijo',region:'continental'},
  {id:'LPBJ',name:'Beja',region:'continental'},
+ {id:'LPFR',name:'Faro / Gago Coutinho',region:'continental'},
  {id:'LPMA',name:'Madeira / Cristiano Ronaldo',region:'madeira'},
  {id:'LPPS',name:'Porto Santo',region:'madeira'},
  {id:'LPPD',name:'Ponta Delgada',region:'acores'},
@@ -403,7 +436,7 @@ function requestWorldAviation(){
 }
 function aviationRender(){
  const region=$('airportRegion').value;
- if(region==='mundo'){aviationRenderWorld();return;}
+ if(region==='mundo'){aviationRenderWorld();renderAviationMap();return;}
  const search=$('airportSearch').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const city=$('place').value;
  let airports=AVIATION_AIRPORTS.filter(a=>{
@@ -438,8 +471,10 @@ async function loadAerodromes(force=false){
    try{
      const d=await fetchMeteoFoxData('aviation');
      aviationData=d;
+     renderAviationMap();
      $('aviationStatus').textContent='Consulta concluída · '+aviationDateUTC(d.checked_utc||d.metar_updated_utc||d.taf_updated_utc||'');
      aviationRender();
+     renderAviationMap();
    }catch(e){
      $('aviationStatus').textContent='Dados indisponíveis';
      $('airportReports').innerHTML='<p class="aviation-empty error">Não foi possível consultar os boletins no GitHub: '+safe(e.message)+'</p>';
@@ -447,8 +482,8 @@ async function loadAerodromes(force=false){
  })();
  return aviationLoading;
 }
-$('airportSearch').addEventListener('input',()=>{aviationRender();requestWorldAviation();});
-$('airportRegion').addEventListener('change',()=>{aviationRender();requestWorldAviation();});
+$('airportSearch').addEventListener('input',()=>{aviationRender();requestWorldAviation();renderAviationMap();});
+$('airportRegion').addEventListener('change',()=>{aviationRender();requestWorldAviation();renderAviationMap();});
 $('refreshAviation').addEventListener('click',()=>loadAerodromes(true));
 $('airportReports').addEventListener('click',async(event)=>{
  const button=event.target.closest('[data-copy-kind]');
@@ -465,6 +500,8 @@ $('airportReports').addEventListener('click',async(event)=>{
 async function loadSynop(){
  $('synopStatus').textContent='A consultar OGIMET…';
  try{const d=await fetchMeteoFoxData('synop');
+ synopMapData=d;
+ renderSynopMap();
  const format=p=>!p?'—':p.trace?'Traços':p.mm==null?'—':fmt(p.mm,1);
  const order={'08543':0,'08545':1,'08544':2,'08540':3,'08530':4,'08552':5,'08539':6,'08537':7,'08536':8,'08535':9,'08532':10,'08534':11,'08562':12,'08538':13,'08522':14,'08524':15,'08506':16,'08509':16,'08508':17,'08513':18,'08512':19,'08521':20};
  const chosen=$('place').value;const selectedStations=chosen==='Madeira'?d.stations.filter(st=>synopZone(st)[0]==='Madeira'):chosen==='Açores'?d.stations.filter(st=>synopZone(st)[0]==='Açores'):d.stations;const sorted=[...selectedStations].sort((a,b)=>synopZone(a)[1]-synopZone(b)[1] || (order[a.station]??99)-(order[b.station]??99));
@@ -479,7 +516,7 @@ $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
 async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
 function showRadar(i){if(!radarFrames.length||!map)return;radarIndex=Math.max(0,Math.min(i,radarFrames.length-1));if(radarLayer)map.removeLayer(radarLayer);let frame=radarFrames[radarIndex];radarLayer=L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.72,zIndex:10,attribution:'Radar © RainViewer'});if(radarOn)radarLayer.addTo(map);let d=new Date(frame.time*1000);$('radarTime').textContent=d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes')loadAerodromes();if(id==='synop')loadSynop()}
+function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
 function switchObservation(which){
  const radar=which==='radar';
@@ -556,5 +593,190 @@ $('visSimPlay').onclick=()=>{
  $('visSimPlay').textContent='Ⅱ Pausar';
  visTimer=setInterval(()=>visShow(visAt+1),1250);
 };
+
+/* MAPAS METEOFOX — sem alterar os boletins originais ou as animações ECMWF. */
+const OBS_AIRPORT_POS = {
+ LPPR:[41.248,-8.682],LPOV:[40.915,-8.645],LPMR:[39.829,-8.887],LPTN:[39.475,-8.364],
+ LPOT:[39.117,-8.983],LPAR:[38.884,-9.030],LPST:[38.829,-9.340],LPPT:[38.781,-9.136],
+ LPCS:[38.725,-9.355],LPMT:[38.704,-9.035],LPBJ:[38.078,-7.932],LPFR:[37.0144,-7.9658],
+ LPMA:[32.697,-16.774],LPPS:[33.073,-16.350],LPPD:[37.741,-25.698],LPLA:[38.761,-27.091],
+ LPHR:[38.520,-28.716],LPFL:[39.455,-31.131],LPPI:[38.555,-28.441],LPSJ:[38.665,-28.175],
+ LPGR:[39.092,-28.030],LPCR:[39.671,-31.113],LPAZ:[36.971,-25.171]
+};
+// Localizações de referência para as estações identificadas por WMO; não assumir coordenadas para IDs desconhecidos.
+const OBS_SYN_POS = {
+ '08543':[41.694,-8.832], '08545':[41.248,-8.682], '08544':[40.915,-8.645],
+ '08540':[39.829,-8.887], '08530':[39.354,-9.405], '08552':[39.475,-8.364],
+ '08539':[39.117,-8.983], '08537':[38.884,-9.030], '08536':[38.781,-9.136],
+ '08535':[38.718,-9.150], '08534':[38.704,-9.035], '08532':[38.829,-9.340],
+ '08562':[38.078,-7.932], '08538':[37.007,-8.942], '08524':[33.073,-16.350],
+ '08509':[38.761,-27.091]
+};
+let obsAviationMap=null,obsAviationLayer=null,obsSynopMap=null,obsSynopLayer=null;
+let synopMapData=null,synopMapHours=24;
+function obsTile(mapInstance){
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:18,attribution:'© OpenStreetMap contributors'
+ }).addTo(mapInstance);
+}
+function ensureObsMap(id){
+ if(!window.L)return null;
+ if(id==='aviationMap'){
+  if(!obsAviationMap){obsAviationMap=L.map(id,{scrollWheelZoom:false}).setView([39.4,-9.4],6);obsTile(obsAviationMap);obsAviationLayer=L.layerGroup().addTo(obsAviationMap)}
+  setTimeout(()=>obsAviationMap.invalidateSize(),120);return obsAviationMap;
+ }
+ if(!obsSynopMap){obsSynopMap=L.map(id,{scrollWheelZoom:false}).setView([39.4,-9.4],6);obsTile(obsSynopMap);obsSynopLayer=L.layerGroup().addTo(obsSynopMap)}
+ setTimeout(()=>obsSynopMap.invalidateSize(),120);return obsSynopMap;
+}
+function obsCircle(latlng,color,radius=9){
+ return L.circleMarker(latlng,{radius,weight:2,color:'#243c55',fillColor:color,fillOpacity:0.96});
+}
+function obsFreshness(item){
+ const time=item?.utc; const ms=Date.parse(time||'');
+ if(!Number.isFinite(ms))return 'Hora de emissão não verificável';
+ const hours=(Date.now()-ms)/3600000;
+ return hours>3?'Atenção: METAR emitido há '+Math.floor(hours)+' horas':'Hora UTC: '+aviationDateUTC(time);
+}
+function obsMetarParsed(item){
+ const raw=String(item?.raw||'').trim();
+ if(!raw)return null;
+ // Reporte original preservado; a extração seguinte usa apenas tokens METAR.
+ const tokens=raw.replace(/\s+/g,' ').split(' ').filter(Boolean);
+ let visibility=null, ceiling=Infinity, hasCeiling=false, cloudStatus=false, significant=false;
+ const timeIndex=tokens.findIndex(x=>/^\d{6}Z$/.test(x));
+ let start=timeIndex>=0?timeIndex+1:1;
+ // Token opcional AUTO/COR e vento antes da visibilidade.
+ for(let i=start;i<tokens.length;i++){
+  const t=tokens[i];
+  if(/^(RMK|TEMPO|BECMG|NOSIG)$/.test(t))break;
+  if(/^Q\d{4}$/.test(t)||/^A\d{4}$/.test(t))break;
+  if(t==='CAVOK'){visibility=10000;cloudStatus=true;continue;}
+  if(/^(?:FEW|SCT|BKN|OVC|VV)\d{3}(?:CB|TCU)?$/.test(t)||/^(?:NSC|NCD|SKC|CLR)$/.test(t))cloudStatus=true;
+  if(/^\d{4}(?:NDV)?$/.test(t)){
+    const m=Number(t.slice(0,4));
+    if(m===9999)visibility=10000;
+    else if(m<=8000)visibility=m;
+    else visibility=m;
+  }
+  if(/^\d{4}[NSEW]{1,2}$/.test(t))continue;
+  if(/^P\d+SM$/.test(t))visibility=Number(t.slice(1,-2))*1609.344;
+  if(/^M\d+\/\d+SM$/.test(t)){
+    const [a,b]=t.slice(1,-2).split('/').map(Number);visibility=a/b*1609.344;
+  }
+  if(/^\d+(?:\/\d+)?SM$/.test(t)){
+    const val=t.slice(0,-2);
+    visibility=(val.includes('/')?val.split('/').map(Number).reduce((a,b)=>a/b):Number(val))*1609.344;
+  }
+  if(/^\d+$/.test(t)&&/^\d+\/\d+SM$/.test(tokens[i+1]||'')){
+    const [a,b]=tokens[i+1].slice(0,-2).split('/').map(Number);visibility=(Number(t)+a/b)*1609.344;
+  }
+  const layer=t.match(/^(BKN|OVC|VV)(\d{3}|\/\/\/)/);
+  if(layer){
+   if(layer[2]!=='///'){ceiling=Math.min(ceiling,Number(layer[2])*100);hasCeiling=true;}
+   else return {raw,complete:false,visibility,ceiling:null,reason:'Teto indeterminado (VV/// ou nuvens sem altura)'};
+  }
+  if(/^(?:\+|-|VC)?(?:TS|SH|FZ|FG|GR|GS|SQ|FC|DS|SS|RA|SN|PL)/.test(t)&&
+     !/^(?:\d{6}Z|\d{4}KT)$/.test(t))significant=true;
+ }
+ // Para visibilidade 9999 = 10 km OU MAIS; não corresponde a distância exata.
+ const complete=visibility!==null&&cloudStatus;
+ return {raw,complete,visibility,ceiling:hasCeiling?ceiling:Infinity,significant,
+  reason:complete?'':'Visibilidade ou informação de nebulosidade ausente/não reconhecida'};
+}
+function obsClasses(item){
+ const p=obsMetarParsed(item);
+ if(!p||!p.complete)return {color:'#89939e',code:'—',flight:'Indisponível',parsed:p};
+ const v=p.visibility,c=p.ceiling;
+ // Escala AZ/VD/AM/AB/VM: usa o critério mais restritivo visibilidade/teto.
+ let severity=0;
+ if(v<1000||c<200)severity=4;
+ else if(v<1600||c<500)severity=3;
+ else if(v<5000||c<1500)severity=2;
+ else if(v<10000||c<=5000)severity=1;
+ // Tempo significativo impede AZ; em trovoada impede também VD.
+ if(p.significant)severity=Math.max(severity,2);
+ const choices=[['AZ','#2176ff'],['VD','#19aa66'],['AM','#ffe04d'],['AB','#f49b24'],['VM','#dc3044']];
+ const [code,color]=choices[severity];
+ // FAA flight category thresholds: visibilidade em statute miles; ceiling AGL ft.
+ const miles=v/1609.344;
+ let flight='VFR';
+ if(miles<1||c<500)flight='LIFR';
+ else if(miles<3||c<1000)flight='IFR';
+ else if(miles<=5||c<=3000)flight='MVFR';
+ return {code,color,flight,parsed:p};
+}
+function obsAviationPopup(a,d){
+ const id=a.id,m=d?.metar?.[id],t=d?.taf?.[id],sp=d?.speci?.[id],cat=obsClasses(m);
+ const rawReport=(name,v)=>v?.raw?.trim()?'<p><strong>'+name+'</strong></p><pre>'+safe(v.raw)+'</pre>':'';
+ const p=cat.parsed;
+ return '<div class="obs-popup"><h4>'+safe(id)+' · '+safe(a.name)+'</h4>'+
+  '<span class="cat" style="border-left:5px solid '+cat.color+'">Cor: '+safe(cat.code)+'</span>'+
+  '<span class="cat">Voo: '+safe(cat.flight)+'</span>'+
+  '<p>'+safe(m?.raw?obsFreshness(m):'Sem METAR disponível')+'</p>'+
+  (p?.complete?'<p>Visibilidade: '+(p.visibility>=10000?'≥ 10 km':p.visibility.toFixed(0)+' m')+
+  ' · Teto: '+(Number.isFinite(p.ceiling)?p.ceiling+' ft':'sem teto limitativo reportado')+'</p>':'<p>Classificação indisponível por dados insuficientes</p>')+
+  rawReport('METAR original',m)+rawReport('TAF original',t)+rawReport('SPECI original',sp)+
+  (!m?.raw&&!t?.raw?'<p>Sem boletins disponíveis.</p>':'')+'</div>';
+}
+function renderAviationMap(){
+ if(!$('aerodromes').classList.contains('active'))return;
+ const m=ensureObsMap('aviationMap');if(!m)return;
+ obsAviationLayer.clearLayers();
+ const region=$('airportRegion').value,city=$('place').value;
+ const list=AVIATION_AIRPORTS.filter(a=>region==='mundo'?false:region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
+ const points=[];
+ for(const a of list){
+  const pos=OBS_AIRPORT_POS[a.id];if(!pos)continue;
+  const category=obsClasses(aviationData?.metar?.[a.id]);
+  const marker=obsCircle(pos,category.color).addTo(obsAviationLayer);
+  marker.bindTooltip(a.id+' · '+category.code+' · '+category.flight);
+  marker.bindPopup(()=>obsAviationPopup(a,aviationData),{maxWidth:370});
+  points.push(pos);
+ }
+ if(points.length){
+  const bounds=L.latLngBounds(points);m.fitBounds(bounds.pad(0.18),{maxZoom:9,animate:false});
+ }
+ $('aviMapStatus').textContent=region==='mundo'?'Mapa: seleciona Portugal, Madeira ou Açores':points.length+' aeródromos · '+(aviationData?'METAR consultados':'a aguardar METAR');
+}
+function obsSynopCoords(st){
+ const lat=Number(st.lat??st.latitude),lon=Number(st.lon??st.longitude);
+ if(Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=30&&lat<=43&&lon>=-32&&lon<=-6)return [lat,lon];
+ return OBS_SYN_POS[String(st.station)]||null;
+}
+function obsSynopColor(p){
+ if(!p||p.mm==null&&!p.trace)return '#9ba5af';
+ if(p.trace)return '#dbeafe';
+ const v=Number(p.mm);
+ if(!Number.isFinite(v))return '#9ba5af';
+ return v>=60?'#db2560':v>=30?'#9035c6':v>=10?'#1661cf':v>=1?'#60a5fa':'#dbeafe';
+}
+function renderSynopMap(){
+ if(!$('synop').classList.contains('active'))return;
+ const m=ensureObsMap('synopMap');if(!m)return;
+ obsSynopLayer.clearLayers();
+ const data=synopMapData;
+ if(!data?.stations){$('synopMapStatus').textContent='A aguardar SYNOP';return;}
+ const city=$('place').value;
+ const shown=city==='Madeira'?data.stations.filter(s=>synopZone(s)[0]==='Madeira'):
+  city==='Açores'?data.stations.filter(s=>synopZone(s)[0]==='Açores'):data.stations;
+ const points=[];
+ for(const st of shown){
+  const pos=obsSynopCoords(st);if(!pos)continue;
+  const p=st.periods?.[String(synopMapHours)];
+  const val=!p?'—':p.trace?'Traços':Number.isFinite(Number(p.mm))?Number(p.mm).toFixed(1)+' mm':'—';
+  const marker=obsCircle(pos,obsSynopColor(p),8).addTo(obsSynopLayer);
+  marker.bindTooltip(safe(st.name||st.station)+' · '+val);
+  marker.bindPopup('<div class="obs-popup"><h4>'+safe(st.name||'Estação SYNOP')+' · '+safe(st.station)+'</h4><p><strong>'+synopMapHours+' h: '+val+'</strong></p><p>Período UTC: '+safe(p?.utc||'não indicado')+'</p><p>Última mensagem: '+safe(st.latest_utc||'não indicada')+'</p></div>');
+  points.push(pos);
+ }
+ if(points.length)m.fitBounds(L.latLngBounds(points).pad(0.18),{maxZoom:9,animate:false});
+ $('synopMapStatus').textContent=points.length+' estações no mapa · '+(shown.length-points.length)+' sem localização';
+}
+document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListener('click',()=>{
+ synopMapHours=Number(btn.dataset.synopHours);
+ document.querySelectorAll('[data-synop-hours]').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));
+ renderSynopMap();
+}));
+
 </script>
 </body></html>
