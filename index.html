@@ -155,16 +155,16 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <p class="note">As curvas são alinhadas pela hora válida da previsão (UTC), não pelo índice da série. A hora de inicialização dos modelos deve ser verificada na fonte operacional antes de qualquer comparação rigorosa entre ciclos. Fonte: Open-Meteo.</p>
 </section>
 <section id="aerodromes" class="section">
- <div class="heading"><div><h2>METAR, SPECI, TAF e TAF AMD originais</h2><div class="sub">Aeródromos associados à região</div></div><span class="status" id="aviationStatus">Por consultar</span></div>
+ <div class="heading"><div><h2>Boletins aeronáuticos originais</h2><div class="sub">Aeródromos associados à região</div></div><span class="status" id="aviationStatus">Por consultar</span></div>
  <div class="card aviation-panel">
   <div class="aviation-toolbar">
-   <div class="aviation-field"><label for="airportSearch">Pesquisar aeródromo</label><input id="airportSearch" type="search" placeholder="Ex.: LPPT, Lisboa, Lajes, EGLL…" autocomplete="off"></div>
-   <div class="aviation-field"><label for="airportRegion">Região</label><select id="airportRegion"><option value="local">Associados à localidade</option><option value="all">Todos os aeródromos</option><option value="continental">Portugal continental</option><option value="madeira">Madeira</option><option value="acores">Açores</option><option value="mundo">Mundo · ICAO</option></select></div>
+   <div class="aviation-field"><label for="airportSearch">Pesquisar aeródromo</label><input id="airportSearch" type="search" placeholder="Ex.: EGLL LFPG KJFK LPPT" autocomplete="off"></div>
+   <div class="aviation-field"><label for="airportRegion">Região</label><select id="airportRegion"><option value="local">Associados à localidade</option><option value="continental">Portugal continental</option><option value="madeira">Madeira</option><option value="acores">Açores</option><option value="mundo">Mundo · ICAO</option></select></div>
    <button type="button" class="action" id="refreshAviation">↻ Consultar dados</button>
   </div>
   <div class="aviation-summary"><strong id="airportHeading">Aeródromos associados à localidade</strong><span class="status" id="airportCount">—</span></div>
   <div id="airportReports" class="aviation-results" aria-live="polite"><p class="note">Seleciona o separador para consultar os boletins.</p></div>
-  <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR, SPECI e TAF da NOAA. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
+  <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR e TAF da NOAA; SPECI apenas se existir. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
  </div>
 </section>
 <section id="synop" class="section">
@@ -270,17 +270,17 @@ async function fetchMeteoFoxData(kind){
 // Lista de ICAO já presentes no servidor de observações MeteoFox.
 // A classificação não altera os boletins obtidos do GitHub.
 const AVIATION_AIRPORTS=[
- {id:'LPPT',name:'Lisboa / Humberto Delgado',region:'continental'},
- {id:'LPAR',name:'Alverca',region:'continental'},
- {id:'LPST',name:'Sintra',region:'continental'},
- {id:'LPCS',name:'Cascais / Tires',region:'continental'},
- {id:'LPMT',name:'Montijo',region:'continental'},
- {id:'LPBJ',name:'Beja',region:'continental'},
  {id:'LPPR',name:'Porto / Francisco Sá Carneiro',region:'continental'},
  {id:'LPOV',name:'Ovar',region:'continental'},
  {id:'LPMR',name:'Monte Real',region:'continental'},
  {id:'LPTN',name:'Tancos',region:'continental'},
  {id:'LPOT',name:'Ota',region:'continental'},
+ {id:'LPAR',name:'Alverca',region:'continental'},
+ {id:'LPST',name:'Sintra',region:'continental'},
+ {id:'LPPT',name:'Lisboa / Humberto Delgado',region:'continental'},
+ {id:'LPCS',name:'Cascais / Tires',region:'continental'},
+ {id:'LPMT',name:'Montijo',region:'continental'},
+ {id:'LPBJ',name:'Beja',region:'continental'},
  {id:'LPMA',name:'Madeira / Cristiano Ronaldo',region:'madeira'},
  {id:'LPPS',name:'Porto Santo',region:'madeira'},
  {id:'LPPD',name:'Ponta Delgada',region:'acores'},
@@ -335,33 +335,43 @@ function aviationReport(kind,item,source,isAmd=false){
     ${empty?'':`<button type="button" class="aviation-copy" data-copy-kind="${kind}">Copiar</button>`}
    </div>
    <div class="aviation-report-meta" style="margin-bottom:6px">${empty?'':safe(aviationDateUTC(item.utc))}</div>
-   <pre>${empty?(kind==='SPECI'?'Sem SPECI disponível':'Indisponível'):highlightConvection(kind==='TAF'?formatTAF(raw):raw)}</pre>
+   <pre>${empty?'Indisponível':highlightConvection(kind==='TAF'?formatTAF(raw):raw)}</pre>
  </div>`;
 }
+function worldAirportCodes(){
+ // Aceita vários ICAO separados por espaços (ou vírgulas), sem necessidade de linhas.
+ const words=$('airportSearch').value.toUpperCase().trim().split(/[\s,;]+/).filter(Boolean);
+ return {codes:[...new Set(words.filter(w=>/^[A-Z]{4}$/.test(w)))], invalid:[...new Set(words.filter(w=>!/^[A-Z]{4}$/.test(w)))]};
+}
 function aviationRenderWorld(){
- const raw=$('airportSearch').value.trim().toUpperCase();
+ const {codes,invalid}=worldAirportCodes();
  $('airportHeading').textContent='Pesquisa mundial · boletins ICAO';
- $('airportCount').textContent='Pesquisa internacional';
- if(!/^[A-Z]{4}$/.test(raw)){
-  $('airportReports').innerHTML='<p class="aviation-empty">Escreve um código ICAO de quatro letras, como <strong>EGLL</strong>, <strong>KJFK</strong> ou <strong>LFPG</strong>.</p>';
+ $('airportCount').textContent=codes.length+' aeródromo'+(codes.length===1?'':'s');
+ if(!codes.length){
+  $('airportReports').innerHTML='<p class="aviation-empty">Escreve um ou vários códigos ICAO de quatro letras, separados por espaços. Exemplo: <strong>EGLL LFPG KJFK</strong>.</p>';
   return;
  }
  if(!worldAviation){$('airportReports').innerHTML='<p class="aviation-empty">A obter os boletins mundiais…</p>';return;}
- const m=worldAviation.metar[raw],sp=worldAviation.speci[raw],t=worldAviation.taf[raw];
  const origin='NOAA Aviation Weather Center';
- const isAmd=/\bAMD\b/i.test(t?.raw||'');
- $('airportReports').innerHTML=`<article class="aviation-card" data-icao="${raw}"><div class="aviation-card-head"><div><h3>${raw} · Consulta mundial</h3><small>Última recolha: ${safe(aviationDateUTC(worldAviation.checked_utc))} · A cobertura depende da NOAA</small></div></div>
- <div class="aviation-bulletins">
- ${aviationReport('METAR',m,origin)}
- ${aviationReport('SPECI',sp,origin)}
- ${aviationReport('TAF',t,origin,isAmd)}
- </div></article>`;
+ const notices=[];
+ if(invalid.length)notices.push('<p class="aviation-empty">Códigos ignorados (formato inválido): '+safe(invalid.join(', '))+'</p>');
+ const results=codes.map(id=>{
+  const m=worldAviation.metar?.[id],sp=worldAviation.speci?.[id],t=worldAviation.taf?.[id];
+  const isAmd=/\bAMD\b/i.test(t?.raw||'');
+  return `<article class="aviation-card" data-icao="${id}"><div class="aviation-card-head"><div><h3>${id} · Consulta mundial</h3><small>Última recolha: ${safe(aviationDateUTC(worldAviation.checked_utc))} · A cobertura depende da NOAA</small></div></div>
+  <div class="aviation-bulletins">
+  ${aviationReport('METAR',m,origin)}
+  ${sp?.raw?.trim()?aviationReport('SPECI',sp,origin):''}
+  ${aviationReport('TAF',t,origin,isAmd)}
+  </div></article>`;
+ });
+ $('airportReports').innerHTML=notices.join('')+results.join('');
 }
 function requestWorldAviation(){
  if($('airportRegion').value!=='mundo')return;
  aviationRenderWorld();
- const id=$('airportSearch').value.trim().toUpperCase();
- if(!/^[A-Z]{4}$/.test(id)||worldAviation)return;
+ const {codes}=worldAirportCodes();
+ if(!codes.length||worldAviation)return;
  $('aviationStatus').textContent='A obter dados internacionais…';
  loadWorldAviation().then(()=>{
   $('aviationStatus').textContent='NOAA · '+aviationDateUTC(worldAviation.checked_utc);
@@ -377,11 +387,11 @@ function aviationRender(){
  const search=$('airportSearch').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const city=$('place').value;
  let airports=AVIATION_AIRPORTS.filter(a=>{
-    const inRegion=region==='all'||(region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
+    const inRegion=(region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
     const text=(a.id+' '+a.name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
     return inRegion&&text.includes(search);
  });
- const regionLabel={local:'Associados a '+city,all:'Todos os aeródromos',continental:'Portugal continental',madeira:'Madeira',acores:'Açores'}[region];
+ const regionLabel={local:'Associados a '+city,continental:'Portugal continental',madeira:'Madeira',acores:'Açores'}[region];
  $('airportHeading').textContent=regionLabel;
  $('airportCount').textContent=airports.length+' aeródromo'+(airports.length===1?'':'s');
  if(!airports.length){$('airportReports').innerHTML='<p class="aviation-empty">Nenhum aeródromo corresponde à pesquisa ou à região selecionada.</p>';return;}
@@ -393,7 +403,7 @@ function aviationRender(){
    return `<article class="aviation-card" data-icao="${a.id}"><div class="aviation-card-head"><div><h3>${safe(a.id)} · ${safe(a.name)}</h3><small>${a.region==='continental'?'Portugal continental':a.region==='madeira'?'Madeira':'Açores'}</small></div></div>
     <div class="aviation-bulletins">
     ${aviationReport('METAR',m,d.metar_source||'OGIMET')}
-    ${aviationReport('SPECI',sp,d.speci_source||'OGIMET')}
+    ${sp?.raw?.trim()?aviationReport('SPECI',sp,d.speci_source||'OGIMET'):''}
     ${aviationReport('TAF',t,d.taf_source||'NOAA',isAmd)}
     </div></article>`;
  }).join('');
