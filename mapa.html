@@ -166,7 +166,8 @@ function initialize(){
  appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true}).setView([37.5,-14.8],5);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
  markers=L.layerGroup().addTo(appMap);
- sat=new MeteoFoxSatellite(appMap,$('satTools'));
+ if(window.MeteoFoxSatellite){sat=new MeteoFoxSatellite(appMap,$('satTools'));}
+ else{$('satTools').textContent='Os controlos de satélite estão indisponíveis: confirma se meteofox_satelite.js foi publicado.';}
  paintMarkers();refresh();
  $('refresh').addEventListener('click',refresh);
  $('all').addEventListener('click',()=>appMap.fitBounds(L.latLngBounds(Object.values(OBS_AIRPORT_POS)).pad(.12),{maxZoom:8}));
