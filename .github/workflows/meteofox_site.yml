@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'mapa.html'
+      - 'meteofox_satelite.js'
+      - '.github/workflows/meteofox_site.yml'
 
 permissions:
   contents: read
@@ -21,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - name: Obter o index.html do MeteoFox
+      - name: Obter os ficheiros do MeteoFox
         uses: actions/checkout@v4
 
       - name: Reutilizar os mapas ja publicados
@@ -32,11 +35,17 @@ jobs:
           from urllib.request import Request, urlopen
           import shutil
 
-          site = Path('index.html')
-          assert site.is_file() and site.stat().st_size > 1000, 'index.html nao encontrado'
           public = Path('public')
           public.mkdir(exist_ok=True)
-          shutil.copy2(site, public / 'index.html')
+
+          # Publicar todas as paginas e o JavaScript do mapa grande.
+          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js'):
+              source = Path(name)
+              assert source.is_file() and source.stat().st_size > 0, f'{name} nao encontrado ou vazio'
+              if name.endswith('.html'):
+                  assert source.stat().st_size > 1000, f'{name} demasiado pequeno'
+              shutil.copy2(source, public / name)
+              print('Incluido no site:', name)
 
           base = 'https://dfraposo1991-lang.github.io/MeteoFox/'
           files = ['MeteoFox_animacao_48h.html']
@@ -66,7 +75,7 @@ jobs:
 
           (public / '.nojekyll').write_text('', encoding='utf-8')
           assert len(list(public.glob('*.png'))) == 32, 'Faltam mapas ECMWF'
-          print('Site pronto: index.html, animacao e 32 mapas ECMWF')
+          print('Site pronto: index.html, mapa.html, meteofox_satelite.js, animacao e 32 mapas ECMWF')
           PY
 
       - name: Configurar GitHub Pages
