@@ -1,0 +1,77 @@
+name: MeteoFox | Satelite VIS SW Europe 48h
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_time:
+        description: 'Run UTC YYYYMMDDHHMM (deixar vazio para automatico)'
+        type: string
+        required: false
+  schedule:
+    - cron: '35 4,10,16,22 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meteofox-vis-48h
+  cancel-in-progress: false
+
+jobs:
+  imagens:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar Pillow
+        run: python -m pip install 'Pillow>=10,<13'
+      - name: Descarregar e validar 16 imagens ECMWF (+3 a +48 h)
+        shell: bash
+        env:
+          BASE_TIME: ${{ inputs.base_time }}
+        run: |
+          set -euo pipefail
+          if [ -n "${BASE_TIME:-}" ]; then
+            python gerar_visivel_swe_48h.py --base-time "$BASE_TIME"
+          else
+            python gerar_visivel_swe_48h.py
+          fi
+      - name: Guardar diagnostico e imagens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteofox-satelite-vis-48h
+          path: |
+            data/satellite_vis/manifest.json
+            data/.satellite_vis_preparacao/relatorio_producao.json
+            data/satellite_vis/relatorio_producao.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Publicar dados no repositorio (sem reconstruir o site)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/satellite_vis/manifest.json
+          python - <<'PYVERIFY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('data/satellite_vis/manifest.json').read_text())
+          frames=d['frames']
+          assert len(frames)==16
+          assert [f['step_h'] for f in frames]==list(range(3,49,3))
+          assert all(Path('data/satellite_vis',f['file']).is_file() for f in frames)
+          PYVERIFY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/satellite_vis/
+          if git diff --cached --quiet; then
+            echo 'Sem alteracoes a publicar.'
+          else
+            git commit -m 'Atualizar satelite VIS ECMWF 48h [skip ci]'
+            git push
+          fi
