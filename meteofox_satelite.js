@@ -5,10 +5,11 @@
 (function(){
 'use strict';
 const WMS='https://view.eumetsat.int/geoserver/wms';
+const SAT_MANIFEST='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_times.json';
 const LAYER='mtg_fd:rgb_geocolour';
 const RADAR_API='https://api.rainviewer.com/public/weather-maps.json';
-const RADAR_MAX_DIFF=12*60*1000;
-const SAT_MAX_DIFF=12*60*1000;
+const RADAR_MAX_DIFF=8*60*1000;
+const SAT_MAX_DIFF=8*60*1000;
 const DATE=s=>{const n=Date.parse(s);return Number.isFinite(n)?n:null;};
 const fmt=ms=>new Date(ms).toLocaleString('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' UTC';
 const short=ms=>new Date(ms).toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'}).replace(':00','')+'Z';
@@ -24,7 +25,7 @@ function parseTimes(text){const items=[];for(const part of String(text||'').spli
  }
  return [...new Set(items)].filter(n=>n<=Date.now()+600000).sort((a,b)=>a-b).slice(-36);
 }
-async function actualSatelliteTimes(){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
+async function actualSatelliteTimesDirect(){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
  try{
   const r=await fetch(WMS+'?service=WMS&version=1.1.1&request=GetCapabilities',{signal:controller.signal,mode:'cors',cache:'no-store'});
   if(!r.ok)throw Error('HTTP '+r.status);const xml=new DOMParser().parseFromString(await r.text(),'text/xml');
@@ -34,8 +35,26 @@ async function actualSatelliteTimes(){const controller=new AbortController();con
   const times=parseTimes(dim?.textContent);if(!times.length)throw Error('Sem horas UTC publicadas');return times;
  }finally{clearTimeout(timeout);}
 }
+async function actualSatelliteTimes(){
+ // A lista de horários é recolhida pelo GitHub Actions: evita falhas de CORS do GetCapabilities no navegador.
+ try{
+  const r=await fetch(SAT_MANIFEST+'?v='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('Manifesto HTTP '+r.status);
+  const d=await r.json();
+  if(d.layer!==LAYER||!Array.isArray(d.times_utc))throw Error('Formato do manifesto inválido');
+  const checked=DATE(d.checked_utc);
+  if(checked===null||Date.now()-checked>90*60000||checked>Date.now()+5*60000)throw Error('Manifesto de horários desatualizado');
+  const times=[...new Set(d.times_utc.map(DATE).filter(x=>x!==null&&x<=Date.now()+120000&&x>=Date.now()-6*3600000))].sort((a,b)=>a-b);
+  if(times.length<2)throw Error('Sem sequência recente confirmada');
+  return times;
+ }catch(manifestError){
+  // Alternativa direta: funciona apenas quando o serviço permitir CORS.
+  try{return await actualSatelliteTimesDirect();}
+  catch(directError){throw Error('Manifesto: '+manifestError.message+'; EUMETSAT: '+directError.message);}
+ }
+}
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
@@ -54,9 +73,10 @@ class MeteoFoxSatellite{
  }
  state(s){this.status.textContent=s;}
  async setSatellite(on){this.stop();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
-  if(!on){if(this.satLayer)this.map.removeLayer(this.satLayer);this.refreshTimeline();return;}
-  if(!this.satLayer){this.satLayer=L.tileLayer.wms(WMS,{layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',opacity:1,maxZoom:16,updateWhenIdle:true,keepBuffer:3,attribution:'© EUMETSAT / NASA'});}
-  this.satLayer.addTo(this.map);this.satLayer.bringToFront();this.ensureRadarAbove();
+  if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
+  // A camada é criada com TIME explícito após obter horários publicados.
+  // Opacidade fixa a 80%; sem controlos adicionais.
+  this.ensureRadarAbove();
   this.state('Satélite ligado. A verificar os horários UTC da EUMETSAT…');
   try{const confirmed=await actualSatelliteTimes();if(this.satRequest!==satRequest)return;this.satTimes=confirmed;this.satKnown=true;this.state('Horários Meteosat confirmados: '+this.satTimes.length+' imagens.');}
   catch(e){if(this.satRequest!==satRequest)return;this.satKnown=false;this.satTimes=[];this.state('Satélite disponível sem horários confirmados ('+e.message+'). Não será animado com horas inventadas.');}
@@ -74,25 +94,34 @@ class MeteoFoxSatellite{
   if(!this.radarOn)return;this.refreshTimeline();
  }
  refreshTimeline(){
-  // Linha temporal única: se as duas camadas estiverem ativas, o cursor governa as duas em simultâneo.
-  // Usa a união dos instantes publicados e aproxima cada camada ao instante mais próximo disponível.
-  const satTimeline=(this.satOn&&this.satKnown&&this.satTimes.length)?this.satTimes:[];
-  const radarTimeline=(this.radarOn&&this.radarFrames.length)?this.radarFrames.map(x=>x.time*1000):[];
+  const sat=this.satOn&&this.satKnown?this.satTimes:[];
+  const rad=this.radarOn?this.radarFrames.map(x=>x.time*1000):[];
   if(this.satOn&&this.radarOn){
-   this.timeline=[...new Set([...satTimeline,...radarTimeline])].sort((a,b)=>a-b);
-  }else if(this.radarOn){
-   this.timeline=radarTimeline;
-  }else if(this.satOn){
-   this.timeline=satTimeline;
-  }else{
-   this.timeline=[];
+   // As duas camadas só animam quando há pares temporalmente compatíveis (máx. 8 min).
+   this.timeline=sat.length&&rad.length?rad.filter(t=>this.nearestSat(t)!==null):[];
+  }else if(this.radarOn)this.timeline=rad;
+  else if(this.satOn)this.timeline=sat;
+  else this.timeline=[];
+  const ok=this.timeline.length>0;
+  this.play.disabled=!ok;this.back.disabled=!ok;this.forward.disabled=!ok;this.slider.disabled=!ok;
+  this.slider.max=String(Math.max(0,this.timeline.length-1));
+  this.start.textContent=ok?short(this.timeline[0]):'—';
+  this.end.textContent=ok?short(this.timeline.at(-1)):'—';
+  if(ok)this.select(this.timeline.length-1);
+  else{
+   if(this.radarOn)this.clearRadar();
+   if(this.satOn&&this.satLayer&&this.map.hasLayer(this.satLayer)){this.map.removeLayer(this.satLayer);this.satLayer=null;this.satRenderedTime=null;}
+   this.state(this.satOn&&this.radarOn?'Sem imagens radar/Meteosat com horários UTC compatíveis. Desliga uma camada para a consultar isoladamente.':this.satOn?'Meteosat sem horários recentes confirmados. A imagem fica oculta para não apresentar uma hora errada.':'Ativa uma camada com imagens temporais disponíveis.');
   }
-  const ok=this.timeline.length>0;this.play.disabled=!ok;this.back.disabled=!ok;this.forward.disabled=!ok;this.slider.disabled=!ok;
-  this.slider.max=String(Math.max(0,this.timeline.length-1));this.start.textContent=ok?short(this.timeline[0]):'—';this.end.textContent=ok?short(this.timeline.at(-1)):'—';
-  if(ok)this.select(this.timeline.length-1);else this.state(this.satOn&&!this.satKnown?'Imagem Meteosat estática; sem horários confirmados para animação.':'Ativa uma camada com imagens temporais disponíveis.');
  }
- nearestSat(time){if(!this.satKnown||!this.satTimes.length)return null;let best=null,delta=Infinity;for(const t of this.satTimes){const d=Math.abs(t-time);if(d<delta){delta=d;best=t;}}return delta<=SAT_MAX_DIFF?best:null;}
- nearestRadar(time){if(!this.radarFrames.length)return null;let best=null,delta=Infinity;for(const f of this.radarFrames){const t=f.time*1000;const d=Math.abs(t-time);if(d<delta){delta=d;best=f;}}return delta<=RADAR_MAX_DIFF?best:null;}
+ nearestSat(time){if(!this.satKnown||!this.satTimes.length)return null;let best=null,delta=Infinity;
+  for(const t of this.satTimes){const d=Math.abs(t-time);if(d<delta){delta=d;best=t;}}
+  return delta<=SAT_MAX_DIFF?best:null;
+ }
+ nearestRadar(time){if(!this.radarFrames.length)return null;let best=null,delta=Infinity;
+  for(const f of this.radarFrames){const d=Math.abs(f.time*1000-time);if(d<delta){delta=d;best=f;}}
+  return delta<=RADAR_MAX_DIFF?best:null;
+ }
  ensureRadarAbove(){if(this.radarLayer&&this.radarOn&&this.map.hasLayer(this.radarLayer))this.radarLayer.bringToFront();}
  clearRadar(){
   // Invalida callbacks assíncronos de imagens antigas e elimina TODOS os mosaicos de radar.
@@ -100,6 +129,35 @@ class MeteoFoxSatellite{
   for(const layer of this.radarLayers){if(this.map.hasLayer(layer))this.map.removeLayer(layer);}
   if(this.radarLayer&&this.map.hasLayer(this.radarLayer))this.map.removeLayer(this.radarLayer);
   this.radarLayers.clear();this.radarLayer=null;
+ }
+ swapSatellite(time){
+  if(!this.satOn||time===null)return;
+  if((this.satRenderedTime===time&&this.satLayer&&this.map.hasLayer(this.satLayer))||this.satPendingTime===time)return;
+  if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);
+  this.satPendingLayer=null;this.satPendingTime=time;
+  // Dupla camada: a próxima imagem é desenhada invisível e só substitui a anterior
+  // depois de os mosaicos do viewport carregarem, reduzindo o piscar.
+  const seq=++this.satRequestSeq;
+  const old=this.satLayer;
+  const next=L.tileLayer.wms(WMS,{
+   layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
+   time:new Date(time).toISOString(),opacity:0,maxZoom:16,keepBuffer:0,
+   updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
+  });
+  let errors=0;let finished=false;
+  const finish=()=>{
+   if(finished||seq!==this.satRequestSeq||!this.satOn)return;
+   finished=true;this.satPendingTime=null;this.satPendingLayer=null;
+   if(errors){this.map.removeLayer(next);this.state('Meteosat: erro ao carregar a imagem de '+fmt(time)+'. Mantida imagem anterior; hora não validada.');return;}
+   next.setOpacity(0.8);
+   this.satLayer=next;this.satRenderedTime=time;
+   if(old&&old!==next&&this.map.hasLayer(old))this.map.removeLayer(old);
+   this.ensureRadarAbove();
+  };
+  next.on('tileerror',()=>{errors++;});
+  next.once('load',finish);
+  this.satPendingLayer=next;next.addTo(this.map);
+  this.ensureRadarAbove();
  }
  swapRadar(frame){
   if(!this.radarOn||!frame)return;
@@ -111,7 +169,7 @@ class MeteoFoxSatellite{
   if(!this.radarOn)return;
   const epoch=this.radarEpoch;
   const next=L.tileLayer(url,{
-   opacity:0.82,zIndex:420,maxNativeZoom:10,maxZoom:18,
+   opacity:0.66,zIndex:420,maxNativeZoom:10,maxZoom:18,
    attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true
   });
   next.meteofoxUrl=url;
@@ -122,18 +180,28 @@ class MeteoFoxSatellite{
   });
   next.addTo(this.map);next.bringToFront();
  }
- select(i){if(!this.timeline.length)return;this.index=Math.max(0,Math.min(this.timeline.length-1,i));const time=this.timeline[this.index];this.slider.value=String(this.index);
-  let texts=['Referência '+fmt(time)];
+ select(i){if(!this.timeline.length)return;
+  this.index=Math.max(0,Math.min(this.timeline.length-1,i));
+  const time=this.timeline[this.index];this.slider.value=String(this.index);
+  const texts=['Referência '+fmt(time)];
   if(this.radarOn){
    const frame=this.nearestRadar(time);
-   if(frame){this.swapRadar(frame);texts.push('Radar '+fmt(frame.time*1000));if(frame.time*1000!==time)texts.push('Δ radar '+Math.round(Math.abs(time-frame.time*1000)/60000)+' min');}
-   else {this.clearRadar();texts.push('Radar sem imagem próxima confirmada');}
+   if(frame){this.swapRadar(frame);texts.push('Radar '+fmt(frame.time*1000));}
+   else{this.clearRadar();texts.push('Radar: sem imagem para este instante');}
   }
   if(this.satOn){
    const satTime=this.nearestSat(time);
-   if(satTime!==null&&this.satLayer){this.satLayer.setParams({time:new Date(satTime).toISOString()},false);this.satLayer.redraw();texts.push('Meteosat '+fmt(satTime));if(satTime!==time)texts.push('Δ sat '+Math.round(Math.abs(time-satTime)/60000)+' min');}
-   else texts.push(this.satKnown?'Meteosat sem imagem próxima confirmada':'Meteosat sem horário confirmado');
-   if(satTime!==null&&this.satLayer&&!this.map.hasLayer(this.satLayer))this.satLayer.addTo(this.map);
+   if(satTime!==null){
+    this.swapSatellite(satTime);
+    texts.push('Meteosat solicitado '+fmt(satTime));
+    if(satTime!==time)texts.push('Δ '+Math.round(Math.abs(time-satTime)/60000)+' min');
+   }else{
+    this.satRequestSeq++;this.satPendingTime=null;
+    if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;
+    if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);
+    this.satLayer=null;this.satRenderedTime=null;
+    texts.push('Meteosat: sem imagem temporal confirmada');
+   }
   }
   this.ensureRadarAbove();this.state(texts.join(' · '));
  }
