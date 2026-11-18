@@ -1,0 +1,94 @@
+name: MeteoFox | Publicar site sem gerar mapas
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+
+permissions:
+  contents: read
+
+# Usa o mesmo grupo do processo ECMWF, evitando duas publicacoes simultaneas.
+concurrency:
+  group: meteofox-pages
+  cancel-in-progress: false
+
+jobs:
+  preparar:
+    name: Preparar site e conservar mapas existentes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Obter o index.html do MeteoFox
+        uses: actions/checkout@v4
+
+      - name: Reutilizar os mapas ja publicados
+        run: |
+          python3 - <<'PY'
+          from concurrent.futures import ThreadPoolExecutor
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          import shutil
+
+          site = Path('index.html')
+          assert site.is_file() and site.stat().st_size > 1000, 'index.html nao encontrado'
+          public = Path('public')
+          public.mkdir(exist_ok=True)
+          shutil.copy2(site, public / 'index.html')
+
+          base = 'https://dfraposo1991-lang.github.io/MeteoFox/'
+          files = ['MeteoFox_animacao_48h.html']
+          files += [f'{kind}_{step:03d}.png'
+                    for step in range(3, 49, 3)
+                    for kind in ('chuva', 'rajadas')]
+
+          def download(name):
+              req = Request(base + name, headers={
+                  'User-Agent': 'MeteoFox-GitHub-Actions/1.0',
+                  'Cache-Control': 'no-cache',
+              })
+              with urlopen(req, timeout=30) as reply:
+                  assert reply.status == 200, f'Erro HTTP no ficheiro {name}'
+                  contents = reply.read()
+              minimum = 1000 if name.endswith('.html') else 10000
+              if len(contents) < minimum:
+                  raise RuntimeError(f'Ficheiro ausente ou incompleto: {name}')
+              (public / name).write_bytes(contents)
+              return name
+
+          # Se algum mapa nao estiver acessivel, a publicacao falha.
+          # A versao antiga permanece no GitHub Pages.
+          with ThreadPoolExecutor(max_workers=6) as pool:
+              for name in pool.map(download, files):
+                  print('Conservado:', name)
+
+          (public / '.nojekyll').write_text('', encoding='utf-8')
+          assert len(list(public.glob('*.png'))) == 32, 'Faltam mapas ECMWF'
+          print('Site pronto: index.html, animacao e 32 mapas ECMWF')
+          PY
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar artefacto do site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public
+          retention-days: 1
+
+  publicar:
+    name: Publicar alteracoes ao MeteoFox
+    needs: preparar
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Atualizar o site
+        id: deploy
+        uses: actions/deploy-pages@v4
