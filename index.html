@@ -243,10 +243,10 @@ async function loadSynop(){
  const chosen=$('place').value;const selectedStations=chosen==='Madeira'?d.stations.filter(st=>synopZone(st)[0]==='Madeira'):chosen==='Açores'?d.stations.filter(st=>synopZone(st)[0]==='Açores'):d.stations;const sorted=[...selectedStations].sort((a,b)=>synopZone(a)[1]-synopZone(b)[1] || (order[a.station]??99)-(order[b.station]??99));
  let zone='';$('precipRows').innerHTML=sorted.map(st=>{
   const z=synopZone(st)[0];let head='';if(z!==zone){zone=z;head=`<tr class="zone-row"><td colspan="6">${safe(z)}</td></tr>`;}
-  return head+`<tr><td>${safe(st.name)}</td><td>${safe(st.station)}</td>${[6,12,24].map(h=>{const p=st.periods[String(h)];return `<td title="${safe(p?.utc||'Sem observação')}">${format(p)}</td>`}).join('')}<td>${safe(st.latest_utc||'—')}</td></tr>`;
+  return head+`<tr><td>${safe(st.name)}</td><td>${safe(st.station)}</td>${[6,12,24].map(h=>{const p=st.periods?.[String(h)];return `<td title="${safe(p?.utc||'Sem observação')}">${format(p)}</td>`}).join('')}<td>${safe(st.latest_utc||'—')}</td></tr>`;
  }).join('');
- $('synopStatus').textContent=(chosen==='Madeira'?'Madeira · ':chosen==='Açores'?'Açores · ':'Todas as estações · ')+'OGIMET · consulta '+new Date(d.retrieved_utc).toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC';
- }catch(e){$('synopStatus').textContent='Sem dados';$('precipRows').innerHTML='<tr><td colspan="6">Não foi possível consultar o OGIMET. Confirma que o servidor MeteoFox está em execução.</td></tr>'}
+ $('synopStatus').textContent=(chosen==='Madeira'?'Madeira · ':chosen==='Açores'?'Açores · ':'Todas as estações · ')+'OGIMET · consulta '+(d.checked_utc||d.retrieved_utc ? new Date(d.checked_utc||d.retrieved_utc).toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC' : 'hora não indicada');
+ }catch(e){$('synopStatus').textContent='Erro nos dados SYNOP';$('precipRows').innerHTML='<tr><td colspan="6">Não foi possível apresentar as observações SYNOP: '+safe(e.message)+'</td></tr>'}
 }
 $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
