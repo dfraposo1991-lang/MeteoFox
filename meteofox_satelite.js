@@ -30,6 +30,15 @@
   }
   return [...new Set(times)].sort().slice(-12);
  }
+ // Alternativa quando o navegador bloqueia a leitura do GetCapabilities (CORS).
+ // Instantes candidatos de 10 em 10 minutos, não confirmados pela EUMETSAT.
+ // A disponibilidade real depende de cada resposta GetMap e do atraso operacional.
+ function candidateTimes(){
+  const period=10*60*1000;
+  const now=Date.now();
+  const latest=Math.floor((now-30*60*1000)/period)*period;
+  return Array.from({length:12},(_,i)=>new Date(latest-(11-i)*period).toISOString());
+ }
  function directChild(node,name){return [...node.children].find(x=>x.localName===name)||null;}
  function findLayer(node,name){
   if(node.localName==='Layer' && directChild(node,'Name')?.textContent?.trim()===name)return node;
@@ -54,7 +63,7 @@
   constructor(map,container){
    if(!window.L||!map||!container)throw Error('Mapa não disponível');
    this.map=map;this.active=false;this.layer=null;this.timeline=[];this.timer=null;this.frameIndex=0;
-   this.container=container;
+   this.container=container;this.timesEstimated=false;this.discoveryPromise=null;
    this.toggle=el('button','☁ Satélite: desligado',container,{'type':'button','aria-pressed':'false'});
    this.play=el('button','▶ Animar',container,{'type':'button'});
    this.play.disabled=true;
@@ -85,7 +94,7 @@
      this.errors=(this.errors||0)+1;
      if(this.errors===6 && this.active)this.setStatus('A fonte EUMETSAT não devolveu algumas imagens. Verifica EUMETView ou desliga a camada.');
     });
-    this.layer.on('load',()=>{this.errors=0;if(this.active&&!this.timer)this.setStatus(this.timeline.length?'Imagem disponível · animação preparada':'Imagem solicitada · para animar, consultar horas publicadas');});
+    this.layer.on('load',()=>{this.errors=0;if(this.active&&!this.timer&&!this.discoveryPromise)this.setStatus(this.timeline.length?'Imagem disponível · animação preparada':'Imagem disponível · clicar Animar para iniciar');});
    }
    this.layer.addTo(this.map);this.layer.bringToFront();
    this.setStatus('A carregar imagem Meteosat…');
@@ -97,21 +106,30 @@
    this.frameIndex=(i+this.timeline.length)%this.timeline.length;
    const time=this.timeline[this.frameIndex];
    this.layer.setParams({time},false);
-   this.setStatus('Satélite · '+new Date(time).toLocaleString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})+' UTC · '+(this.frameIndex+1)+'/'+this.timeline.length);
+   this.setStatus('Satélite · '+new Date(time).toLocaleString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})+' UTC · '+(this.frameIndex+1)+'/'+this.timeline.length+(this.timesEstimated?' · horário candidato (não confirmado)':''));
   }
   async animate(){
    if(this.timer){this.stop();return;}
    if(!this.active)return;
    if(!this.timeline.length){
     this.play.disabled=true;this.setStatus('A consultar instantes de satélite publicados…');
-    try{this.timeline=await discoverTimes();}
-    catch(e){this.setStatus('Animação indisponível: '+(e.name==='AbortError'?'tempo excedido':e.message)+'. A imagem estática continua disponível.');}
-    finally{this.play.disabled=false;}
+    try{
+     this.discoveryPromise=discoverTimes();
+     this.timeline=await this.discoveryPromise;
+     if(!this.timeline.length)throw Error('A fonte não indicou horários');
+     this.timesEstimated=false;
+    }catch(e){
+     // Não bloquear a animação por falta de CORS ou resposta do catálogo.
+     // Estes horários são apenas candidatos; nunca afirmar que estão publicados.
+     this.timeline=candidateTimes();
+     this.timesEstimated=true;
+     this.setStatus('Catálogo de horários indisponível ('+(e.name==='AbortError'?'tempo excedido':e.message)+'). A experimentar instantes de 10 min; a disponibilidade das imagens não está confirmada.');
+    }finally{this.discoveryPromise=null;this.play.disabled=false;}
     if(!this.timeline.length || !this.active)return;
    }
    this.showFrame(this.timeline.length-1);
    this.play.textContent='Ⅱ Pausar';
-   this.timer=setInterval(()=>this.showFrame(this.frameIndex+1),1600);
+   this.timer=setInterval(()=>{if(!this.active){this.stop();return;}this.showFrame(this.frameIndex+1);},2500);
   }
  }
  window.MeteoFoxSatellite=MeteoFoxSatellite;
