@@ -7,8 +7,8 @@ from pathlib import Path
 import json, csv, io, re, time, threading
 
 ROOT=Path(__file__).resolve().parent
-STATIONS={'08532':'Sintra / BA1','08509':'Lajes / BA4 (a confirmar)','08508':'Lajes / BA4 (a confirmar)','08540':'Monte Real / BA5','08534':'Montijo / BA6','08562':'Beja / BA11 (a confirmar)','08544':'Ovar / AM1','08552':'Tancos','08539':'Ota','08537':'Alverca','08506':'Horta','08512':'Portugal continental (por confirmar)','08513':'Ponta Delgada','08521':'Portugal continental (por confirmar)','08524':'Porto Santo','08530':'Cabo Carvoeiro','08535':'Lisboa / Geofísico','08536':'Lisboa / Portela','08538':'Sagres','08543':'Viana do Castelo','08545':'Porto / Pedras Rubras'}
-AIRPORTS=['LPPT','LPAR','LPST','LPCS','LPMT','LPBJ','LPPR','LPOV','LPMR','LPLA','LPTN','LPOT','LPMA','LPPS','LPPD','LPHR','LPFL','LPPI','LPSJ','LPGR','LPCR','LPAZ']
+STATIONS={'08532':'Sintra / BA1','08509':'Lajes / BA4','08540':'Monte Real / BA5','08534':'Montijo / BA6','08562':'Beja / BA11','08544':'Ovar / AM1','08552':'Tancos','08539':'Ota','08537':'Alverca','08506':'Horta','08513':'Ponta Delgada','08524':'Porto Santo','08530':'Cabo Carvoeiro','08535':'Lisboa / Geofísico','08536':'Lisboa / Portela','08538':'Sagres','08543':'Viana do Castelo','08545':'Porto / Pedras Rubras','08521':'MADEIRA / LPMA','08554':'FARO / LPFR'}
+AIRPORTS=['LPFR','LPPT','LPAR','LPST','LPCS','LPMT','LPBJ','LPPR','LPOV','LPMR','LPLA','LPMA','LPPS','LPPD','LPHR','LPFL','LPPI','LPSJ','LPGR','LPCR','LPAZ']
 CACHE={}; LOCK=threading.Lock()
 def cached(key,ttl,fn):
     with LOCK:
