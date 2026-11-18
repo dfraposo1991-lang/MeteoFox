@@ -17,13 +17,13 @@
     {
       "station": "08509",
       "name": "Lajes / BA4 (a confirmar)",
-      "latest_utc": "2026-11-18T12:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.2,
+          "mm": 1.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T06:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         },
         "6": {
           "mm": 1.0,
@@ -40,13 +40,13 @@
     {
       "station": "08540",
       "name": "Monte Real / BA5",
-      "latest_utc": "2026-11-18T12:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.5,
+          "mm": 18.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T06:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         },
         "6": {
           "mm": 2.0,
@@ -59,13 +59,13 @@
     {
       "station": "08534",
       "name": "Montijo / BA6",
-      "latest_utc": "2026-11-18T12:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 3.0,
+          "mm": 4.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T06:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         },
         "6": {
           "mm": 4.0,
@@ -78,26 +78,26 @@
     {
       "station": "08562",
       "name": "Beja / BA11 (a confirmar)",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.8,
+          "mm": 0.7,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T17:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         }
       }
     },
     {
       "station": "08544",
       "name": "Ovar / AM1",
-      "latest_utc": "2026-11-18T12:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 12.0,
+          "mm": 7.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T06:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         },
         "6": {
           "mm": 0.1,
@@ -131,26 +131,26 @@
     {
       "station": "08506",
       "name": "Horta",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T17:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         }
       }
     },
     {
       "station": "08512",
       "name": "Portugal continental (por confirmar)",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T17:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         }
       }
     },
@@ -170,26 +170,26 @@
     {
       "station": "08521",
       "name": "Portugal continental (por confirmar)",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T17:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         }
       }
     },
     {
       "station": "08524",
       "name": "Porto Santo",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.1,
+          "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T14:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         }
       }
     },
@@ -200,13 +200,13 @@
     {
       "station": "08535",
       "name": "Lisboa / Geofísico",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {}
     },
     {
       "station": "08536",
       "name": "Lisboa / Portela",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
           "mm": 7.0,
@@ -227,16 +227,16 @@
     {
       "station": "08545",
       "name": "Porto / Pedras Rubras",
-      "latest_utc": "2026-11-18T17:00:00Z",
+      "latest_utc": "2026-11-18T18:00:00Z",
       "periods": {
         "12": {
-          "mm": 9.0,
+          "mm": 8.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-18T17:00:00Z"
+          "utc": "2026-11-18T18:00:00Z"
         }
       }
     }
   ],
-  "checked_utc": "2026-11-18T18:15:12.221265Z"
+  "checked_utc": "2026-11-18T19:15:12.503015Z"
 }
