@@ -117,12 +117,22 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .vis-figure{border-radius:9px;overflow:hidden;background:#e4eef6;min-height:100px}
 .vis-figure img{display:block;width:100%;height:auto;object-fit:contain}
 #visSimMessage:empty{display:none}
+.meteologo-link{text-decoration:none;color:inherit;border-radius:9px}
+.meteologo-link:focus-visible{outline:3px solid white;outline-offset:5px}
+.sat-widgets{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0}
+.sat-widgets button{border:1px solid #c1dce9;background:#e6f3fc;color:#174967;padding:7px 11px;border-radius:8px;cursor:pointer;font:600 12px Inter,sans-serif}
+.sat-widgets button[aria-pressed=true]{background:#07518b;color:white}
+.sat-widgets button:disabled{opacity:.5;cursor:not-allowed}
+.sat-widgets label{color:#45657a;font-size:12px;font-weight:600}
+.sat-widgets input[type=range]{width:100px;accent-color:#07518b}
+.sat-widgets .sat-status{font-size:11px;color:#526b7e;flex-basis:100%}
+.sat-widgets .sat-attribution{font-size:10px;color:#667f93;flex-basis:100%}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header class="top">
- <div class="brand"><div class="logo">⛅</div><div><h1>MeteoFox</h1><small>PORTUGAL · CENTRO DE ANÁLISE METEOROLÓGICA</small></div></div>
+ <a class="brand meteologo-link" href="./mapa.html" title="Abrir mapa meteorológico interativo em grande"><div class="logo">⛅</div><div><h1>MeteoFox</h1><small>PORTUGAL · CENTRO DE ANÁLISE METEOROLÓGICA</small></div></a>
  <div class="topright"><span class="pill">● DADOS ONLINE · DISPONIBILIDADE VARIÁVEL</span><select id="place" class="select" aria-label="Localidade">
  <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa">Lisboa</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
 </header>
@@ -192,21 +202,23 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <p class="note">As curvas são alinhadas pela hora válida da previsão (UTC), não pelo índice da série. A hora de inicialização dos modelos deve ser verificada na fonte operacional antes de qualquer comparação rigorosa entre ciclos. Fonte: Open-Meteo.</p>
 </section>
 <section id="aerodromes" class="section">
- <div class="heading"><div><h2>Boletins aeronáuticos originais</h2><div class="sub">Aeródromos associados à região</div></div><span class="status" id="aviationStatus">Por consultar</span></div>
+ <div class="heading"><div><h2>Boletins aeronáuticos originais</h2><div class="sub">Portugal continental, Madeira e Açores</div></div><span class="status" id="aviationStatus">Por consultar</span></div>
 
  <div class="card obs-map-wrap" id="aviationMapPanel">
    <div class="obs-map-head"><h3>Mapa meteorológico de aeródromos</h3><span class="status" id="aviMapStatus">A carregar…</span></div>
-   <div id="aviationMap" class="obs-map" role="application" aria-label="Mapa de categorias meteorológicas dos aeródromos"></div>
+    <div id="aviSatControls" class="sat-widgets" aria-label="Controlos de satélite sobre o mapa de aeródromos"></div>
+    <div id="aviationMap" class="obs-map" role="application" aria-label="Mapa de categorias meteorológicas dos aeródromos"></div>
+    <p class="obs-notice"><a href="./mapa.html" style="color:#07518b;font-weight:700">⛶ Abrir mapa meteorológico em grande</a> · Satélite Meteosat: camada opcional, com carregamento apenas quando é ativada.</p>
    <div class="obs-legend" id="aviMapLegend"><span><i class="obs-dot" style="background:#2176ff"></i>AZ</span><span><i class="obs-dot" style="background:#19aa66"></i>VD</span><span><i class="obs-dot" style="background:#ffe04d"></i>AM</span><span><i class="obs-dot" style="background:#f49b24"></i>AB</span><span><i class="obs-dot" style="background:#dc3044"></i>VM</span><span><i class="obs-dot" style="background:#8a939d"></i>Sem METAR / classificação indisponível</span></div>
    <p class="obs-notice">Classificação visual calculada a partir do METAR disponível. AZ/VD/AM/AB/VM e VFR/MVFR/IFR/LIFR são escalas distintas. As observações podem estar desatualizadas; a categoria não substitui informação aeronáutica oficial. Ao selecionar um marcador são apresentados os boletins originais.</p>
  </div>
  <div class="card aviation-panel">
   <div class="aviation-toolbar">
    <div class="aviation-field"><label for="airportSearch">Pesquisar aeródromo</label><input id="airportSearch" type="search" placeholder="Ex.: EGLL LFPG KJFK LPPT" autocomplete="off"></div>
-   <div class="aviation-field"><label for="airportRegion">Região</label><select id="airportRegion"><option value="local">Associados à localidade</option><option value="continental">Portugal continental</option><option value="madeira">Madeira</option><option value="acores">Açores</option><option value="mundo">Mundo · ICAO</option></select></div>
+   <div class="aviation-field"><label for="airportRegion">Região</label><select id="airportRegion"><option value="portugal" selected>Portugal e Ilhas</option><option value="local">Associados à localidade</option><option value="continental">Portugal continental</option><option value="madeira">Madeira</option><option value="acores">Açores</option><option value="mundo">Mundo · ICAO</option></select></div>
    <button type="button" class="action" id="refreshAviation">↻ Consultar dados</button>
   </div>
-  <div class="aviation-summary"><strong id="airportHeading">Aeródromos associados à localidade</strong><span class="status" id="airportCount">—</span></div>
+  <div class="aviation-summary"><strong id="airportHeading">Portugal e Ilhas</strong><span class="status" id="airportCount">—</span></div>
   <div id="airportReports" class="aviation-results" aria-live="polite"><p class="note">Seleciona o separador para consultar os boletins.</p></div>
   <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR e TAF da NOAA; SPECI apenas se existir. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
  </div>
@@ -440,11 +452,11 @@ function aviationRender(){
  const search=$('airportSearch').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const city=$('place').value;
  let airports=AVIATION_AIRPORTS.filter(a=>{
-    const inRegion=(region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
+    const inRegion=region==='portugal'||(region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
     const text=(a.id+' '+a.name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
     return inRegion&&text.includes(search);
  });
- const regionLabel={local:'Associados a '+city,continental:'Portugal continental',madeira:'Madeira',acores:'Açores'}[region];
+ const regionLabel={portugal:'Portugal e Ilhas',local:'Associados a '+city,continental:'Portugal continental',madeira:'Madeira',acores:'Açores'}[region];
  $('airportHeading').textContent=regionLabel;
  $('airportCount').textContent=airports.length+' aeródromo'+(airports.length===1?'':'s');
  if(!airports.length){$('airportReports').innerHTML='<p class="aviation-empty">Nenhum aeródromo corresponde à pesquisa ou à região selecionada.</p>';return;}
@@ -723,7 +735,7 @@ function renderAviationMap(){
  const m=ensureObsMap('aviationMap');if(!m)return;
  obsAviationLayer.clearLayers();
  const region=$('airportRegion').value,city=$('place').value;
- const list=AVIATION_AIRPORTS.filter(a=>region==='mundo'?false:region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
+ const list=AVIATION_AIRPORTS.filter(a=>region==='mundo'?false:region==='portugal'?true:region==='local'?(AIRPORTS[city]||[]).includes(a.id):a.region===region);
  const points=[];
  for(const a of list){
   const pos=OBS_AIRPORT_POS[a.id];if(!pos)continue;
@@ -736,7 +748,7 @@ function renderAviationMap(){
  if(points.length){
   const bounds=L.latLngBounds(points);m.fitBounds(bounds.pad(0.18),{maxZoom:9,animate:false});
  }
- $('aviMapStatus').textContent=region==='mundo'?'Mapa: seleciona Portugal, Madeira ou Açores':points.length+' aeródromos · '+(aviationData?'METAR consultados':'a aguardar METAR');
+ $('aviMapStatus').textContent=region==='mundo'?'Mapa: seleciona Portugal e Ilhas ou outra região':points.length+' aeródromos · '+(aviationData?'METAR consultados':'a aguardar METAR');
 }
 function obsSynopCoords(st){
  const lat=Number(st.lat??st.latitude),lon=Number(st.lon??st.longitude);
@@ -778,5 +790,15 @@ document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListene
  renderSynopMap();
 }));
 
+</script>
+<script src="./meteofox_satelite.js" defer></script>
+<script>
+// A camada satélite só é preparada após o utilizador abrir Aeródromos.
+let aviationSatelliteController=null;
+function prepareAviationSatellite(){
+ if(!window.MeteoFoxSatellite || !obsAviationMap || aviationSatelliteController)return;
+ aviationSatelliteController=new MeteoFoxSatellite(obsAviationMap,document.getElementById('aviSatControls'));
+}
+document.querySelector('[data-tab="aerodromes"]').addEventListener('click',()=>setTimeout(prepareAviationSatellite,180));
 </script>
 </body></html>
