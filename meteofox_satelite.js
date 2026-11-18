@@ -58,7 +58,7 @@
    this.toggle=el('button','☁ Satélite: desligado',container,{'type':'button','aria-pressed':'false'});
    this.play=el('button','▶ Animar',container,{'type':'button'});
    this.play.disabled=true;
-   this.opacityLabel=el('label','Transparência',container);
+   this.opacityLabel=el('label','Opacidade',container);
    this.opacity=el('input',null,this.opacityLabel,{'type':'range','min':'20','max':'100','step':'10','value':'70','aria-label':'Opacidade da imagem de satélite'});
    this.state=el('span','Satélite desligado · mapa e METAR disponíveis',container,{'class':'sat-status','aria-live':'polite'});
    this.attr=el('span','Fonte: EUMETSAT / Meteosat MTG GeoColour RGB · imagens observadas · disponibilidade dependente da EUMETView. ',container,{'class':'sat-attribution'});
@@ -83,7 +83,7 @@
     // Colocar a imagem atrás dos marcadores, mesmo quando o mapa é reposicionado.
     this.layer.on('tileerror',()=>{
      this.errors=(this.errors||0)+1;
-     if(this.errors===6 && this.active)this.setStatus('Imagens indisponíveis nesta fonte. Desliga a camada ou consulta a EUMETView.');
+     if(this.errors===6 && this.active)this.setStatus('A fonte EUMETSAT não devolveu algumas imagens. Verifica EUMETView ou desliga a camada.');
     });
     this.layer.on('load',()=>{this.errors=0;if(this.active&&!this.timer)this.setStatus(this.timeline.length?'Imagem disponível · animação preparada':'Imagem solicitada · para animar, consultar horas publicadas');});
    }
@@ -107,7 +107,7 @@
     try{this.timeline=await discoverTimes();}
     catch(e){this.setStatus('Animação indisponível: '+(e.name==='AbortError'?'tempo excedido':e.message)+'. A imagem estática continua disponível.');}
     finally{this.play.disabled=false;}
-    if(!this.timeline.length)return;
+    if(!this.timeline.length || !this.active)return;
    }
    this.showFrame(this.timeline.length-1);
    this.play.textContent='Ⅱ Pausar';
