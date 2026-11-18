@@ -1,0 +1,178 @@
+<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#07518b"><title>MeteoFox — Mapa Meteorológico Interativo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>
+*{box-sizing:border-box}body{margin:0;font:14px Inter,system-ui,sans-serif;background:#edf4fa;color:#163c55}
+header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;background:#07518b;color:white;padding:13px 20px}
+header strong{font-size:21px}header span{font-size:12px;opacity:.9}header a{color:white;font-weight:700;border:1px solid #ffffff65;padding:9px 13px;border-radius:9px;text-decoration:none}
+main{padding:14px;max-width:1900px;margin:auto}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.toolbar button{border:1px solid #c2dae9;background:white;padding:9px 12px;border-radius:8px;color:#17527c;font-weight:600;cursor:pointer}
+#largeMap{height:calc(100dvh - 254px);min-height:430px;border:1px solid #c3dbe8;border-radius:12px;background:#d7e6ef}
+#satTools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0}
+#satTools button{border:1px solid #bad6e7;background:white;color:#15527a;padding:9px 12px;border-radius:8px;font-weight:600;cursor:pointer}
+#satTools button[aria-pressed=true]{background:#07518b;color:white}#satTools button:disabled{opacity:.5;cursor:not-allowed}
+#satTools label{font-size:12px}#satTools input{accent-color:#07518b}#satTools .sat-status,#satTools .sat-attribution{font-size:11px;color:#607e90}#satTools .sat-status{flex-basis:100%}
+#satTools .sat-attribution{flex-basis:100%}#count,#source{color:#59778b;font-size:12px}
+.popup{font:12px Inter,system-ui,sans-serif;color:#183c54;max-width:355px}.popup h3{margin:4px 0 9px}.popup pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:165px;overflow:auto;background:#edf4fa;padding:9px;border-radius:8px;font:11px Consolas,monospace}.cat{padding:4px 6px;background:#eef4f8;border-radius:6px;font-weight:700;display:inline-block}
+.legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11px;color:#496a81;margin:8px 0}.legend i{display:inline-block;border-radius:50%;width:10px;height:10px;margin-right:4px}
+@media(max-width:600px){header{padding:11px}header strong{font-size:18px}main{padding:8px}#largeMap{height:calc(100dvh - 315px);min-height:350px}}
+</style></head><body>
+<header><div><strong>⛅ MeteoFox</strong> <span>Mapa meteorológico · Portugal e Ilhas</span></div><a href="./index.html">← Voltar ao MeteoFox</a></header>
+<main><div class="toolbar"><button id="all">Portugal e Ilhas</button><button id="mainland">Continente</button><button id="islands">Açores</button><button id="madeira">Madeira</button><button id="refresh">↻ Atualizar boletins</button><span id="count" aria-live="polite">A carregar mapa…</span></div>
+<div id="satTools" aria-label="Controlos Meteosat"></div>
+<div id="largeMap" aria-label="Mapa interativo de aeródromos e imagens de satélite"></div>
+<div class="legend"><span><i style="background:#2176ff"></i>AZ</span><span><i style="background:#19aa66"></i>VD</span><span><i style="background:#ffe04d"></i>AM</span><span><i style="background:#f49b24"></i>AB</span><span><i style="background:#dc3044"></i>VM</span><span><i style="background:#89939e"></i>Sem classificação</span></div>
+<div id="source">METAR/SPECI OGIMET · TAF NOAA, recolhidos pelo MeteoFox</div>
+</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./meteofox_satelite.js"></script><script>
+const $=id=>document.getElementById(id);
+const DATA_URL='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/aviation.json';
+function safe(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function aviationDateUTC(value){if(!value)return 'Hora não indicada';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+' UTC';}
+const AVIATION_AIRPORTS=[
+ {id:'LPPR',name:'Porto / Francisco Sá Carneiro',region:'continental'},
+ {id:'LPOV',name:'Ovar',region:'continental'},
+ {id:'LPMR',name:'Monte Real',region:'continental'},
+ {id:'LPTN',name:'Tancos',region:'continental'},
+ {id:'LPOT',name:'Ota',region:'continental'},
+ {id:'LPAR',name:'Alverca',region:'continental'},
+ {id:'LPST',name:'Sintra',region:'continental'},
+ {id:'LPPT',name:'Lisboa / Humberto Delgado',region:'continental'},
+ {id:'LPCS',name:'Cascais / Tires',region:'continental'},
+ {id:'LPMT',name:'Montijo',region:'continental'},
+ {id:'LPBJ',name:'Beja',region:'continental'},
+ {id:'LPFR',name:'Faro / Gago Coutinho',region:'continental'},
+ {id:'LPMA',name:'Madeira / Cristiano Ronaldo',region:'madeira'},
+ {id:'LPPS',name:'Porto Santo',region:'madeira'},
+ {id:'LPPD',name:'Ponta Delgada',region:'acores'},
+ {id:'LPLA',name:'Lajes',region:'acores'},
+ {id:'LPHR',name:'Horta',region:'acores'},
+ {id:'LPFL',name:'Flores',region:'acores'},
+ {id:'LPPI',name:'Pico',region:'acores'},
+ {id:'LPSJ',name:'São Jorge',region:'acores'},
+ {id:'LPGR',name:'Graciosa',region:'acores'},
+ {id:'LPCR',name:'Corvo',region:'acores'},
+ {id:'LPAZ',name:'Santa Maria',region:'acores'}
+];
+const OBS_AIRPORT_POS = {
+ LPPR:[41.248,-8.682],LPOV:[40.915,-8.645],LPMR:[39.829,-8.887],LPTN:[39.475,-8.364],
+ LPOT:[39.117,-8.983],LPAR:[38.884,-9.030],LPST:[38.829,-9.340],LPPT:[38.781,-9.136],
+ LPCS:[38.725,-9.355],LPMT:[38.704,-9.035],LPBJ:[38.078,-7.932],LPFR:[37.0144,-7.9658],
+ LPMA:[32.697,-16.774],LPPS:[33.073,-16.350],LPPD:[37.741,-25.698],LPLA:[38.761,-27.091],
+ LPHR:[38.520,-28.716],LPFL:[39.455,-31.131],LPPI:[38.555,-28.441],LPSJ:[38.665,-28.175],
+ LPGR:[39.092,-28.030],LPCR:[39.671,-31.113],LPAZ:[36.971,-25.171]
+};
+function obsMetarParsed(item){
+ const raw=String(item?.raw||'').trim();
+ if(!raw)return null;
+ // Reporte original preservado; a extração seguinte usa apenas tokens METAR.
+ const tokens=raw.replace(/\s+/g,' ').split(' ').filter(Boolean);
+ let visibility=null, ceiling=Infinity, hasCeiling=false, cloudStatus=false, significant=false;
+ const timeIndex=tokens.findIndex(x=>/^\d{6}Z$/.test(x));
+ let start=timeIndex>=0?timeIndex+1:1;
+ // Token opcional AUTO/COR e vento antes da visibilidade.
+ for(let i=start;i<tokens.length;i++){
+  const t=tokens[i];
+  if(/^(RMK|TEMPO|BECMG|NOSIG)$/.test(t))break;
+  if(/^Q\d{4}$/.test(t)||/^A\d{4}$/.test(t))break;
+  if(t==='CAVOK'){visibility=10000;cloudStatus=true;continue;}
+  if(/^(?:FEW|SCT|BKN|OVC|VV)\d{3}(?:CB|TCU)?$/.test(t)||/^(?:NSC|NCD|SKC|CLR)$/.test(t))cloudStatus=true;
+  if(/^\d{4}(?:NDV)?$/.test(t)){
+    const m=Number(t.slice(0,4));
+    if(m===9999)visibility=10000;
+    else if(m<=8000)visibility=m;
+    else visibility=m;
+  }
+  if(/^\d{4}[NSEW]{1,2}$/.test(t))continue;
+  if(/^P\d+SM$/.test(t))visibility=Number(t.slice(1,-2))*1609.344;
+  if(/^M\d+\/\d+SM$/.test(t)){
+    const [a,b]=t.slice(1,-2).split('/').map(Number);visibility=a/b*1609.344;
+  }
+  if(/^\d+(?:\/\d+)?SM$/.test(t)){
+    const val=t.slice(0,-2);
+    visibility=(val.includes('/')?val.split('/').map(Number).reduce((a,b)=>a/b):Number(val))*1609.344;
+  }
+  if(/^\d+$/.test(t)&&/^\d+\/\d+SM$/.test(tokens[i+1]||'')){
+    const [a,b]=tokens[i+1].slice(0,-2).split('/').map(Number);visibility=(Number(t)+a/b)*1609.344;
+  }
+  const layer=t.match(/^(BKN|OVC|VV)(\d{3}|\/\/\/)/);
+  if(layer){
+   if(layer[2]!=='///'){ceiling=Math.min(ceiling,Number(layer[2])*100);hasCeiling=true;}
+   else return {raw,complete:false,visibility,ceiling:null,reason:'Teto indeterminado (VV/// ou nuvens sem altura)'};
+  }
+  if(/^(?:\+|-|VC)?(?:TS|SH|FZ|FG|GR|GS|SQ|FC|DS|SS|RA|SN|PL)/.test(t)&&
+     !/^(?:\d{6}Z|\d{4}KT)$/.test(t))significant=true;
+ }
+ // Para visibilidade 9999 = 10 km OU MAIS; não corresponde a distância exata.
+ const complete=visibility!==null&&cloudStatus;
+ return {raw,complete,visibility,ceiling:hasCeiling?ceiling:Infinity,significant,
+  reason:complete?'':'Visibilidade ou informação de nebulosidade ausente/não reconhecida'};
+}
+function obsClasses(item){
+ const p=obsMetarParsed(item);
+ if(!p||!p.complete)return {color:'#89939e',code:'—',flight:'Indisponível',parsed:p};
+ const v=p.visibility,c=p.ceiling;
+ // Escala AZ/VD/AM/AB/VM: usa o critério mais restritivo visibilidade/teto.
+ let severity=0;
+ if(v<1000||c<200)severity=4;
+ else if(v<1600||c<500)severity=3;
+ else if(v<5000||c<1500)severity=2;
+ else if(v<10000||c<=5000)severity=1;
+ // Tempo significativo impede AZ; em trovoada impede também VD.
+ if(p.significant)severity=Math.max(severity,2);
+ const choices=[['AZ','#2176ff'],['VD','#19aa66'],['AM','#ffe04d'],['AB','#f49b24'],['VM','#dc3044']];
+ const [code,color]=choices[severity];
+ // FAA flight category thresholds: visibilidade em statute miles; ceiling AGL ft.
+ const miles=v/1609.344;
+ let flight='VFR';
+ if(miles<1||c<500)flight='LIFR';
+ else if(miles<3||c<1000)flight='IFR';
+ else if(miles<=5||c<=3000)flight='MVFR';
+ return {code,color,flight,parsed:p};
+}
+
+let appMap=null, markers=null, data=null, sat=null;
+function reportBlock(label,item){if(!item?.raw?.trim())return '';
+ const pre=document.createElement('pre');pre.textContent=item.raw;
+ return '<p><b>'+label+'</b> · '+safe(aviationDateUTC(item.utc))+'</p><pre>'+safe(item.raw)+'</pre>';
+}
+function paintMarkers(){
+ markers.clearLayers();let n=0;
+ for(const a of AVIATION_AIRPORTS){
+  const latlng=OBS_AIRPORT_POS[a.id];if(!latlng)continue;
+  const c=obsClasses(data?.metar?.[a.id]);
+  const marker=L.circleMarker(latlng,{radius:9,weight:2,color:'#203a55',fillColor:c.color,fillOpacity:.96}).addTo(markers);
+  marker.bindTooltip(a.id+' · '+c.code+' · '+c.flight);
+  marker.bindPopup(()=>{
+   const m=data?.metar?.[a.id],t=data?.taf?.[a.id],s=data?.speci?.[a.id];
+   return '<div class="popup"><h3>'+safe(a.id)+' · '+safe(a.name)+'</h3>'+
+     '<div><span class="cat" style="border-left:5px solid '+c.color+'">'+safe(c.code)+'</span> <span class="cat">'+safe(c.flight)+'</span></div>'+
+     (!m?.raw?'<p>Sem METAR disponível</p>':'')+
+     reportBlock('METAR',m)+(s?.raw?reportBlock('SPECI',s):'')+reportBlock(/\bAMD\b/.test(t?.raw||'')?'TAF AMD':'TAF',t)+
+     (!m?.raw&&!t?.raw?'<p>Sem boletins disponíveis.</p>':'')+'</div>';
+  },{maxWidth:385});n++;
+ }
+ $('count').textContent=n+' aeródromos no mapa · '+(data?'boletins consultados':'a aguardar boletins');
+}
+async function refresh(){
+ $('count').textContent='A atualizar METAR e TAF…';
+ try{
+  const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const v=await r.json();if(!v.metar||!v.taf)throw Error('Formato de aviação inválido');
+  data=v;paintMarkers();
+  $('source').textContent='Dados MeteoFox · '+aviationDateUTC(v.metar_checked_utc||v.taf_checked_utc||v.checked_utc);
+ }catch(err){$('count').textContent='Sem dados novos · marcadores mantidos';$('source').textContent='Falha na consulta: '+err.message;}
+}
+function initialize(){
+ if(!window.L){$('count').textContent='Biblioteca cartográfica indisponível';return;}
+ appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true}).setView([37.5,-14.8],5);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
+ markers=L.layerGroup().addTo(appMap);
+ sat=new MeteoFoxSatellite(appMap,$('satTools'));
+ paintMarkers();refresh();
+ $('refresh').addEventListener('click',refresh);
+ $('all').addEventListener('click',()=>appMap.fitBounds(L.latLngBounds(Object.values(OBS_AIRPORT_POS)).pad(.12),{maxZoom:8}));
+ $('mainland').addEventListener('click',()=>appMap.setView([39.65,-8.3],7));
+ $('islands').addEventListener('click',()=>appMap.setView([37.7,-25.5],7));
+ $('madeira').addEventListener('click',()=>appMap.setView([32.8,-16.7],9));
+}
+initialize();
+</script></body></html>
