@@ -56,7 +56,7 @@ jobs:
       - name: Gerar os 32 mapas e o HTML
         run: .venv/bin/python gerar_meteofox_48h.py
 
-      - name: Preparar publicação apenas com o Run mais recente
+      - name: Preparar publicação do site completo com o Run mais recente
         run: |
           .venv/bin/python - <<'PY'
           import json
@@ -73,11 +73,15 @@ jobs:
                   f = source / f"{kind}_{step:03d}.png"
                   assert f.exists() and f.stat().st_size > 1000, f"Falta {f}"
                   shutil.copy2(f, out / f.name)
-          html = source / "MeteoFox_animacao_48h.html"
-          assert html.exists() and html.stat().st_size > 1000
-          shutil.copy2(html, out / "index.html")
+          animation = source / "MeteoFox_animacao_48h.html"
+          assert animation.exists() and animation.stat().st_size > 1000
+          # Guardar a animação separadamente, para nunca substituir o site principal.
+          shutil.copy2(animation, out / "MeteoFox_animacao_48h.html")
+          main_site = Path("index.html")
+          assert main_site.exists() and main_site.stat().st_size > 1000, "Falta index.html na raiz do repositorio"
+          shutil.copy2(main_site, out / "index.html")
           (out / ".nojekyll").write_text("")
-          print("Publicação pronta:", len(list(out.glob("*.png"))), "mapas; Run", run)
+          print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
           PY
 
       - name: Preparar GitHub Pages
@@ -100,6 +104,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - name: Publicar apenas os novos mapas
+      - name: Publicar site completo com novos mapas
         id: deploy
         uses: actions/deploy-pages@v4
