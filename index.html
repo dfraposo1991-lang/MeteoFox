@@ -206,9 +206,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 
  <div class="card obs-map-wrap" id="aviationMapPanel">
    <div class="obs-map-head"><h3>Mapa meteorológico de aeródromos</h3><span class="status" id="aviMapStatus">A carregar…</span></div>
-    <div id="aviSatControls" class="sat-widgets" aria-label="Controlos de satélite sobre o mapa de aeródromos"></div>
     <div id="aviationMap" class="obs-map" role="application" aria-label="Mapa de categorias meteorológicas dos aeródromos"></div>
-    <p class="obs-notice"><a href="./mapa.html" style="color:#07518b;font-weight:700">⛶ Abrir mapa meteorológico em grande</a> · Satélite Meteosat: camada opcional, com carregamento apenas quando é ativada.</p>
+    <p class="obs-notice"><a href="./mapa.html" style="color:#07518b;font-weight:700">⛶ Abrir mapa meteorológico em grande</a> · As imagens Meteosat animadas estão disponíveis apenas no mapa em grande, para manter esta página leve.</p>
    <div class="obs-legend" id="aviMapLegend"><span><i class="obs-dot" style="background:#2176ff"></i>AZ</span><span><i class="obs-dot" style="background:#19aa66"></i>VD</span><span><i class="obs-dot" style="background:#ffe04d"></i>AM</span><span><i class="obs-dot" style="background:#f49b24"></i>AB</span><span><i class="obs-dot" style="background:#dc3044"></i>VM</span><span><i class="obs-dot" style="background:#8a939d"></i>Sem METAR / classificação indisponível</span></div>
    <p class="obs-notice">Classificação visual calculada a partir do METAR disponível. AZ/VD/AM/AB/VM e VFR/MVFR/IFR/LIFR são escalas distintas. As observações podem estar desatualizadas; a categoria não substitui informação aeronáutica oficial. Ao selecionar um marcador são apresentados os boletins originais.</p>
  </div>
@@ -790,15 +789,5 @@ document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListene
  renderSynopMap();
 }));
 
-</script>
-<script src="./meteofox_satelite.js" defer></script>
-<script>
-// A camada satélite só é preparada após o utilizador abrir Aeródromos.
-let aviationSatelliteController=null;
-function prepareAviationSatellite(){
- if(!window.MeteoFoxSatellite || !obsAviationMap || aviationSatelliteController)return;
- aviationSatelliteController=new MeteoFoxSatellite(obsAviationMap,document.getElementById('aviSatControls'));
-}
-document.querySelector('[data-tab="aerodromes"]').addEventListener('click',()=>setTimeout(prepareAviationSatellite,180));
 </script>
 </body></html>
