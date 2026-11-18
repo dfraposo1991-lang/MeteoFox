@@ -94,6 +94,13 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 @media(max-width:970px){.aviation-results{grid-template-columns:1fr}}
 @media(max-width:650px){.aviation-field{max-width:none;min-width:100%}.aviation-card{padding:11px}}
 </style>
+<style id="meteofox-vis-sim-style">
+.vis-meta{display:flex;flex-wrap:wrap;gap:8px;margin:9px 0;color:#164c70;font:600 12px 'DM Mono',monospace}
+.vis-meta span{display:inline-block;border:1px solid #b7d3e6;border-radius:8px;background:#edf5fb;padding:7px 10px}
+.vis-figure{border-radius:9px;overflow:hidden;background:#e4eef6;min-height:100px}
+.vis-figure img{display:block;width:100%;height:auto;object-fit:contain}
+#visSimMessage:empty{display:none}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -124,7 +131,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 </section>
 <section id="satRadar" class="section">
  <div class="heading"><div><h2>Satélite e Radar</h2><div class="sub">Visualização das imagens de observação meteorológica</div></div></div>
- <div class="maptools" role="group" aria-label="Escolher visualização"><button type="button" class="action active" id="showRadar">◉ Radar</button><button type="button" class="action" id="showSatellite">☁ Satélite</button></div>
+ <div class="maptools" role="group" aria-label="Escolher visualização"><button type="button" class="action active" id="showRadar">◉ Radar</button><button type="button" class="action" id="showSatellite">☁ Satélite</button><button type="button" class="action" id="showVisSim">◉ Imagem de satélite simulada</button></div>
  <div id="radarPane">
  <div class="heading"><div><h2>Radar de precipitação</h2><div class="sub">Camada de radar RainViewer sobre cartografia OpenStreetMap · animação temporal</div></div><span id="radarStatus" class="status">A carregar radar…</span></div>
  <div class="maptools"><button id="radarToggle" class="action active">Radar: ligado</button><button id="radarPlay" class="action">▶ Animar</button><button id="radarLatest" class="action">Última imagem</button><span class="status" id="radarTime" style="align-self:center"></span></div>
@@ -134,6 +141,19 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="heading"><div><h2>Imagem de satélite</h2><div class="sub">Visualização de nebulosidade e evolução das massas de nuvens sobre Portugal</div></div><span class="status">Windy · camada de satélite</span></div>
  <div class="iframebox"><iframe id="satFrame" title="Satélite meteorológico" loading="lazy" referrerpolicy="no-referrer" src="https://embed.windy.com/embed2.html?lat=39.5&lon=-8.0&detailLat=39.5&detailLon=-8.0&width=650&height=450&zoom=5&level=surface&overlay=satellite&product=satellite&menu=&message=true&marker=&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C"></iframe></div>
  <p class="note">A camada é disponibilizada pelo Windy. Se o painel não carregar, verifica a ligação à Internet ou abre <a href="https://www.windy.com/?39.5,-8.0,5" target="_blank" rel="noopener" style="color:var(--cyan)">Windy — Portugal</a>.</p>
+ </div>
+ <div id="visSimPane" style="display:none">
+  <div class="heading"><div><h2>Imagem de satélite simulada · ECMWF IFS</h2><div class="sub">Canais visíveis simulados · South West Europe · previsões até +48 h</div></div><span id="visSimStatus" class="status">A consultar imagens…</span></div>
+  <div class="card" style="padding:12px">
+   <div class="maptools" style="align-items:center">
+    <button class="action" id="visSimPrev" type="button">◀ Anterior</button><button class="action" id="visSimPlay" type="button">▶ Animar</button><button class="action" id="visSimNext" type="button">Seguinte ▶</button><button class="action" id="visSimRefresh" type="button">↻ Atualizar</button>
+   </div>
+   <div id="visSimMeta" class="vis-meta" aria-live="polite">Aguardando dados ECMWF…</div>
+   <input id="visSimSlider" aria-label="Prazo de previsão" type="range" min="0" max="15" step="1" value="0" disabled style="width:100%;margin:12px 0"/>
+   <div class="vis-figure"><img id="visSimImage" alt="Imagem de satélite visível simulada ECMWF" style="display:none"/></div>
+   <div id="visSimMessage" class="note">As imagens serão apresentadas quando o workflow de 48 horas publicar o conjunto completo.</div>
+   <p class="note">Fonte: ECMWF OpenCharts · imagens visíveis simuladas (não são imagens observadas nem Cloud RGB). © ECMWF · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. A disponibilidade depende da API do ECMWF.</p>
+  </div>
  </div>
 </section>
 <section id="precipGust" class="section">
@@ -463,21 +483,78 @@ function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
 function switchObservation(which){
  const radar=which==='radar';
+ const satellite=which==='satellite';
+ const vis=which==='vis';
  $('radarPane').style.display=radar?'block':'none';
- $('satellitePane').style.display=radar?'none':'block';
+ $('satellitePane').style.display=satellite?'block':'none';
+ $('visSimPane').style.display=vis?'block':'none';
  $('showRadar').classList.toggle('active',radar);
- $('showSatellite').classList.toggle('active',!radar);
+ $('showSatellite').classList.toggle('active',satellite);
+ $('showVisSim').classList.toggle('active',vis);
  $('showRadar').setAttribute('aria-pressed',String(radar));
- $('showSatellite').setAttribute('aria-pressed',String(!radar));
+ $('showSatellite').setAttribute('aria-pressed',String(satellite));
+ $('showVisSim').setAttribute('aria-pressed',String(vis));
+ if(!vis)visStop();
+ if(vis)visLoad();
  if(radar&&map)setTimeout(()=>map.invalidateSize(),100);
 }
 $('showRadar').onclick=()=>switchObservation('radar');
 $('showSatellite').onclick=()=>switchObservation('satellite');
+$('showVisSim').onclick=()=>switchObservation('vis');
 
 $('place').addEventListener('change',async()=>{await loadOverview();const [lat,lon]=current;if(map)map.setView([lat,lon],6);$('satFrame').src=`https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&width=650&height=450&zoom=5&level=surface&overlay=satellite&product=satellite&menu=&message=true&marker=&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C`;modelData={};if($('models').classList.contains('active'))loadModels();if($('aerodromes').classList.contains('active'))loadAerodromes();if($('synop').classList.contains('active'))loadSynop()});
 $('radarToggle').onclick=()=>{radarOn=!radarOn;$('radarToggle').textContent='Radar: '+(radarOn?'ligado':'desligado');$('radarToggle').classList.toggle('active',radarOn);if(radarLayer){if(radarOn)radarLayer.addTo(map);else map.removeLayer(radarLayer)}};
 $('radarLatest').onclick=()=>showRadar(radarFrames.length-1);
 $('radarPlay').onclick=()=>{if(radarTimer){clearInterval(radarTimer);radarTimer=null;$('radarPlay').textContent='▶ Animar'}else{$('radarPlay').textContent='Ⅱ Pausar';radarTimer=setInterval(()=>showRadar((radarIndex+1)%radarFrames.length),650)}};
 (async()=>{await loadOverview();initMap()})();
+
+/* ECMWF VIS simulado: manifesto e imagens servidos de forma independente do deploy GitHub Pages. */
+const VIS_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_vis/';
+let visData=null,visAt=0,visTimer=null,visLoading=null;
+function visStop(){if(visTimer){clearInterval(visTimer);visTimer=null;}$('visSimPlay').textContent='▶ Animar'}
+function visUTC(s){const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+' UTC':'—'}
+function visShow(i){
+ if(!visData||!visData.frames.length)return;
+ visAt=(i+visData.frames.length)%visData.frames.length;
+ const f=visData.frames[visAt];
+ $('visSimMeta').replaceChildren();
+ for(const t of ['Run: '+visUTC(f.run_utc),'Validade: '+visUTC(f.valid_utc),'+'+f.step_h+' h']){
+  const s=document.createElement('span');s.textContent=t;$('visSimMeta').append(s);
+ }
+ $('visSimSlider').value=String(visAt);
+ $('visSimImage').style.display='block';
+ $('visSimImage').src=VIS_RAW+encodeURIComponent(f.file)+'?v='+encodeURIComponent(visData.generated_utc||visData.run_utc);
+ $('visSimImage').onerror=()=>{$('visSimMessage').textContent='Não foi possível carregar esta imagem. Tenta atualizar.'};
+ $('visSimImage').onload=()=>{$('visSimMessage').textContent=''};
+ $('visSimStatus').textContent=(visAt+1)+' / '+visData.frames.length+' · previsão visível simulada';
+}
+async function visLoad(force=false){
+ if(visData&&!force)return;
+ if(visLoading)return visLoading;
+ $('visSimMessage').textContent='A consultar o conjunto de imagens ECMWF…';
+ visLoading=(async()=>{
+  try{
+   const r=await fetch(VIS_RAW+'manifest.json?t='+Date.now(),{cache:'no-store'});
+   if(!r.ok)throw Error('O conjunto ainda não foi publicado (HTTP '+r.status+').');
+   const d=await r.json();
+   if(!Array.isArray(d.frames)||d.frames.length!==16||d.projection!=='opencharts_south_west_europe')throw Error('Manifesto incompleto ou região incorreta.');
+   const steps=Array.from({length:16},(_,i)=>(i+1)*3);
+   if(!d.frames.every((f,i)=>f.step_h===steps[i]&&/^VIS_\d{3}\.png$/.test(f.file)&&f.run_utc&&f.valid_utc))throw Error('Dados dos prazos de previsão inválidos.');
+   visData=d;visAt=0;$('visSimSlider').disabled=false;visShow(0);
+  }catch(e){visData=null;$('visSimImage').style.display='none';$('visSimSlider').disabled=true;$('visSimMeta').textContent='Sem imagens disponíveis';$('visSimStatus').textContent='Ainda sem atualização';$('visSimMessage').textContent=e.message+' Executa primeiro o workflow "MeteoFox | Satelite VIS SW Europe 48h" no GitHub.'}
+  finally{visLoading=null}
+ })();
+ return visLoading;
+}
+$('visSimPrev').onclick=()=>{visStop();visShow(visAt-1)};
+$('visSimNext').onclick=()=>{visStop();visShow(visAt+1)};
+$('visSimSlider').oninput=e=>{visStop();visShow(+e.target.value)};
+$('visSimRefresh').onclick=()=>{visStop();visLoad(true)};
+$('visSimPlay').onclick=()=>{
+ if(visTimer){visStop();return}
+ if(!visData)return;
+ $('visSimPlay').textContent='Ⅱ Pausar';
+ visTimer=setInterval(()=>visShow(visAt+1),1250);
+};
 </script>
 </body></html>
