@@ -83,6 +83,10 @@
     "LPTN": {
       "raw": "METAR LPTN NIL=",
       "utc": "2026-11-18T19:00:00Z"
+    },
+    "LPFR": {
+      "raw": "METAR LPFR 181900Z 25013KT 9999 FEW011 BKN008 BKN032 20/18 Q1016=",
+      "utc": "2026-11-18T19:00:00Z"
     }
   },
   "speci": {
@@ -155,12 +159,16 @@
     "LPMT": {
       "raw": "TAF LPMT 181714Z 1818/1918 22015KT 4000 -DZ SCT004 BKN012 TEMPO 1818/1820 23018G30KT 2000 RADZ BR BKN005 PROB40 TEMPO 1818/1820 0500 +RADZ FG BKN002 BECMG 1819/1821 29010KT 9999 NSW SCT025",
       "utc": "2026-11-18T17:14:00.000Z"
+    },
+    "LPFR": {
+      "raw": "TAF LPFR 181700Z 1818/1918 24013KT 9999 SCT006 SCT012 TEMPO 1818/1824 3000 -RA BR SCT002 BKN004 PROB30 TEMPO 1821/1824 1500 DZRA BR BKN002 BECMG 1900/1902 31008KT SCT018",
+      "utc": "2026-11-18T17:00:00.000Z"
     }
   },
   "metar_source": "OGIMET getmetar",
   "speci_source": "OGIMET getmetar",
   "taf_source": "NOAA Aviation Weather Center",
-  "metar_checked_utc": "2026-11-18T19:15:11.150446Z",
-  "speci_checked_utc": "2026-11-18T19:15:11.150446Z",
-  "taf_checked_utc": "2026-11-18T19:15:11.452678Z"
+  "metar_checked_utc": "2026-11-18T19:36:26.714958Z",
+  "speci_checked_utc": "2026-11-18T19:36:26.714958Z",
+  "taf_checked_utc": "2026-11-18T19:36:28.334327Z"
 }
