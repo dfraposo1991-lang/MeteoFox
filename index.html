@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>MeteoFox — Centro de Análise Meteorológica | Portugal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#07111d;--panel:#0d1a29;--panel2:#102337;--line:#1e3449;--txt:#e8f1f8;--muted:#8ca3b8;--cyan:#51d6e7;--blue:#72a7ff;--green:#65d6a4;--amber:#ffca72;--red:#ff7e86}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% -15%,#153451 0,transparent 38%),var(--bg);color:var(--txt);font:14px Inter,system-ui,sans-serif}button,select{font:inherit}button{cursor:pointer}.wrap{max-width:1500px;margin:auto;padding:22px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px}.brand{display:flex;align-items:center;gap:12px}.logo{width:43px;height:43px;border-radius:13px;background:linear-gradient(145deg,#1b7992,#2452a0);display:grid;place-items:center;font-size:22px;box-shadow:0 8px 28px #1b799244}.brand h1{font-size:20px;letter-spacing:.12em;margin:0;font-weight:800}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.16em;margin-top:3px}.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pill,.select{border:1px solid var(--line);background:#0d1c2b;color:var(--txt);border-radius:9px;padding:9px 12px}.pill{color:var(--green);font:11px 'DM Mono';}.select{min-width:185px}.tabs{display:flex;gap:7px;overflow:auto;padding:5px 0 15px;border-bottom:1px solid var(--line);margin-bottom:18px}.tab{white-space:nowrap;background:transparent;border:1px solid transparent;color:var(--muted);padding:9px 13px;border-radius:8px}.tab.active{background:#15334a;border-color:#28506b;color:var(--cyan)}.section{display:none}.section.active{display:block}.heading{display:flex;justify-content:space-between;align-items:end;gap:14px;margin:5px 0 15px}.heading h2{margin:0;font-size:19px}.sub{color:var(--muted);font-size:12px;margin-top:5px}.grid{display:grid;gap:13px}.metrics{grid-template-columns:repeat(6,minmax(0,1fr));margin:15px 0}.card{background:linear-gradient(145deg,#102236,#0b1927);border:1px solid var(--line);border-radius:13px;padding:15px;min-width:0}.metric .k{color:var(--muted);font-size:11px}.metric .v{font-size:25px;font-weight:700;margin:9px 0 4px;letter-spacing:-.04em}.metric .u{color:var(--muted);font-size:11px}.metric .ico{float:right;font-size:17px}.two{grid-template-columns:1.4fr 1fr}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.chartbox{height:280px;position:relative}.chartbox.tall{height:350px}.chartbox canvas{width:100%!important;height:100%!important}.card h3{font-size:13px;margin:0 0 12px}.forecast{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{text-align:center;padding:12px 6px;background:#0b1927;border:1px solid var(--line);border-radius:10px}.day b{display:block;font-size:11px}.day .symbol{font-size:23px;margin:9px 0}.day strong{font-size:14px}.day small{display:block;color:var(--muted);font-size:10px;margin-top:5px}.hourly{overflow:auto}.hourrow{display:grid;grid-template-columns:repeat(12,minmax(72px,1fr));gap:7px;min-width:850px}.hour{padding:10px 7px;text-align:center;background:#0b1927;border-radius:9px;border:1px solid var(--line)}.hour span{display:block;color:var(--muted);font-size:10px}.hour b{display:block;margin:9px 0}.hour em{font-style:normal;color:var(--cyan);font-size:11px}.map{height:520px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:#0a1724}.maptools{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.action{background:#142a3e;border:1px solid #29465e;color:var(--txt);padding:8px 11px;border-radius:8px;font-size:12px}.action.active{border-color:var(--cyan);color:var(--cyan)}.note{font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px}.status{font:11px 'DM Mono';color:var(--muted)}.modelgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.modeltitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.modeltitle b{font-size:14px}.tag{font:10px 'DM Mono';color:var(--cyan);border:1px solid #28516a;border-radius:5px;padding:4px 6px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:right;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:500}.synopticgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.synoptic .chartbox{height:220px}.iframebox{height:560px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1927}.iframebox iframe{width:100%;height:100%;border:0}.footer{margin:22px 0 8px;padding-top:13px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px}.loading{color:var(--amber)}.error{color:var(--red)}.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:11px}.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+@media(max-width:1050px){.metrics{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}.three{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.wrap{padding:13px}.top{align-items:flex-start;flex-direction:column}.topright{width:100%}.select{flex:1}.metrics{grid-template-columns:repeat(2,1fr)}.three,.modelgrid,.synopticgrid{grid-template-columns:1fr}.forecast{grid-template-columns:repeat(4,1fr)}.map{height:420px}.iframebox{height:430px}.heading{align-items:flex-start;flex-direction:column}}
+.wx-alert{color:#ff657b;font-weight:800;background:rgba(255,101,123,.14);border-radius:3px;padding:0 2px}.zone-row td{text-align:left!important;background:#18354a;color:#8fe4f5;font-weight:700;letter-spacing:.04em;padding:12px 10px;border-top:1px solid #35536b}</style>
+<style id="meteofox-v1-brand"> 
+/* MeteoFox professional visual refresh. Overrides only the original palette/layout. */
+:root{
+ --bg:#f3f7fc;--panel:#ffffff;--panel2:#edf4fa;--line:#d4e3ef;
+ --txt:#17364e;--muted:#627d94;--cyan:#047ca3;--blue:#186aa3;
+ --green:#177e63;--amber:#b96a09;--red:#ba3047;
+}
+body{background:#f3f7fc;color:var(--txt)}
+.wrap{max-width:1520px;padding:0 22px 25px}
+.top{background:#07518b;box-shadow:0 8px 22px #0b427b20;position:relative;
+  margin:0 -22px 22px;padding:17px 22px;min-height:86px;border-bottom:3px solid #0d75b6}
+.brand h1{color:#fff;font-size:24px;letter-spacing:.02em}
+.brand small{color:#cce7f8;font-size:10px}
+.logo{background:#ffffff20;box-shadow:none;border:1px solid #ffffff50}
+.topright .pill{color:#dbfbe9;background:#ffffff16;border-color:#ffffff40}
+.topright .status{color:#d9ecf7}
+.select{color:#143f5c;background:#fff;border-color:#b6d2e3;min-width:185px}
+.tabs{gap:7px;padding:0 0 13px;flex-wrap:wrap}
+.tab{background:#fff;border-color:#d8e5f0;color:#476b84;font-weight:600}
+.tab.active{background:#07518b;border-color:#07518b;color:#fff}
+.tab:hover:not(.active){background:#e6f2fa}
+.heading h2{color:#173e5c}.sub,.note,.status{color:var(--muted)}
+.card{background:#fff;border-color:var(--line);box-shadow:0 3px 15px #1e54800a}
+.day,.hour{background:#f7fafc;border-color:#dbe7ee}
+.map,.iframebox{border-color:#d4e3ef;background:#edf5fa}
+.action{background:#e7f2f9;border-color:#c3dce9;color:#23536e}
+.action.active{background:#07518b;border-color:#07518b;color:#fff}
+.action:hover{background:#d4e9f5}
+.pill{color:#177e63}
+.tag{background:#e8f4fb;color:#075b88;border-color:#b8dcea}
+.zone-row td{background:#e5f3fb;color:#145d82;border-color:#b9d8e8}
+.wx-alert{background:#ffe6e9;color:#ba3047}
+th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
+.footer{border-color:#d0e1ee;color:#657f93}
+.legend,.metric .k,.metric .u{color:#617c90}
+.metric .v{color:#113f60}
+.meteomap-frame{width:100%;height:min(83vh,830px);min-height:530px;border:1px solid #d5e5ef;border-radius:12px;overflow:hidden;background:white}
+.meteomap-frame iframe{height:100%;width:100%;border:0;background:white}
+.meteomap-links{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 6px}
+.meteomap-links a{text-decoration:none}
+.meteomap-links .note{flex:1;min-width:220px;margin:0}
+@media(max-width:650px){
+ .wrap{padding:0 12px 15px}
+ .top{margin:0 -12px 16px;padding:15px 12px}
+ .topright{width:100%}
+ .tabs{flex-wrap:nowrap}
+ .meteomap-frame{height:700px;min-height:550px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+ <div class="brand"><div class="logo">⛅</div><div><h1>MeteoFox</h1><small>PORTUGAL · CENTRO DE ANÁLISE METEOROLÓGICA</small></div></div>
+ <div class="topright"><span class="pill">● DADOS ONLINE · DISPONIBILIDADE VARIÁVEL</span><select id="place" class="select" aria-label="Localidade">
+ <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa">Lisboa</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
+</header>
+<nav class="tabs">
+ <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">🌧 Chuva e Rajadas</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
+</nav>
+<section id="overview" class="section active">
+ <div class="heading"><div><h2 id="placeTitle">Previsão ECMWF IFS — Lisboa</h2><div class="sub" id="summary">A obter previsão ECMWF IFS…</div></div><span class="status" id="coords"></span></div>
+ <div id="islandForecasts" class="grid two" style="display:none;margin:12px 0"></div>
+ <p class="note">MODELO PRINCIPAL · ECMWF IFS · Dados de previsão, não observações instrumentais. Vento em kt.</p><div class="grid metrics">
+  <div class="card metric"><span class="ico">🌡</span><div class="k">Temperatura</div><div class="v" id="temp">—</div><div class="u" id="feels">Sensação —</div></div>
+  <div class="card metric"><span class="ico">💧</span><div class="k">Humidade relativa</div><div class="v" id="humidity">—</div><div class="u">a 2 metros</div></div>
+  <div class="card metric"><span class="ico">🌧</span><div class="k">Precipitação</div><div class="v" id="rain">—</div><div class="u">valor previsto para a hora atual</div></div>
+  <div class="card metric"><span class="ico">💨</span><div class="k">Vento</div><div class="v" id="wind">—</div><div class="u" id="gust">Rajada —</div></div>
+  <div class="card metric"><span class="ico">🧭</span><div class="k">Pressão MSL</div><div class="v" id="pressure">—</div><div class="u">hPa</div></div>
+  <div class="card metric"><span class="ico">🌫</span><div class="k">Ponto de orvalho</div><div class="v" id="dew">—</div><div class="u">a 2 metros</div></div>
+ </div>
+ <div class="grid two">
+  <div class="card"><h3>Evolução da temperatura · próximas 24 horas</h3><div class="chartbox"><canvas id="tempChart"></canvas></div></div>
+  <div class="card"><h3>Previsão diária · 7 dias</h3><div id="daily" class="forecast"></div></div>
+ </div>
+ <div class="card" style="margin-top:13px"><h3>Previsão horária · próximas 12 horas</h3><div class="hourly"><div id="hours" class="hourrow"></div></div></div>
+</section>
+<section id="satRadar" class="section">
+ <div class="heading"><div><h2>Satélite e Radar</h2><div class="sub">Visualização das imagens de observação meteorológica</div></div></div>
+ <div class="maptools" role="group" aria-label="Escolher visualização"><button type="button" class="action active" id="showRadar">◉ Radar</button><button type="button" class="action" id="showSatellite">☁ Satélite</button></div>
+ <div id="radarPane">
+ <div class="heading"><div><h2>Radar de precipitação</h2><div class="sub">Camada de radar RainViewer sobre cartografia OpenStreetMap · animação temporal</div></div><span id="radarStatus" class="status">A carregar radar…</span></div>
+ <div class="maptools"><button id="radarToggle" class="action active">Radar: ligado</button><button id="radarPlay" class="action">▶ Animar</button><button id="radarLatest" class="action">Última imagem</button><span class="status" id="radarTime" style="align-self:center"></span></div>
+ <div id="radarMap" class="map"></div><p class="note">Fonte: RainViewer. A disponibilidade, cobertura e atraso das imagens dependem do fornecedor. O radar representa estimativas de precipitação e não substitui observações oficiais do IPMA.</p>
+</div>
+<div id="satellitePane" style="display:none">
+ <div class="heading"><div><h2>Imagem de satélite</h2><div class="sub">Visualização de nebulosidade e evolução das massas de nuvens sobre Portugal</div></div><span class="status">Windy · camada de satélite</span></div>
+ <div class="iframebox"><iframe id="satFrame" title="Satélite meteorológico" loading="lazy" referrerpolicy="no-referrer" src="https://embed.windy.com/embed2.html?lat=39.5&lon=-8.0&detailLat=39.5&detailLon=-8.0&width=650&height=450&zoom=5&level=surface&overlay=satellite&product=satellite&menu=&message=true&marker=&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C"></iframe></div>
+ <p class="note">A camada é disponibilizada pelo Windy. Se o painel não carregar, verifica a ligação à Internet ou abre <a href="https://www.windy.com/?39.5,-8.0,5" target="_blank" rel="noopener" style="color:var(--cyan)">Windy — Portugal</a>.</p>
+ </div>
+</section>
+<section id="precipGust" class="section">
+ <div class="heading"><div><h2>Chuva e Rajadas · ECMWF IFS</h2><div class="sub">Portugal continental e Atlântico próximo · 16°W a 6°W · previsão até 48 h · resolução 0,1°</div></div><span class="status">ECMWF Open Data · atualização na nuvem</span></div>
+ <div class="card">
+  <h3>Precipitação (mm) e rajadas de vento (kt)</h3>
+  <p class="note" style="margin-top:0;margin-bottom:12px">Os mapas mantêm a cartografia, as cores e as setas que aprovámos. A linha temporal sincroniza os dois campos de 3 em 3 horas.</p>
+  <div class="meteomap-frame"><iframe id="ecmwfMapsFrame" title="Mapas ECMWF MeteoFox: precipitação e rajadas sincronizadas" src="./MeteoFox_animacao_48h.html" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe></div>
+  <div class="meteomap-links"><a class="action" href="https://dfraposo1991-lang.github.io/MeteoFox/" target="_blank" rel="noopener noreferrer">↗ Abrir cartas ECMWF numa nova janela</a><span class="note">Os mapas são servidos pelo GitHub Pages e atualizados sem o computador ligado. Se o painel estiver indisponível, utiliza o link.</span></div>
+  <p class="note">Fonte: ECMWF IFS Open Data (CC BY 4.0). A chuva apresentada é acumulada nas últimas 3 horas. As cores das rajadas indicam intensidade máxima; as setas representam a direção do vento a 10 m. Os passos são de 3 horas e não horários.</p>
+ </div>
+</section>
+<section id="models" class="section">
+ <div class="heading"><div><h2>Comparação de modelos numéricos</h2><div class="sub">ECMWF IFS · NOAA GFS · DWD ICON · ECMWF AIFS, quando disponível</div></div><span class="status" id="modelStatus">Por carregar</span></div>
+ <div class="card"><h3>Disponibilidade e referência temporal</h3><div id="modelRuns" class="legend">A aguardar consulta…</div><p class="note">A API pode não fornecer a hora de inicialização de cada execução. Nesse caso será indicada como não disponibilizada, nunca inferida.</p></div>
+ <div class="grid two" style="margin-top:13px"><div class="card"><h3>Temperatura a 2 m · °C</h3><div class="chartbox tall"><canvas id="modelTemp"></canvas></div></div><div class="card"><h3>Precipitação horária · mm</h3><div class="chartbox tall"><canvas id="modelRain"></canvas></div></div></div>
+ <div class="grid two" style="margin-top:13px"><div class="card"><h3>Vento a 10 m · kt</h3><div class="chartbox"><canvas id="modelWind"></canvas></div></div><div class="card"><h3>Pressão MSL · hPa</h3><div class="chartbox"><canvas id="modelPressure"></canvas></div></div></div>
+ <div class="card" style="margin-top:13px"><h3>Comparação diária · próximos 3 dias</h3><div class="tablewrap"><table><thead><tr><th>Modelo</th><th>Dia</th><th>T máx. °C</th><th>T mín. °C</th><th>Precip. mm</th></tr></thead><tbody id="modelTable"></tbody></table></div></div>
+ <p class="note">As curvas são alinhadas pela hora válida da previsão (UTC), não pelo índice da série. A hora de inicialização dos modelos deve ser verificada na fonte operacional antes de qualquer comparação rigorosa entre ciclos. Fonte: Open-Meteo.</p>
+</section>
+<section id="aerodromes" class="section">
+ <div class="heading"><div><h2>METAR, SPECI, TAF e TAF AMD originais</h2><div class="sub">Mensagens brutas, sem descodificação nem tradução · aeródromos associados à região</div></div><span class="status" id="aviationStatus">Por consultar</span></div>
+ <div class="card"><h3 id="airportHeading">Aeródromos</h3><div id="airportReports" class="grid three"></div><p class="note">METAR e SPECI: OGIMET. TAF incluindo TAF AMD: NOAA Aviation Weather Center (fonte alternativa enquanto não existir interface TAF OGIMET validada). Mensagens originais, sem interpretação. Consulta através do servidor MeteoFox.</p></div>
+</section>
+<section id="synop" class="section">
+ <div class="heading"><div><h2>Precipitação observada · SYNOP</h2><div class="sub">Estações civis e militares · ordenadas de norte para sul, depois Madeira e Açores · OGIMET · horas UTC</div></div><span class="status" id="synopStatus">Por consultar</span></div>
+ <div class="card"><div class="maptools"><button class="action active" id="refreshSynop">↻ Atualizar observações</button></div><div class="tablewrap"><table><thead><tr><th>Estação</th><th>WMO</th><th>6 h (mm)</th><th>12 h (mm)</th><th>24 h (mm)</th><th>Última observação UTC</th></tr></thead><tbody id="precipRows"><tr><td>A carregar…</td></tr></tbody></table></div><p class="note">Nas regiões insulares são apresentados os postos SYNOP identificados por código WMO; a cobertura pode ser incompleta, mesmo que existam aeródromos adicionais. Valores observados descodificados de SYNOP. — significa período não comunicado, não 0 mm. «Traços» significa precipitação inferior a 0,1 mm. A hora de cada acumulado pode diferir da última observação. Códigos e nomes de estação fornecidos pelo utilizador; algumas correspondências carecem de validação.</p></div>
+ </section>
+<footer class="footer"><span>MeteoFox · Ferramenta de apoio à análise meteorológica</span><span>Previsão: Open-Meteo/ECMWF · Radar: RainViewer · Satélite: Windy · METAR/SYNOP: OGIMET · TAF: NOAA</span></footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const places={
+"Lisboa":[38.7223,-9.1393],"Porto":[41.1579,-8.6291],"Coimbra":[40.2033,-8.4103],"Faro":[37.0194,-7.9304],"Braga":[41.5454,-8.4265],"Santarém":[39.2362,-8.6850],"Setúbal":[38.5244,-8.8882],"Castelo Branco":[39.8222,-7.4909],"Évora":[38.5714,-7.9135],"Madeira":[32.6669,-16.9241],"Açores":[38.7300,-27.3200],"Viana do Castelo":[41.6932,-8.8329]
+};
+const REGIONS={
+ "Madeira":[{name:"Funchal",lat:32.6669,lon:-16.9241,icao:"LPMA"},{name:"Porto Santo",lat:33.0734,lon:-16.3499,icao:"LPPS"}],
+ "Açores":[{name:"Terceira / Lajes",lat:38.7618,lon:-27.0908,icao:"LPLA"},{name:"Ponta Delgada",lat:37.7412,lon:-25.6756,icao:"LPPD"}]
+};
+const ISLAND_AIRPORTS={"Madeira":["LPMA","LPPS"],"Açores":["LPAZ","LPCR","LPFL","LPGR","LPHR","LPLA","LPPI","LPPD","LPSJ"]};
+let activeIsland={"Madeira":0,"Açores":0},regionToken=0;
+let charts={}, map=null, radarLayer=null, radarFrames=[], radarIndex=0, radarTimer=null, radarOn=true, current=[38.7223,-9.1393], modelData={};
+const $=id=>document.getElementById(id);
+const fmt=(v,d=0)=>v==null||!Number.isFinite(Number(v))?"—":Number(v).toFixed(d);
+function chart(id,labels,datasets,type='line',opts={}){if(!window.Chart)return; if(charts[id])charts[id].destroy();charts[id]=new Chart($(id),{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#a9bdce',boxWidth:10,font:{size:10}}}},scales:{x:{ticks:{color:'#8098ad',maxTicksLimit:8},grid:{color:'#1b3043'}},y:{ticks:{color:'#8098ad'},grid:{color:'#1b3043'},...(opts.y||{})}},...opts.options}})}
+function timesLabels(times){return times.map(t=>new Date(t+'Z').toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'}))}
+function dailyLabels(times){return times.map(t=>new Date(t+'T12:00').toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit'}))}
+async function getForecast(lat,lon,model=null){const hourly='temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,dew_point_2m,weather_code';const daily='temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,weather_code';let url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,dew_point_2m&hourly=${hourly}&daily=${daily}&forecast_days=7&timezone=GMT&wind_speed_unit=kn`;if(model)url+=`&models=${model}`;let r=await fetch(url);if(!r.ok)throw Error('API meteorológica indisponível ('+r.status+')');return r.json()}
+function weatherIcon(code){if(code===0)return'☀️';if([1,2].includes(code))return'🌤️';if(code===3)return'☁️';if([45,48].includes(code))return'🌫️';if([51,53,55,56,57].includes(code))return'🌦️';if([61,63,65,66,67,80,81,82].includes(code))return'🌧️';if([71,73,75,77,85,86].includes(code))return'🌨️';if([95,96,99].includes(code))return'⛈️';return'🌡️'}
+async function loadOverview(){
+ const name=$('place').value;
+ const island=REGIONS[name];
+ if(island){
+   const token=++regionToken, selected=activeIsland[name]||0;
+   $('islandForecasts').style.display='grid';
+   $('islandForecasts').innerHTML=island.map((p,i)=>`<div class="card"><h3>${p.name} · ${p.icao} ${i===selected?'· Selecionado':''}</h3><div id="islandData${i}" class="note">A consultar ECMWF…</div><button class="action ${i===selected?'active':''}" data-island="${i}" style="margin-top:10px">Ver previsão detalhada</button></div>`).join('');
+   $('islandForecasts').querySelectorAll('[data-island]').forEach(b=>b.onclick=()=>{activeIsland[name]=Number(b.dataset.island);loadOverview();modelData={};if($('models').classList.contains('active'))loadModels()});
+   Promise.all(island.map(async(p,i)=>{try{const d=await getForecast(p.lat,p.lon,'ecmwf_ifs025');if(token!==regionToken||$('place').value!==name)return;const c=d.current; $('islandData'+i).textContent=`${fmt(c.temperature_2m,1)} °C · Vento ${fmt(c.wind_speed_10m)} kt · Rajada ${fmt(c.wind_gusts_10m)} kt · Precipitação ${fmt(c.precipitation,1)} mm`; }catch(e){if(token===regionToken)$('islandData'+i).textContent='Previsão indisponível';}}));
+ }else{regionToken++;$('islandForecasts').style.display='none';$('islandForecasts').innerHTML='';}
+ const [lat,lon]=island?[island[activeIsland[name]||0].lat,island[activeIsland[name]||0].lon]:places[name];current=[lat,lon];$('placeTitle').textContent='Previsão ECMWF IFS — '+(island?name+' / '+island[activeIsland[name]||0].name:name);$('coords').textContent=lat.toFixed(2)+'°N · '+Math.abs(lon).toFixed(2)+'°W';
+ try{const d=await getForecast(lat,lon,'ecmwf_ifs025');const c=d.current,h=d.hourly,day=d.daily;$('temp').textContent=fmt(c.temperature_2m,1)+' °C';$('feels').textContent='Sensação '+fmt(c.apparent_temperature,1)+' °C';$('humidity').textContent=fmt(c.relative_humidity_2m)+' %';$('rain').textContent=fmt(c.precipitation,1)+' mm';$('wind').textContent=fmt(c.wind_speed_10m)+' kt';$('gust').textContent='Rajada '+fmt(c.wind_gusts_10m)+' kt';$('pressure').textContent=fmt(c.pressure_msl,0);$('dew').textContent=fmt(c.dew_point_2m,1)+' °C';
+ let idx=h.time.findIndex(t=>t>=c.time);if(idx<0)idx=0;let end=Math.min(idx+24,h.time.length),lab=timesLabels(h.time.slice(idx,end));chart('tempChart',lab,[{label:'Temperatura (°C)',data:h.temperature_2m.slice(idx,end),borderColor:'#51d6e7',backgroundColor:'#51d6e722',fill:true,tension:.32,pointRadius:0},{label:'Sensação térmica (°C)',data:h.apparent_temperature.slice(idx,end),borderColor:'#ffca72',tension:.32,pointRadius:0}]);
+ $('daily').innerHTML=day.time.map((t,i)=>`<div class="day"><b>${dailyLabels([t])[0]}</b><div class="symbol">${weatherIcon(day.weather_code?.[i])}</div><strong>${fmt(day.temperature_2m_max[i])}°</strong><small>${fmt(day.temperature_2m_min[i])}° min</small><small>☔ ${fmt(day.precipitation_sum[i],1)} mm</small></div>`).join('');
+ $('hours').innerHTML=h.time.slice(idx,idx+12).map((t,i)=>{let j=idx+i;return `<div class="hour"><span>${new Date(t+'Z').toLocaleTimeString('pt-PT',{hour:'2-digit',timeZone:'UTC'})}h</span><b>${fmt(h.temperature_2m[j],0)}°</b><span>☔ ${fmt(h.precipitation_probability[j])}%</span><em>${fmt(h.wind_speed_10m[j])} kt</em></div>`}).join('');
+ const p=day.precipitation_sum.reduce((a,b)=>a+(b||0),0);$('summary').textContent=`Temperatura atual ${fmt(c.temperature_2m,1)} °C · vento ${fmt(c.wind_speed_10m)} kt · precipitação prevista nos próximos 7 dias: ${fmt(p,1)} mm.`;$('updated').textContent='Consulta '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
+ }catch(e){$('summary').innerHTML='<span class="error">'+e.message+'. Confirma a ligação à Internet.</span>';$('updated').textContent='Falha na atualização'}
+}
+const MODELS=[{key:'ecmwf_ifs025',name:'ECMWF IFS',color:'#51d6e7'},{key:'gfs_seamless',name:'NOAA GFS',color:'#ffca72'},{key:'icon_seamless',name:'DWD ICON',color:'#65d6a4'},{key:'ecmwf_aifs025',name:'ECMWF AIFS',color:'#ba9cff'}];
+async function loadModels(){const [lat,lon]=current,token=lat+','+lon;$('modelStatus').textContent='A consultar quatro modelos…';
+ const results=await Promise.all(MODELS.map(async m=>{try{const d=await getForecast(lat,lon,m.key);return {...m,d}}catch(e){return {...m,error:e.message}}}));if(token!==current.join(','))return;modelData={loaded:true};
+ const ok=results.filter(m=>m.d),bad=results.filter(m=>!m.d);$('modelRuns').innerHTML=results.map(m=>`<span class="tag" style="color:${m.d?m.color:'#ff7e86'}">${m.name}: ${m.d?'disponível · ciclo não indicado pela API':'indisponível'}</span>`).join('');
+ if(!ok.length){$('modelStatus').textContent='Nenhum modelo disponível';return}
+ const start=new Date();start.setUTCMinutes(0,0,0);const valid=Array.from({length:48},(_,i)=>new Date(start.getTime()+i*3600000).toISOString().slice(0,16));
+ const series=(m,key)=>{const h=m.d.hourly,lookup=new Map(h.time.map((t,i)=>[t,i]));return valid.map(t=>{const idx=lookup.get(t);return idx===undefined?null:h[key]?.[idx]??null})};
+ const lab=valid.map(t=>t.slice(5,10)+' '+t.slice(11)+'Z');
+ for(const [id,key] of [['modelTemp','temperature_2m'],['modelRain','precipitation'],['modelWind','wind_speed_10m'],['modelPressure','pressure_msl']])chart(id,lab,ok.map(m=>({label:m.name,data:series(m,key),borderColor:m.color,backgroundColor:m.color+'44',pointRadius:0,tension:.2,spanGaps:false})), 'line');
+ $('modelTable').innerHTML=ok.flatMap(m=>m.d.daily.time.slice(0,3).map((t,i)=>`<tr><td>${m.name}</td><td>${t}</td><td>${fmt(m.d.daily.temperature_2m_max?.[i],1)}</td><td>${fmt(m.d.daily.temperature_2m_min?.[i],1)}</td><td>${fmt(m.d.daily.precipitation_sum?.[i],1)}</td></tr>`)).join('');
+ $('modelStatus').textContent=`${ok.length}/4 modelos disponíveis${bad.length?' · '+bad.map(m=>m.name).join(', ')+' sem dados':''}`;
+}
+const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR']};
+function formatTAF(raw){
+ // Quebras apenas nos indicadores de mudança; preserva todos os grupos originais.
+ return String(raw||'Indisponível').replace(/\s+(?=(?:TEMPO|BECMG|FM\d{6}|PROB(?:30|40))(?:\s|$))/g,(spaces,offset,whole)=>{const before=whole.slice(0,offset);return /PROB(?:30|40)\s*$/.test(before)?' ':'\n';});
+}
+function synopZone(st){
+ const id=String(st.station), name=String(st.name||'').toLowerCase();
+ if(['08506','08508','08509','08513'].includes(id))return ['Açores',5];
+ if(id==='08524')return ['Madeira',4];
+ if(['08512','08521'].includes(id))return ['Localização por confirmar',6];
+ if(['08543','08545','08544'].includes(id))return ['Norte',0];
+ if(['08540','08530','08552'].includes(id))return ['Centro',1];
+ if(['08539','08537','08536','08535','08534','08532'].includes(id))return ['Lisboa e Vale do Tejo',2];
+ if(['08562','08538'].includes(id))return ['Alentejo e Algarve',3];
+ return ['Localização por confirmar',6];
+}
+function safe(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+// Realça CB e TS mesmo quando integrados em grupos como BKN008CB ou TSRA.
+// Escapa primeiro o conteúdo original para impedir injeção de HTML.
+function highlightConvection(raw){return safe(raw).replace(/CB|TS/gi,match=>`<span class="wx-alert">${match}</span>`)}
+// Dados METAR, TAF e SYNOP publicados de hora a hora no GitHub.
+// No servidor local, preferir o /api original como alternativa.
+const METEOFOX_REPO_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/';
+async function fetchMeteoFoxData(kind){
+ const isLocal=['localhost','127.0.0.1'].includes(location.hostname);
+ const filename=kind==='aviation'?'aviation.json':'synop.json';
+ const query='?t='+Date.now(); // evita que um resultado antigo fique em cache no navegador
+ const urls=isLocal
+   ? ['/api/'+kind, METEOFOX_REPO_RAW+filename+query]
+   : [METEOFOX_REPO_RAW+filename+query];
+ let lastError=null;
+ for(const url of urls){
+   try{
+     const response=await fetch(url,{cache:'no-store'});
+     if(!response.ok)throw Error('HTTP '+response.status);
+     const data=await response.json();
+     if(kind==='aviation'&&(!data.metar||!data.taf))throw Error('Dados de aviação incompletos');
+     if(kind==='synop'&&!Array.isArray(data.stations))throw Error('SYNOP incompleto');
+     return data;
+   }catch(err){lastError=err;}
+ }
+ throw Error('Não foi possível consultar os dados horários do GitHub: '+(lastError?.message||'erro'));
+}
+
+async function loadAerodromes(){
+ const city=$('place').value,ids=AIRPORTS[city]||[];$('airportHeading').textContent='Aeródromos associados a '+city+(REGIONS[city]?' · todas as ilhas':'');
+ if(!ids.length){$('airportReports').innerHTML='<p class="note">Não há aeródromos configurados para esta localidade.</p>';return}
+ $('aviationStatus').textContent='A consultar…';
+ try{const d=await fetchMeteoFoxData('aviation');if(city!==$('place').value)return;
+ $('airportReports').innerHTML=ids.map(id=>{const m=d.metar?.[id],sp=d.speci?.[id],t=d.taf?.[id],isAmd=/\bAMD\b/.test(t?.raw||'');return `<div class="card"><h3>${id}</h3><p class="note">METAR · OGIMET</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;color:var(--cyan)">${highlightConvection(m?.raw||'Indisponível')}</pre><p class="note">SPECI · OGIMET</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;color:var(--cyan)">${highlightConvection(sp?.raw||'Sem SPECI disponível')}</pre><p class="note">${isAmd?'TAF AMD':'TAF'} · ${safe(d.taf_source)}</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;color:var(--amber)">${highlightConvection(formatTAF(t?.raw))}</pre><p class="note">METAR: ${safe(m?.utc||'sem hora')} · SPECI: ${safe(sp?.utc||'sem hora')} · TAF: ${safe(t?.utc||'sem hora')}</p></div>`}).join('');$('aviationStatus').textContent='Consulta concluída';
+ }catch(e){$('airportReports').textContent='Não foi possível obter mensagens. Abre o METEOPT através do servidor incluído.';$('aviationStatus').textContent='Sem ligação ao servidor'}
+}
+async function loadSynop(){
+ $('synopStatus').textContent='A consultar OGIMET…';
+ try{const d=await fetchMeteoFoxData('synop');
+ const format=p=>!p?'—':p.trace?'Traços':p.mm==null?'—':fmt(p.mm,1);
+ const order={'08543':0,'08545':1,'08544':2,'08540':3,'08530':4,'08552':5,'08539':6,'08537':7,'08536':8,'08535':9,'08532':10,'08534':11,'08562':12,'08538':13,'08522':14,'08524':15,'08506':16,'08509':16,'08508':17,'08513':18,'08512':19,'08521':20};
+ const chosen=$('place').value;const selectedStations=chosen==='Madeira'?d.stations.filter(st=>synopZone(st)[0]==='Madeira'):chosen==='Açores'?d.stations.filter(st=>synopZone(st)[0]==='Açores'):d.stations;const sorted=[...selectedStations].sort((a,b)=>synopZone(a)[1]-synopZone(b)[1] || (order[a.station]??99)-(order[b.station]??99));
+ let zone='';$('precipRows').innerHTML=sorted.map(st=>{
+  const z=synopZone(st)[0];let head='';if(z!==zone){zone=z;head=`<tr class="zone-row"><td colspan="6">${safe(z)}</td></tr>`;}
+  return head+`<tr><td>${safe(st.name)}</td><td>${safe(st.station)}</td>${[6,12,24].map(h=>{const p=st.periods[String(h)];return `<td title="${safe(p?.utc||'Sem observação')}">${format(p)}</td>`}).join('')}<td>${safe(st.latest_utc||'—')}</td></tr>`;
+ }).join('');
+ $('synopStatus').textContent=(chosen==='Madeira'?'Madeira · ':chosen==='Açores'?'Açores · ':'Todas as estações · ')+'OGIMET · consulta '+new Date(d.retrieved_utc).toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC';
+ }catch(e){$('synopStatus').textContent='Sem dados';$('precipRows').innerHTML='<tr><td colspan="6">Não foi possível consultar o OGIMET. Confirma que o servidor MeteoFox está em execução.</td></tr>'}
+}
+$('refreshSynop').onclick=loadSynop;
+function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
+async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
+function showRadar(i){if(!radarFrames.length||!map)return;radarIndex=Math.max(0,Math.min(i,radarFrames.length-1));if(radarLayer)map.removeLayer(radarLayer);let frame=radarFrames[radarIndex];radarLayer=L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.72,zIndex:10,attribution:'Radar © RainViewer'});if(radarOn)radarLayer.addTo(map);let d=new Date(frame.time*1000);$('radarTime').textContent=d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes')loadAerodromes();if(id==='synop')loadSynop()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
+function switchObservation(which){
+ const radar=which==='radar';
+ $('radarPane').style.display=radar?'block':'none';
+ $('satellitePane').style.display=radar?'none':'block';
+ $('showRadar').classList.toggle('active',radar);
+ $('showSatellite').classList.toggle('active',!radar);
+ $('showRadar').setAttribute('aria-pressed',String(radar));
+ $('showSatellite').setAttribute('aria-pressed',String(!radar));
+ if(radar&&map)setTimeout(()=>map.invalidateSize(),100);
+}
+$('showRadar').onclick=()=>switchObservation('radar');
+$('showSatellite').onclick=()=>switchObservation('satellite');
+
+$('place').addEventListener('change',async()=>{await loadOverview();const [lat,lon]=current;if(map)map.setView([lat,lon],6);$('satFrame').src=`https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&width=650&height=450&zoom=5&level=surface&overlay=satellite&product=satellite&menu=&message=true&marker=&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C`;modelData={};if($('models').classList.contains('active'))loadModels();if($('aerodromes').classList.contains('active'))loadAerodromes();if($('synop').classList.contains('active'))loadSynop()});
+$('radarToggle').onclick=()=>{radarOn=!radarOn;$('radarToggle').textContent='Radar: '+(radarOn?'ligado':'desligado');$('radarToggle').classList.toggle('active',radarOn);if(radarLayer){if(radarOn)radarLayer.addTo(map);else map.removeLayer(radarLayer)}};
+$('radarLatest').onclick=()=>showRadar(radarFrames.length-1);
+$('radarPlay').onclick=()=>{if(radarTimer){clearInterval(radarTimer);radarTimer=null;$('radarPlay').textContent='▶ Animar'}else{$('radarPlay').textContent='Ⅱ Pausar';radarTimer=setInterval(()=>showRadar((radarIndex+1)%radarFrames.length),650)}};
+(async()=>{await loadOverview();initMap()})();
+</script>
+</body></html>
