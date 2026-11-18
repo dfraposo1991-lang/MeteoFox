@@ -137,7 +137,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa" selected>Lisboa</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
 </header>
 <nav class="tabs">
- <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">🌧 Chuva e Rajadas</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
+ <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">🌧 Chuva, Rajadas e Satélite Simulado</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
 </nav>
 <section id="overview" class="section active">
  <div class="heading"><div><h2 id="placeTitle">Previsão ECMWF IFS — Lisboa</h2><div class="sub" id="summary">A obter previsão ECMWF IFS…</div></div><span class="status" id="coords"></span></div>
@@ -157,8 +157,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="card" style="margin-top:13px"><h3>Previsão horária · próximas 12 horas</h3><div class="hourly"><div id="hours" class="hourrow"></div></div></div>
 </section>
 <section id="satRadar" class="section">
- <div class="heading"><div><h2>Satélite e Radar</h2><div class="sub">Visualização das imagens de observação meteorológica</div></div></div>
- <div class="maptools" role="group" aria-label="Escolher visualização"><button type="button" class="action active" id="showRadar">◉ Radar</button><button type="button" class="action" id="showSatellite">☁ Satélite</button><button type="button" class="action" id="showVisSim">◉ Imagem de satélite simulada</button></div>
+ <div class="heading"><div><h2>Satélite e Radar · visualização anterior</h2><div class="sub">Visualização anterior mantida durante a validação. No mapa grande podes combinar satélite, radar e METAR.</div></div></div>
+ <div class="maptools" role="group" aria-label="Escolher visualização"><button type="button" class="action active" id="showRadar">◉ Radar</button><button type="button" class="action" id="showSatellite">☁ Satélite</button><button type="button" class="action" id="showVisSim" style="display:none">◉ Imagem de satélite simulada</button></div>
  <div id="radarPane">
  <div class="heading"><div><h2>Radar de precipitação</h2><div class="sub">Camada de radar RainViewer sobre cartografia OpenStreetMap · animação temporal</div></div><span id="radarStatus" class="status">A carregar radar…</span></div>
  <div class="maptools"><button id="radarToggle" class="action active">Radar: ligado</button><button id="radarPlay" class="action">▶ Animar</button><button id="radarLatest" class="action">Última imagem</button><span class="status" id="radarTime" style="align-self:center"></span></div>
@@ -169,7 +169,20 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="iframebox"><iframe id="satFrame" title="Satélite meteorológico" loading="lazy" referrerpolicy="no-referrer" src="https://embed.windy.com/embed2.html?lat=39.5&lon=-8.0&detailLat=39.5&detailLon=-8.0&width=650&height=450&zoom=5&level=surface&overlay=satellite&product=satellite&menu=&message=true&marker=&calendar=now&pressure=true&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C"></iframe></div>
  <p class="note">A camada é disponibilizada pelo Windy. Se o painel não carregar, verifica a ligação à Internet ou abre <a href="https://www.windy.com/?39.5,-8.0,5" target="_blank" rel="noopener" style="color:var(--cyan)">Windy — Portugal</a>.</p>
  </div>
- <div id="visSimPane" style="display:none">
+ 
+</section>
+<section id="precipGust" class="section">
+ <div class="heading"><div><h2>Chuva e Rajadas · ECMWF IFS</h2><div class="sub">Portugal continental e Atlântico próximo · 16°W a 6°W · previsão até 48 h · resolução 0,1°</div></div><span class="status">ECMWF Open Data · atualização na nuvem</span></div>
+ <div class="card">
+  <h3>Precipitação (mm) e rajadas de vento (kt)</h3>
+  <p class="note" style="margin-top:0;margin-bottom:12px">Os mapas mantêm a cartografia, as cores e as setas que aprovámos. A linha temporal sincroniza os dois campos de 3 em 3 horas.</p>
+  <div class="meteomap-frame"><iframe id="ecmwfMapsFrame" title="Mapas ECMWF MeteoFox: precipitação e rajadas sincronizadas" src="./MeteoFox_animacao_48h.html" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe></div>
+  <div class="meteomap-links"><a class="action" href="https://dfraposo1991-lang.github.io/MeteoFox/" target="_blank" rel="noopener noreferrer">↗ Abrir cartas ECMWF numa nova janela</a><span class="note">Os mapas são servidos pelo GitHub Pages e atualizados sem o computador ligado. Se o painel estiver indisponível, utiliza o link.</span></div>
+  <p class="note">Fonte: ECMWF IFS Open Data (CC BY 4.0). A chuva apresentada é acumulada nas últimas 3 horas. As cores das rajadas indicam intensidade máxima; as setas representam a direção do vento a 10 m. Os passos são de 3 horas e não horários.</p>
+ </div>
+
+  <div class="card" style="margin-top:15px"><h3>Satélite visível simulado · ECMWF IFS · +3 a +48 h</h3><p class="note">Previsão do modelo, não imagem observada. A sequência mantém os respetivos run e hora válida UTC.</p></div>
+<div id="visSimPane" style="display:block">
   <div class="heading"><div><h2>Imagem de satélite simulada · ECMWF IFS</h2><div class="sub">Canais visíveis simulados · South West Europe · previsões até +48 h</div></div><span id="visSimStatus" class="status">A consultar imagens…</span></div>
   <div class="card" style="padding:12px">
    <div class="maptools" style="align-items:center">
@@ -181,16 +194,6 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
    <div id="visSimMessage" class="note">As imagens serão apresentadas quando o workflow de 48 horas publicar o conjunto completo.</div>
    <p class="note">Fonte: ECMWF OpenCharts · imagens visíveis simuladas (não são imagens observadas nem Cloud RGB). © ECMWF · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. A disponibilidade depende da API do ECMWF.</p>
   </div>
- </div>
-</section>
-<section id="precipGust" class="section">
- <div class="heading"><div><h2>Chuva e Rajadas · ECMWF IFS</h2><div class="sub">Portugal continental e Atlântico próximo · 16°W a 6°W · previsão até 48 h · resolução 0,1°</div></div><span class="status">ECMWF Open Data · atualização na nuvem</span></div>
- <div class="card">
-  <h3>Precipitação (mm) e rajadas de vento (kt)</h3>
-  <p class="note" style="margin-top:0;margin-bottom:12px">Os mapas mantêm a cartografia, as cores e as setas que aprovámos. A linha temporal sincroniza os dois campos de 3 em 3 horas.</p>
-  <div class="meteomap-frame"><iframe id="ecmwfMapsFrame" title="Mapas ECMWF MeteoFox: precipitação e rajadas sincronizadas" src="./MeteoFox_animacao_48h.html" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe></div>
-  <div class="meteomap-links"><a class="action" href="https://dfraposo1991-lang.github.io/MeteoFox/" target="_blank" rel="noopener noreferrer">↗ Abrir cartas ECMWF numa nova janela</a><span class="note">Os mapas são servidos pelo GitHub Pages e atualizados sem o computador ligado. Se o painel estiver indisponível, utiliza o link.</span></div>
-  <p class="note">Fonte: ECMWF IFS Open Data (CC BY 4.0). A chuva apresentada é acumulada nas últimas 3 horas. As cores das rajadas indicam intensidade máxima; as setas representam a direção do vento a 10 m. Os passos são de 3 horas e não horários.</p>
  </div>
 </section>
 <section id="models" class="section">
@@ -527,7 +530,7 @@ $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
 async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
 function showRadar(i){if(!radarFrames.length||!map)return;radarIndex=Math.max(0,Math.min(i,radarFrames.length-1));if(radarLayer)map.removeLayer(radarLayer);let frame=radarFrames[radarIndex];radarLayer=L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.72,zIndex:10,attribution:'Radar © RainViewer'});if(radarOn)radarLayer.addTo(map);let d=new Date(frame.time*1000);$('radarTime').textContent=d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
+function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust')visLoad();if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
 function switchObservation(which){
  const radar=which==='radar';
@@ -535,7 +538,7 @@ function switchObservation(which){
  const vis=which==='vis';
  $('radarPane').style.display=radar?'block':'none';
  $('satellitePane').style.display=satellite?'block':'none';
- $('visSimPane').style.display=vis?'block':'none';
+ $('visSimPane').style.display='block';
  $('showRadar').classList.toggle('active',radar);
  $('showSatellite').classList.toggle('active',satellite);
  $('showVisSim').classList.toggle('active',vis);
