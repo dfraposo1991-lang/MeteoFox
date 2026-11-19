@@ -186,10 +186,18 @@ jobs:
           shutil.copy2(main_site, out / "index.html")
           # O mapa interativo e a sincronização radar/Meteosat fazem parte
           # obrigatória do pacote, também nas publicações automáticas ECMWF.
-          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js"):
+          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css"):
               source_file = Path(name)
               assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
               shutil.copy2(source_file, out / name)
+          # Preservar observações utilizadas pelo Fox Verified em todas as publicações.
+          obs_target = out / "data"
+          obs_target.mkdir(exist_ok=True)
+          for name in ("aviation.json", "synop.json"):
+              obs_source = Path("data") / name
+              assert obs_source.is_file(), f"Falta {obs_source}"
+              json.loads(obs_source.read_text(encoding="utf-8"))
+              shutil.copy2(obs_source, obs_target / name)
           # Manter igualmente o laboratório e o respetivo ciclo ECMWF 0p25
           # em cada publicação automática dos 32 mapas 0p1.
           import json
