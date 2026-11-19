@@ -48,7 +48,7 @@ try{
  assert.equal(await page.locator('.map-overlays #satTools').count(),1);
  const panelBG=await page.locator('.map-overlays').evaluate(el=>getComputedStyle(el).backgroundColor);
  assert.ok(panelBG.startsWith('rgba(22, 53, 78, 0.22)'), 'Fundo transparente: '+panelBG);
- assert.equal(await page.locator('#count').isVisible(),false,'Sem contador de aeródromos visível');
+ assert.equal(await page.locator('#count').evaluate(el=>getComputedStyle(el.parentElement).clip),'rect(0px, 0px, 0px, 0px)','Contador fora do ecrã');
  const ctrlBounds=await page.locator('.map-overlays').boundingBox();
  assert.ok(ctrlBounds.y>=mapBounds.y&&ctrlBounds.y<mapBounds.y+mapBounds.height,'Controlos sobre o mapa');
  await page.locator('#showLegends').click();
