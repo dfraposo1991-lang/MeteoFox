@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 import time
 
-STEPS = tuple(range(3, 49, 3))
+STEPS = tuple(range(9, 55, 3))
 PARAMETERS = ("tp", "10fg", "10u", "10v")
 UTC = timezone.utc
 
