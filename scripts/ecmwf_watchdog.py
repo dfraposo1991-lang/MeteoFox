@@ -92,8 +92,8 @@ def main():
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write("### MeteoFox — controlo do agendamento ECMWF\n")
-            f.write(f"- Janela nominal: \`{nominal:%Y-%m-%d %H:%M} UTC\`\n")
-            f.write(f"- Ciclo esperado: \`{cycle}\`\n")
+            f.write(f"- Janela nominal: `{nominal:%Y-%m-%d %H:%M} UTC`\n")
+            f.write(f"- Ciclo esperado: `{cycle}`\n")
             f.write(f"- Decisão: **{decision}**\n")
     if decision == "covered":
         delay = (datetime.fromisoformat(matched["created_at"].replace("Z", "+00:00"))
@@ -102,7 +102,7 @@ def main():
         if summary:
             with open(summary, "a", encoding="utf-8") as f:
                 f.write(f"- Execução existente: [#{matched['id']}]({matched['html_url']})"
-                        f" | atraso {delay:+.1f} minutos | estado \`{matched['status']}\`\n")
+                        f" | atraso {delay:+.1f} minutos | estado `{matched['status']}`\n")
     elif decision == "recover":
         # GitHub devolve HTTP 204 quando o despacho foi aceite.
         status, _ = request_json(
@@ -114,7 +114,7 @@ def main():
         print(f"RECUPERAÇÃO DISPARADA: ciclo {cycle}", flush=True)
         if summary:
             with open(summary, "a", encoding="utf-8") as f:
-                f.write(f"- **Recuperação acionada** para o ciclo \`{cycle}\`\n")
+                f.write(f"- **Recuperação acionada** para o ciclo `{cycle}`\n")
     return 0
 
 
