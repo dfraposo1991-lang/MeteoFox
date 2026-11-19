@@ -1,0 +1,27 @@
+name: MeteoFox | Testar otimizações ECMWF sem publicar
+
+on:
+  push:
+    branches: [meteofox-ecmwf-production-optimizations-v1]
+    paths:
+      - '.github/workflows/meteofox_ecmwf.yml'
+      - 'tests/test_ecmwf_packaging.py'
+      - '.github/workflows/meteofox_ecmwf_optimization_ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar validador YAML
+        run: python -m pip install 'PyYAML>=6,<7'
+      - name: Validar pipeline e simular publicação completa e falha de cartas
+        run: python -m unittest discover -s tests -p 'test_ecmwf_packaging.py' -v
