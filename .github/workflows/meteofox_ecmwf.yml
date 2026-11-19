@@ -112,7 +112,7 @@ jobs:
           shutil.copy2(main_site, out / "index.html")
           # O mapa interativo e a sincronização radar/Meteosat fazem parte
           # obrigatória do pacote, também nas publicações automáticas ECMWF.
-          for name in ("mapa.html", "meteofox_satelite.js"):
+          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css"):
               source_file = Path(name)
               assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
               shutil.copy2(source_file, out / name)
@@ -132,7 +132,7 @@ jobs:
           (out / "produtos_experimentais").mkdir(exist_ok=True)
           shutil.copy2(lab_data, out / "produtos_experimentais/previsao_ecmwf.json")
           assert all((out / name).is_file() for name in
-                     ("index.html", "mapa.html", "meteofox_satelite.js", "laboratorio.html",
+                     ("index.html", "mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "laboratorio.html",
                       "produtos_experimentais/previsao_ecmwf.json")), "Site incompleto"
           (out / ".nojekyll").write_text("")
           print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)

@@ -1,0 +1,42 @@
+name: MeteoFox | Validar Meteograma e Skew-T
+on:
+  push:
+    branches: [meteofox-skewt-produtos-timeline]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar scripts e pacote de publicação
+        run: |
+          node --check meteofox_meteograma.js
+          python3 - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          for file in ['index.html','laboratorio.html']:
+              for n, code in enumerate(re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',Path(file).read_text())):
+                  if code.strip():
+                      path=Path('/tmp')/f'{file}-{n}.js'
+                      path.write_text(code)
+                      subprocess.run(['node','--check',str(path)],check=True)
+          for f in ['meteofox_meteograma.js','meteofox_meteograma.css']:
+              for w in ['meteofox_site.yml','meteofox_ecmwf.yml']:
+                  assert f in Path('.github/workflows',w).read_text(),(f,w)
+          print('Sintaxe e workflows OK')
+          PY
+      - name: Instalar Playwright e Chromium
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install chromium
+      - name: Testar meteograma e sondagens no navegador
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/meteofox_http.log 2>&1 &
+          sleep 2
+          node tests/meteofox_meteograma_skewt.mjs
