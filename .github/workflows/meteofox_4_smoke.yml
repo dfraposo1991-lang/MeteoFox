@@ -2,7 +2,7 @@ name: MeteoFox 4.0 | Testes de navegador (desenvolvimento)
 
 on:
   push:
-    branches: [meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2, meteofox-meteograma-skewt-dev, meteofox-skewt-produtos-timeline, meteofox-region-meteograms-keyboard-fix]
+    branches: [meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2, meteofox-meteograma-skewt-dev, meteofox-skewt-produtos-timeline, meteofox-region-meteograms-keyboard-fix, meteofox-white-charts-global-keys]
     paths:
       - 'index.html'
       - 'meteofox_keyboard.js'
