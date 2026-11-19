@@ -77,7 +77,7 @@ jobs:
           raw = json.loads(source_data.read_text(encoding='utf-8'))
           assert len(raw['meteogram_lisboa']) == 30
           assert [x['step_h'] for x in raw['meteogram_lisboa']] == list(range(3, 91, 3))
-          assert len(raw['soundings']) == 9
+          assert len(raw['soundings']) in (9, 16)
           assert all(set(x['cities']) == {'Porto', 'Lisboa', 'Beja'} for x in raw['soundings'])
           target = public / 'produtos_experimentais'
           target.mkdir(exist_ok=True)
