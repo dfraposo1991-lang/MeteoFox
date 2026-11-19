@@ -20,8 +20,9 @@ class ForecastTests(unittest.TestCase):
         self.assertEqual(set(LOCATIONS), {"Lisboa","Porto","Beja"})
         self.assertEqual(len(METEOGRAM_STEPS),30)
         self.assertEqual(METEOGRAM_STEPS[-1],90)
-        self.assertEqual(len(SOUNDING_STEPS),9)
-        self.assertEqual(SOUNDING_STEPS[-1],48)
+        self.assertEqual(len(SOUNDING_STEPS),16)
+        self.assertEqual(SOUNDING_STEPS[0],9)
+        self.assertEqual(SOUNDING_STEPS[-1],54)
         self.assertIn(500,LEVELS)
 
     def test_cycle_guard(self):
