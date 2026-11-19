@@ -7,8 +7,13 @@ on:
         description: 'Run UTC YYYYMMDDHHMM (deixar vazio para automatico)'
         type: string
         required: false
+  # Após a publicação das cartas ECMWF, verificar se o VIS do ciclo está disponível.
+  workflow_run:
+    workflows: ["MeteoFox | ECMWF 48h"]
+    types: [completed]
   schedule:
-    - cron: '35 4,10,16,22 * * *'
+    # Tentativas normais + repetição duas horas depois caso o OpenCharts esteja atrasado.
+    - cron: '35 0,4,6,10,12,16,18,22 * * *'
 
 permissions:
   contents: write
@@ -19,6 +24,7 @@ concurrency:
 
 jobs:
   imagens:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
