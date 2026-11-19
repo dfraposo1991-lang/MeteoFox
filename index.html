@@ -143,7 +143,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .metar-table{border:1px solid #d4e1eb;border-radius:10px;background:#fff;padding:12px;overflow:auto}
 .metar-table h3{font-size:13px;margin:0 0 9px;color:#1a3d5a}.metar-table table{width:100%;border-collapse:collapse;font-size:12px}.metar-table td,.metar-table th{padding:7px 5px;text-align:left;border-bottom:1px solid #e2e9ef;white-space:nowrap}.metar-chip{display:inline-block;min-width:62px;text-align:center;font-weight:800;border-radius:5px;padding:5px 7px}.metar-caveat{font-size:11px;color:#58778b;line-height:1.5}.metar-table-grid .metar-table{max-width:100%}
 @media(max-width:780px){.metar-table-grid{grid-template-columns:1fr}}
-</style></head>
+</style><link rel="stylesheet" href="./meteofox_meteograma.css">
+</head>
 <body>
 <div class="wrap">
 <header class="top">
@@ -164,7 +165,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
   <div class="card metric"><span class="ico">💨</span><div class="k">Vento</div><div class="v" id="wind">—</div><div class="u" id="gust">Rajada —</div></div>
  </div>
  <div class="grid two">
-  <div class="card"><h3>Evolução da temperatura · próximas 24 horas</h3><div class="chartbox"><canvas id="tempChart"></canvas></div></div>
+  <div class="card"><h3>Meteograma</h3><button class="meteo-preview" id="meteoPreview" type="button" aria-label="Ampliar meteograma ECMWF de Lisboa" disabled><svg id="meteoSmallSvg" aria-label="Nuvens, precipitação, temperatura e vento ao longo do tempo"></svg><span class="meteo-preview-hint">⛶ Ampliar</span></button><p id="meteoInfo" class="meteo-caption" role="status">A consultar dados ECMWF de Lisboa…</p></div>
   <div class="card"><h3>Previsão diária · 7 dias</h3><div id="daily" class="forecast"></div></div>
  </div>
  <div class="card" style="margin-top:13px"><h3>Previsão horária · próximas 12 horas</h3><div class="hourly"><div id="hours" class="hourrow"></div></div></div>
@@ -317,7 +318,7 @@ async function loadOverview(){
  }else{regionToken++;$('islandForecasts').style.display='none';$('islandForecasts').innerHTML='';}
  const [lat,lon]=island?[island[activeIsland[name]||0].lat,island[activeIsland[name]||0].lon]:places[name];current=[lat,lon];$('placeTitle').textContent='Previsão ECMWF IFS — '+(island?name+' / '+island[activeIsland[name]||0].name:name);$('coords').textContent=lat.toFixed(2)+'°N · '+Math.abs(lon).toFixed(2)+'°W';
  try{const d=await getForecast(lat,lon,'ecmwf_ifs025');const c=d.current,h=d.hourly,day=d.daily;$('temp').textContent=fmt(c.temperature_2m,1)+' °C';$('feels').textContent='Sensação '+fmt(c.apparent_temperature,1)+' °C';$('humidity').textContent=fmt(c.relative_humidity_2m)+' %';$('rain').textContent=fmt(c.precipitation,1)+' mm';$('wind').textContent=fmt(c.wind_speed_10m)+' kt';$('gust').textContent='Rajada '+fmt(c.wind_gusts_10m)+' kt';
- let idx=h.time.findIndex(t=>t>=c.time);if(idx<0)idx=0;let end=Math.min(idx+24,h.time.length),lab=timesLabels(h.time.slice(idx,end));chart('tempChart',lab,[{label:'Temperatura (°C)',data:h.temperature_2m.slice(idx,end),borderColor:'#51d6e7',backgroundColor:'#51d6e722',fill:true,tension:.32,pointRadius:0},{label:'Sensação térmica (°C)',data:h.apparent_temperature.slice(idx,end),borderColor:'#ffca72',tension:.32,pointRadius:0}]);
+
  $('daily').innerHTML=day.time.map((t,i)=>`<div class="day"><b>${dailyLabels([t])[0]}</b><div class="symbol">${weatherIcon(day.weather_code?.[i])}</div><strong>${fmt(day.temperature_2m_max[i])}°</strong><small>${fmt(day.temperature_2m_min[i])}° min</small><small>☔ ${fmt(day.precipitation_sum[i],1)} mm</small></div>`).join('');
  $('hours').innerHTML=h.time.slice(idx,idx+12).map((t,i)=>{let j=idx+i;return `<div class="hour"><span>${new Date(t+'Z').toLocaleTimeString('pt-PT',{hour:'2-digit',timeZone:'UTC'})}h</span><b>${fmt(h.temperature_2m[j],0)}°</b><span>☔ ${fmt(h.precipitation_probability[j])}%</span><em>${fmt(h.wind_speed_10m[j])} kt</em></div>`}).join('');
  const p=day.precipitation_sum.reduce((a,b)=>a+(b||0),0);$('summary').textContent=`Temperatura atual ${fmt(c.temperature_2m,1)} °C · vento ${fmt(c.wind_speed_10m)} kt · precipitação prevista nos próximos 7 dias: ${fmt(p,1)} mm.`;$('updated').textContent='Consulta '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
@@ -854,4 +855,12 @@ document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListene
 }));
 
 </script>
+<div id="meteoDialog" class="meteo-dialog" role="dialog" aria-modal="true" aria-labelledby="meteoModalTitle" hidden>
+ <div class="meteo-modal">
+  <div class="meteo-modal-head"><h2 id="meteoModalTitle">Meteograma · Lisboa</h2><button type="button" id="meteoClose" class="meteo-close" aria-label="Fechar meteograma ampliado">✕ Fechar</button></div>
+  <div class="meteo-modal-body"><svg id="meteoLargeSvg" role="img" aria-label="Meteograma ampliado de Lisboa com nebulosidade, precipitação, temperatura, direção do vento, vento médio e rajadas"></svg></div>
+  <div class="meteo-modal-foot"><button id="meteoPrevious" class="meteo-control" type="button" aria-label="Prazo anterior">◀</button><input id="meteoTimeSlider" type="range" min="0" max="29" value="0" step="1" aria-label="Selecionar prazo do meteograma"><button id="meteoNext" class="meteo-control" type="button" aria-label="Prazo seguinte">▶</button><div id="meteoDetails" class="meteo-details" aria-live="polite"></div></div>
+ </div>
+</div>
+<script src="./meteofox_meteograma.js" defer></script>
 </body></html>
