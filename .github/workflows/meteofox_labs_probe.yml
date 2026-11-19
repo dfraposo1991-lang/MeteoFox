@@ -1,0 +1,51 @@
+name: MeteoFox Labs | Ensaio ECMWF real (sem publicação)
+
+on:
+  push:
+    branches: [meteofox-meteograma-skewt-dev]
+    paths:
+      - '.github/workflows/meteofox_labs_probe.yml'
+      - 'gerar_produtos_experimentais.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar bibliotecas leves para ler GRIB2
+        run: python -m pip install 'ecmwf-opendata>=0.3,<1' 'eccodes>=2.38,<3'
+      - name: Descarregar um passo de superfície e uma sondagem real
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from datetime import timezone
+          from tempfile import TemporaryDirectory
+          from ecmwf.opendata import Client
+          from gerar_produtos_experimentais import (
+              LEVELS, LOCATIONS, SURFACE_PARAMS, PRESSURE_PARAMS,
+              extract_grib, request, build_surface_row, build_sounding, parse_cycle
+          )
+          client=Client(source="ecmwf",model="ifs",resol="0p25")
+          latest=client.latest(stream="oper",type="fc",levtype="sfc",step=3,param=list(SURFACE_PARAMS))
+          cycle=latest if latest.tzinfo else latest.replace(tzinfo=timezone.utc)
+          print("Ciclo ECMWF real selecionado:",cycle,flush=True)
+          with TemporaryDirectory() as d:
+              path=Path(d)/"probe.grib2"
+              request(client,cycle,3,SURFACE_PARAMS,path)
+              fields=extract_grib(path,3,cycle,{p:{p} for p in SURFACE_PARAMS},{"Lisboa":LOCATIONS["Lisboa"]})
+              row,_=build_surface_row(fields,3,cycle,None)
+              print("Meteograma de Lisboa: OK",row,flush=True)
+              request(client,cycle,6,PRESSURE_PARAMS,path,levtype="pl",levels=LEVELS)
+              fields=extract_grib(path,6,cycle,{p:{f"{p}@{l}" for l in LEVELS} for p in PRESSURE_PARAMS},LOCATIONS)
+              sounding=build_sounding(fields,6,cycle)
+              print("Sondagem: OK",len(sounding["cities"]),"localidades,",
+                    len(sounding["cities"]["Lisboa"]),"níveis",flush=True)
+          PY

@@ -1,0 +1,48 @@
+name: MeteoFox Labs | Guardar dados reais de teste
+
+on:
+  push:
+    branches: [meteofox-meteograma-skewt-dev]
+    paths: ['.github/workflows/meteofox_labs_seed.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  importar:
+    if: github.ref_name == 'meteofox-meteograma-skewt-dev'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Descarregar JSON real do ensaio completo aprovado
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p produtos_experimentais
+          gh run download 44534617727 --repo dfraposo1991-lang/MeteoFox --name meteofx-laboratorio-previa --dir /tmp/meteofx-labs-test
+          cp /tmp/meteofx-labs-test/produtos_experimentais/previsao_ecmwf.json produtos_experimentais/previsao_ecmwf.json
+      - name: Confirmar qualidade e guardar no ramo de desenvolvimento
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('produtos_experimentais/previsao_ecmwf.json')
+          data=json.loads(p.read_text())
+          assert len(data['meteogram_lisboa'])==30
+          assert [x['step_h'] for x in data['meteogram_lisboa']]==list(range(3,91,3))
+          assert len(data['soundings'])==9
+          assert all(set(x['cities'])=={'Lisboa','Porto','Beja'} for x in data['soundings'])
+          print('JSON experimental validado; ciclo:',data['run_utc'])
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add produtos_experimentais/previsao_ecmwf.json
+          git commit -m "Guardar previsão experimental ECMWF 90h validada" || true
+          git fetch origin meteofox-meteograma-skewt-dev
+          git rebase origin/meteofox-meteograma-skewt-dev
+          git push origin HEAD:meteofox-meteograma-skewt-dev

@@ -1,0 +1,57 @@
+name: MeteoFox Labs | Validar gráficos no navegador
+
+on:
+  push:
+    branches: [meteofox-meteograma-skewt-dev]
+    paths:
+      - 'laboratorio.html'
+      - 'tests/meteofox_labs_browser.mjs'
+      - '.github/workflows/meteofox_labs_browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Descarregar dados REAIS do ensaio +90h concluído
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p previa/produtos_experimentais
+          gh run download 44534617727 --repo dfraposo1991-lang/MeteoFox --name meteofx-laboratorio-previa --dir /tmp/meteofx-real
+          cp /tmp/meteofx-real/produtos_experimentais/previsao_ecmwf.json previa/produtos_experimentais/previsao_ecmwf.json
+          cp laboratorio.html previa/index.html
+          python - <<'PY'
+          import json
+          data=json.load(open('previa/produtos_experimentais/previsao_ecmwf.json'))
+          assert len(data['meteogram_lisboa'])==30 and len(data['soundings'])==9
+          print('Dados REAIS de ECMWF validados para o teste visual')
+          PY
+      - name: Instalar navegador de testes
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install chromium
+      - name: Testar gráficos com Playwright em desktop e telemóvel
+        run: |
+          cd previa
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/meteofx_labs_http.log 2>&1 &
+          cd ..
+          sleep 2
+          node tests/meteofox_labs_browser.mjs
+      - name: Guardar capturas de ecrã de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteofx-labs-capturas
+          path: capturas
+          retention-days: 5
+          if-no-files-found: ignore
