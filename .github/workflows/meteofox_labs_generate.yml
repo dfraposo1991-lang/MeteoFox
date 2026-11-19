@@ -1,4 +1,4 @@
-name: MeteoFox Labs | Gerar 120h e sondagens (isolado)
+name: MeteoFox Labs | Gerar 90h e sondagens (isolado)
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   gerar_experimento:
-    name: ECMWF 0p25 Lisboa +120h e sondagens
+    name: ECMWF 0p25 Lisboa +90h e sondagens
     runs-on: ubuntu-24.04
     timeout-minutes: 100
     steps:
@@ -22,7 +22,7 @@ jobs:
           python-version: '3.12'
       - name: Preparar leitor ECMWF/GRIB
         run: python -m pip install 'ecmwf-opendata>=0.3,<1' 'eccodes>=2.38,<3'
-      - name: Selecionar ciclo ECMWF 0p25 que tenha +120h e +48h
+      - name: Selecionar ciclo ECMWF 0p25 que tenha +90h e +48h
         shell: bash
         run: |
           python - <<'PY'
@@ -31,12 +31,12 @@ jobs:
           from pathlib import Path
           from gerar_produtos_experimentais import SURFACE_PARAMS,PRESSURE_PARAMS
           client=Client(source="ecmwf",model="ifs",resol="0p25")
-          surface=client.latest(stream="oper",type="fc",levtype="sfc",step=120,param=list(SURFACE_PARAMS))
+          surface=client.latest(stream="oper",type="fc",levtype="sfc",step=90,param=list(SURFACE_PARAMS))
           pressure=client.latest(stream="oper",type="fc",levtype="pl",step=48,param=list(PRESSURE_PARAMS))
-          for label,dt in [("120h superfície",surface),("48h pressão",pressure)]:
+          for label,dt in [("90h superfície",surface),("48h pressão",pressure)]:
               print(label,dt,flush=True)
           if surface!=pressure:
-              raise RuntimeError("Os produtos 120h superfície e 48h pressão ainda não são do mesmo ciclo")
+              raise RuntimeError("Os produtos 90h superfície e 48h pressão ainda não são do mesmo ciclo")
           Path("selected_cycle.txt").write_text(surface.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
           PY
       - name: Gerar e validar todos os produtos
@@ -47,8 +47,8 @@ jobs:
           import json
           from pathlib import Path
           data=json.loads(Path("produtos_experimentais/previsao_ecmwf.json").read_text())
-          assert len(data["meteogram_lisboa"])==40
-          assert data["meteogram_lisboa"][-1]["step_h"]==120
+          assert len(data["meteogram_lisboa"])==30
+          assert data["meteogram_lisboa"][-1]["step_h"]==90
           assert len(data["soundings"])==9
           assert set(data["soundings"][0]["cities"])=={"Porto","Lisboa","Beja"}
           print("Dados experimentais completos:",data["run_utc"])
