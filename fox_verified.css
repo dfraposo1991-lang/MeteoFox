@@ -1,0 +1,17 @@
+/* Fox Verified · respeita as variáveis de cor do portal existente */
+.fox-trigger{margin-left:auto;white-space:nowrap;background:var(--panel2);color:var(--cyan);border:1px solid var(--cyan);font-weight:700}
+.fox-trigger:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.fox-trigger[hidden],.fox-verified[hidden]{display:none!important}
+.fox-verified{margin:-1px 0 16px;border-color:var(--cyan);box-shadow:0 3px 15px #074c6e12}
+.fox-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.fox-panel-head strong{font-size:14px;color:var(--txt)}
+.fox-panel-head span{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.fox-table{width:100%;min-width:740px}
+.fox-table th,.fox-table td{text-align:left;padding:11px 12px;white-space:nowrap}
+.fox-table th{font-size:11px;color:var(--muted)}
+.fox-table td{font:12px 'DM Mono',monospace;color:var(--txt)}
+.fox-table td:first-child{font-family:Inter,system-ui,sans-serif;font-weight:700}
+.fox-table td.fox-delta{color:var(--cyan);font-weight:700}
+.fox-table td.fox-cell-note{font:11px Inter,system-ui,sans-serif;color:var(--muted)}
+.fox-wait{color:var(--muted);padding:16px 4px}.fox-fail{color:var(--red);padding:12px 4px}
+@media(max-width:650px){.fox-trigger{margin:6px 0 0}.fox-verified{padding:12px}.fox-table th,.fox-table td{padding:9px}}
