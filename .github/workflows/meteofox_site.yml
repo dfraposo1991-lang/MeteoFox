@@ -6,6 +6,10 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'fox_verified.js'
+      - 'fox_verified.css'
+      - 'data/aviation.json'
+      - 'data/synop.json'
       - 'meteofox_keyboard.js'
       - 'meteofox_meteograma.js'
       - 'meteofox_meteograma.css'
@@ -45,13 +49,25 @@ jobs:
           public.mkdir(exist_ok=True)
 
           # Publicar todas as paginas e o JavaScript do mapa grande.
-          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js', 'laboratorio.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js'):
+          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js', 'laboratorio.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
               source = Path(name)
               assert source.is_file() and source.stat().st_size > 0, f'{name} nao encontrado ou vazio'
               if name.endswith('.html'):
                   assert source.stat().st_size > 1000, f'{name} demasiado pequeno'
               shutil.copy2(source, public / name)
               print('Incluido no site:', name)
+
+          # Observações necessárias ao Fox Verified.
+          observations = public / 'data'
+          observations.mkdir(exist_ok=True)
+          for name in ('aviation.json', 'synop.json'):
+              source = Path('data') / name
+              assert source.is_file(), f'Dados observacionais em falta: {name}'
+              json_text = source.read_text(encoding='utf-8')
+              import json
+              json.loads(json_text)
+              shutil.copy2(source, observations / name)
+              print('Incluido no site: data/' + name)
 
           # Produtos ECMWF experimentais são ficheiros validados e versionados
           # no GitHub. Não dependem de serviços externos durante a publicação.
