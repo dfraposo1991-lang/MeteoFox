@@ -107,6 +107,7 @@ def ler_passo(path):
 
 def criar_html(run, steps, output):
     run_h = html.escape(run)
+    run_iso = datetime.strptime(run, '%d/%m/%Y %H:%M').replace(tzinfo=timezone.utc).isoformat().replace('+00:00','Z')
     names = json.dumps([f"{v:03d}" for v in steps])
     values = json.dumps([int(s) for s in steps])
     content = r'''<!doctype html>
@@ -125,10 +126,10 @@ button:hover{background:#3b6481}input[type=range]{flex:1;min-width:140px;accent-
 @media(max-width:850px){.panels{grid-template-columns:1fr}main{padding:10px}}
 </style></head><body>
 <header><h1>MeteoFox · ECMWF IFS · Chuva e Rajadas</h1>
-<p>Run: RUN_PLACEHOLDER UTC · previsões de 3 em 3 h até +48 h · ECMWF IFS Open Data (CC BY 4.0)</p></header>
+<p>Run: RUN_PLACEHOLDER UTC · previsões de 3 em 3 h até +54 h · ECMWF IFS Open Data (CC BY 4.0)</p></header>
 <main><div class="controls"><button id="play">▶ Reproduzir</button>
 <button id="previous">◀</button><input id="position" type="range" min="0" value="0"><button id="next">▶</button>
-<span id="time" class="time">+03 h</span></div>
+<span id="time" class="time">+09 h</span></div>
 <div class="panels"><div class="panel"><h2>Precipitação em 3 horas · mm</h2><img id="rain" alt="Precipitação ECMWF"></div>
 <div class="panel"><h2>Rajadas máximas · kt</h2><img id="wind" alt="Rajadas ECMWF"></div></div>
 <div class="foot">Use a linha temporal para consultar cada passo. Os vetores mostram a direção do vento a 10 m, não a direção das rajadas.</div></main>
@@ -138,7 +139,7 @@ const rain=document.getElementById('rain'),wind=document.getElementById('wind');
 const slider=document.getElementById('position'),time=document.getElementById('time'),play=document.getElementById('play');
 let n=0,timer=null;slider.max=hours.length-1;
 function render(){let s=files[n];rain.src='chuva_'+s+'.png';wind.src='rajadas_'+s+'.png';
-slider.value=n;time.textContent='+'+String(hours[n]).padStart(2,'0')+' h';}
+slider.value=n;const valid=new Date(Date.parse(RUN_ISO_PLACEHOLDER)+hours[n]*3600000);const when=new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(valid);time.textContent='+'+String(hours[n]).padStart(2,'0')+' h · '+when+' UTC';}
 function stop(){if(timer){clearInterval(timer);timer=null;}play.textContent='▶ Reproduzir';}
 function step(dir){n=(n+dir+hours.length)%hours.length;render();}
 play.addEventListener('click',()=>{if(timer){stop();return;}play.textContent='⏸ Pausar';
@@ -150,7 +151,8 @@ render();
 </script></body></html>'''
     content = (content.replace("RUN_PLACEHOLDER", run_h)
                      .replace("FILES_PLACEHOLDER", names)
-                     .replace("HOURS_PLACEHOLDER", values))
+                     .replace("HOURS_PLACEHOLDER", values)
+                     .replace("RUN_ISO_PLACEHOLDER", json.dumps(run_iso)))
     (output / "MeteoFox_animacao_48h.html").write_text(content, encoding="utf-8")
 
 
