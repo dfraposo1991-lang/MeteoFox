@@ -87,7 +87,7 @@ def extract_grib(path, expected_step, expected_cycle, expected_params, locations
                 cycle = datetime.strptime(f"{date}{time:04d}", "%Y%m%d%H%M").replace(tzinfo=UTC)
                 if step != expected_step or cycle != expected_cycle:
                     raise ValueError(f"GRIB inesperado: {param} passo {step}, ciclo {cycle}")
-                level = int(codes_get(gid, "level")) if "@" in expected_params[param] else None
+                level = int(codes_get(gid, "level")) if any("@" in k for k in expected_params[param]) else None
                 key = f"{param}@{level}" if level is not None else param
                 if key not in expected_params[param]:
                     continue
