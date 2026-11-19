@@ -179,7 +179,7 @@ def main():
         chosen=None; first=None
         for fmt,layer in variants:
             try:
-                first,query_url=query(base,3,fmt,layer)
+                first,query_url=query(base,9,fmt,layer)
                 chosen=(fmt,layer)
                 report['attempts'].append({'name':'probe_ok','step_h':9,'format':fmt,'layer_name_included':layer,'query_url':query_url})
                 print(f'Parâmetros aceites: {fmt}; layer_name={layer}',flush=True)
@@ -193,7 +193,7 @@ def main():
                     report['stop_reason']=f'Erro HTTP {exc.status}; interrompido sem insistir'
                     break
             except (ValueError,URLError,TimeoutError,OSError) as exc:
-                log_failure(exc,name=f'probe_{fmt}_layer_{layer}',step=3)
+                log_failure(exc,name=f'probe_{fmt}_layer_{layer}',step=9)
                 report['stop_reason']='Resposta inesperada, sem continuar pedidos';break
             time.sleep(5)
         if chosen is None:
