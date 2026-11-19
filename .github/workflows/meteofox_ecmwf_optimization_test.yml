@@ -1,0 +1,159 @@
+name: MeteoFox | Ensaio seguro de otimização ECMWF
+
+# Testa produção e conservação das 32 cartas, SEM publicar no Pages.
+# Não modifica a versão pública nem os quatro cron ECMWF em produção.
+on:
+  push:
+    branches: [meteofox-ecmwf-optimization-staged]
+    paths: ['.github/workflows/meteofox_ecmwf_optimization_test.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gerar:
+    name: Produzir e medir 32 mapas isoladamente
+    runs-on: ubuntu-24.04
+    timeout-minutes: 160
+    outputs:
+      run: ${{ steps.run_time.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Não alterar os pacotes aprovados; reutilizar ARQUIVOS .deb em vez de os
+      # descarregar repetidamente. A reinstalação em runner efémero é inevitável.
+      - name: Recuperar pacotes apt de execuções de teste anteriores
+        uses: actions/cache@v4
+        with:
+          path: .apt-deb-cache
+          key: meteofx-ubuntu24-ecmwf-deb-v1-${{ hashFiles('.github/workflows/meteofox_ecmwf_optimization_test.yml') }}
+          restore-keys: |
+            meteofx-ubuntu24-ecmwf-deb-v1-
+
+      - name: Instalar dependências sem alterar o ambiente de produção
+        shell: bash
+        run: |
+          set -euo pipefail
+          start=$(date +%s)
+          sudo mkdir -p /var/cache/apt/archives
+          if test -d .apt-deb-cache; then
+            sudo cp -n .apt-deb-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+          fi
+          sudo apt-get update
+          sudo apt-get -o APT::Keep-Downloaded-Packages=true install -y \
+            python3-venv python3-eccodes python3-numpy \
+            python3-matplotlib python3-cartopy libeccodes-tools
+          mkdir -p .apt-deb-cache
+          sudo cp -n /var/cache/apt/archives/*.deb .apt-deb-cache/ 2>/dev/null || true
+          echo "Instalação apt: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Recuperar cache de pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: meteofx-ecmwf-pip-ubuntu24-py3-v1
+
+      - name: Preparar Python meteorológico
+        run: |
+          start=$(date +%s)
+          /usr/bin/python3 -m venv --system-site-packages .venv
+          .venv/bin/python -m pip install 'ecmwf-opendata>=0.3,<1'
+          echo "Preparar Python: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Escolher um ciclo ECMWF disponível para teste sem publicar
+        id: run_time
+        shell: bash
+        run: |
+          start=$(date +%s)
+          .venv/bin/python - <<'PY'
+          from datetime import timezone
+          from ecmwf.opendata import Client
+          from pathlib import Path
+          import os
+          client=Client(source="ecmwf",model="ifs",resol="0p1")
+          params=["tp","10fg","10u","10v"]
+          cycles=[client.latest(stream="oper",type="fc",levtype="sfc",step=step,param=params)
+                  for step in range(3,49,3)]
+          if len(set(cycles))!=1: raise RuntimeError(f"0p1: ciclo incompleto {cycles}")
+          run=cycles[0].astimezone(timezone.utc)
+          Path("cycle.txt").write_text(run.strftime("%Y-%m-%dT%H:%M:%SZ"))
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write("run="+run.strftime("%Y-%m-%dT%H:%M:%SZ")+"\n")
+          print("Ciclo completo de teste",run)
+          PY
+          echo "Verificação disponibilidade: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Descarregar e verificar 16 GRIB sem publicação
+        run: |
+          start=$(date +%s)
+          export ECMWF_EXPECTED_RUN_UTC="$(cat cycle.txt)"
+          .venv/bin/python descarregar_meteofox_48h.py
+          .venv/bin/python - <<'PY'
+          from pathlib import Path
+          import json
+          root=Path("dados_meteofox_48h")
+          index=json.loads((root/"ultimo_run.json").read_text())
+          for step in range(3,49,3):
+              f=root/index["pasta"]/f"step_{step:03d}.grib2"
+              assert f.is_file() and f.stat().st_size>100_000, f
+          print("16 GRIB validados")
+          PY
+          echo "Descarregamento+GRIB: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Gerar e contar 32 PNG isolados
+        run: |
+          start=$(date +%s)
+          .venv/bin/python gerar_meteofox_48h.py
+          .venv/bin/python - <<'PY'
+          from pathlib import Path
+          import json
+          info=json.loads(Path("dados_meteofox_48h/ultimo_run.json").read_text())
+          name="MeteoFox_48h_"+info["run"][:10].replace("-","")+"_"+info["run"][11:13]+"UTC"
+          path=Path(name)
+          files=[path/f"{kind}_{step:03d}.png" for step in range(3,49,3) for kind in ("chuva","rajadas")]
+          assert len(files)==32 and all(f.is_file() and f.stat().st_size>10000 for f in files)
+          print("32 cartas validadas",name)
+          PY
+          echo "Geração e validação: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Empacotar mapas como artefacto isolado
+        run: |
+          mkdir -p mapas-para-teste
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,shutil
+          info=json.loads(Path("dados_meteofox_48h/ultimo_run.json").read_text())
+          path=Path("MeteoFox_48h_"+info["run"][:10].replace("-","")+"_"+info["run"][11:13]+"UTC")
+          for step in range(3,49,3):
+              for kind in ("chuva","rajadas"):
+                  shutil.copy2(path/f"{kind}_{step:03d}.png",Path("mapas-para-teste")/f"{kind}_{step:03d}.png")
+          Path("mapas-para-teste/cycle.txt").write_text(info["run"])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meteofx-32-cartas-teste
+          path: mapas-para-teste
+          retention-days: 3
+
+  verificar_pacote:
+    name: Validar artefacto sem aceder ao Pages
+    needs: gerar
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: meteofx-32-cartas-teste
+          path: mapas-isolados
+      - name: Garantir que produção não pressupõe publicação
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('mapas-isolados')
+          files=list(p.glob('*.png'))
+          assert len(files)==32,f"Esperados 32 PNG, encontrados {len(files)}"
+          assert all(f.stat().st_size>10000 for f in files)
+          assert (p/'cycle.txt').is_file()
+          print('Validação isolada de 32 mapas OK; nenhuma publicação efetuada')
+          PY
