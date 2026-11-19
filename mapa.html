@@ -40,15 +40,34 @@ header{flex:none;position:relative;z-index:1100}
 .map-legends-panel .metar-table-grid{grid-template-columns:1fr 1fr}
 @media(max-width:850px){.map-overlays{top:7px;left:7px;right:7px;padding:8px;max-height:52%}.map-legends-panel{top:7px;right:7px;bottom:7px;width:calc(100% - 14px)}.map-legends-panel .metar-table-grid{grid-template-columns:1fr}#satTools .sat-status,#satTools .sat-attribution{flex-basis:100%}}
 @media(max-width:480px){header{padding:8px 10px}header strong{font-size:17px}header span{font-size:10px}.map-overlays .toolbar button{font-size:11px;padding:6px 8px}#satTools button{font-size:11px;padding:6px 8px}.map-overlays{max-height:54%}}
+</style><style id="meteofox-header-controls-v2">
+.map-header{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;background:#f7fbff;color:#16466f;padding:11px 16px;box-shadow:0 1px 6px #103b5b1f;flex-wrap:wrap}
+.map-brand{display:flex;align-items:center;gap:11px 18px;min-width:0;color:#124b7d;text-decoration:none;flex-wrap:wrap}
+.map-brand strong{font-size:22px;white-space:nowrap}
+.map-brand span{font-size:12px;font-weight:500;color:#57758f;opacity:1;white-space:nowrap}
+.header-buttons{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.header-buttons button{border:1px solid #bcd9ed;background:#fff;color:#165385;border-radius:9px;padding:9px 12px;font:650 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.header-buttons button:hover{background:#edf7ff}
+.header-buttons button:focus-visible{outline:2px solid #07518b;outline-offset:2px}
+.map-overlays{top:14px;left:14px;right:auto;width:max-content;max-width:calc(100% - 28px);max-height:45%;padding:8px 11px;background:rgba(22,53,78,.22);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.20);border-radius:13px;box-shadow:none;overflow:auto}
+#satTools{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:0;border:0;max-width:100%}
+#satTools button{background:rgba(245,250,255,.78);color:#17466c;border:1px solid rgba(255,255,255,.8);padding:7px 10px;border-radius:8px}
+#satTools button[aria-pressed=true]{background:rgba(7,81,139,.85);color:#fff}
+#satTools label,#satTools .sat-clock{color:#fff;text-shadow:0 1px 4px #123}
+#satTools input[type=range]{accent-color:#77c6ff;max-width:210px}
+#satTools .sat-status,#satTools .sat-attribution{color:#fff;text-shadow:0 1px 4px #123;font-size:10px;flex-basis:100%}
+#satTools a{color:#fff!important}
+.map-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+@media(max-width:1250px){.map-header{justify-content:center}.map-brand{justify-content:center}.header-buttons{justify-content:center}}
+@media(max-width:650px){.map-header{padding:9px 7px;gap:7px}.map-brand strong{font-size:18px}.map-brand span{font-size:10px}.header-buttons{gap:4px}.header-buttons button{font-size:10px;padding:7px 8px}.map-overlays{top:7px;left:7px;right:7px;max-width:none;width:auto;padding:7px;max-height:45%}#satTools button{font-size:10px;padding:6px 8px}#satTools input[type=range]{max-width:125px}}
 </style></head><body>
-<header><div><strong>⛅ MeteoFox</strong> <span>Mapa meteorológico · Portugal e Ilhas</span></div><a href="./index.html">← Voltar ao MeteoFox</a></header>
+<header class="map-header"><a class="map-brand" href="./index.html" title="Voltar à página principal do MeteoFox"><strong>⛅ MeteoFox</strong><span>Mapa meteorológico · Portugal e Ilhas</span></a><nav class="header-buttons" aria-label="Regiões e ferramentas do mapa">
+<button id="all" type="button">Portugal e Ilhas</button><button id="mainland" type="button">Continente</button><button id="islands" type="button">Açores</button><button id="madeira" type="button">Madeira</button><button id="refresh" type="button">↻ Atualizar boletins</button><button id="showLegends" type="button" aria-expanded="false" aria-controls="mapLegends">☰ Legendas METAR e Voo</button>
+</nav></header>
 <main id="mapMain">
 <div id="largeMap" aria-label="Mapa interativo de aeródromos e imagens de satélite"></div>
-<div class="map-overlays">
-<div class="toolbar"><button id="all">Portugal e Ilhas</button><button id="mainland">Continente</button><button id="islands">Açores</button><button id="madeira">Madeira</button><button id="refresh">↻ Atualizar boletins</button><span id="count" aria-live="polite">A carregar mapa…</span></div>
-<div id="satTools" aria-label="Controlos Meteosat e radar"></div>
-<div class="map-footer-controls"><button id="showLegends" type="button" aria-expanded="false" aria-controls="mapLegends">☰ Legendas METAR e Voo</button><span id="source">METAR/SPECI OGIMET · TAF NOAA, recolhidos pelo MeteoFox</span></div>
-</div>
+<div class="map-overlays"><div id="satTools" aria-label="Controlos Meteosat e radar"></div></div>
+<div class="map-visually-hidden" aria-live="polite"><span id="count">A carregar mapa…</span><span id="source">METAR/SPECI OGIMET · TAF NOAA, recolhidos pelo MeteoFox</span></div>
 <aside id="mapLegends" class="map-legends-panel" hidden aria-label="Tabelas de cores METAR e categorias de voo">
 <div class="map-legends-head"><strong>Legendas meteorológicas</strong><button id="closeLegends" type="button" aria-label="Fechar legendas">✕</button></div>
 <div class="legend"><span><i style="background:#2563eb"></i>BLU</span><span><i style="background:#f8fafc"></i>WHT</span><span><i style="background:#16a34a"></i>GRN</span><span><i style="background:#facc15"></i>YLO1</span><span><i style="background:#eab308"></i>YLO2</span><span><i style="background:#f59e0b"></i>AMB</span><span><i style="background:#dc2626"></i>RED</span><span><i style="background:#89939e"></i>Indisponível</span></div><div class="metar-table-grid">
