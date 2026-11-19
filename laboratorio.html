@@ -49,10 +49,10 @@ function plot(id,rows,series,{zero=false,bar=false}={}){
 }
 function drawSkew(group,city){
  const svg=$('skew');svg.replaceChildren();const X=73,Y=30,W=598,H=490,pTop=200,pBottom=1000;
- const y=p=>Y+Math.log(pBottom/p)/Math.log(pBottom/pTop)*H;
- const x=(t,p)=>X+(t+70)*6.2 + 68*Math.log(pBottom/p);
+ const y=p=>Y+Math.log(p/pTop)/Math.log(pBottom/pTop)*H;
+ const x=(t,p)=>X+(t+80)*4.3 + 55*Math.log(pBottom/p);
  for(const p of [1000,925,850,700,600,500,400,300,250,200]){const yy=y(p);add(svg,'line',{x1:X,y1:yy,x2:X+W,y2:yy,stroke:'#34526b'});add(svg,'text',{x:22,y:yy+4},p+'')}
- for(let t=-80;t<=60;t+=10){add(svg,'line',{x1:x(t,1000),y1:y(1000),x2:x(t,200),y2:y(200),stroke:'#29465d','stroke-dasharray':'3 4'});add(svg,'text',{x:x(t,1000)-9,y:546},String(t))}
+ for(let t=-80;t<=40;t+=10){add(svg,'line',{x1:x(t,1000),y1:y(1000),x2:x(t,200),y2:y(200),stroke:'#29465d','stroke-dasharray':'3 4'});add(svg,'text',{x:x(t,1000)-9,y:546},String(t))}
  add(svg,'text',{x:20,y:17},'hPa');add(svg,'text',{x:250,y:564},'Temperatura °C · linhas inclinadas: isotérmicas');
  const lines=[['temp_c','#ff826f'],['dewpoint_c','#67e3bb']];
  for(const [key,color] of lines){const points=group.map(r=>x(r[key],r.hpa)+','+y(r.hpa)).join(' ');add(svg,'polyline',{points,fill:'none',stroke:color,'stroke-width':3,'stroke-linejoin':'round'});for(const r of group)add(svg,'circle',{cx:x(r[key],r.hpa),cy:y(r.hpa),r:3,fill:color})}
