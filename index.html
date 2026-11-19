@@ -30,6 +30,16 @@
 .obs-popup p{margin:4px 0}
 .obs-notice{color:var(--muted);font-size:11px;line-height:1.5}
 @media(max-width:650px){.obs-map{height:390px}}
+
+/* MeteoFox 4: cartas ECMWF sem iframe, integradas na página. */
+.ecmwf-native{width:100%;min-width:0}.ecmwf-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 15px}
+.ecmwf-controls input[type=range]{flex:1 1 220px;min-width:140px;accent-color:var(--cyan)}
+.ecmwf-controls strong{min-width:112px;font:700 12px 'DM Mono',monospace;color:var(--txt)}
+.ecmwf-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.ecmwf-field{min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:10px;overflow:hidden}
+.ecmwf-field h4{font-size:12px;color:var(--txt);padding:11px 13px;margin:0;border-bottom:1px solid var(--line)}
+.ecmwf-field img{display:block;width:100%;height:auto;background:#e7edf4}
+@media(max-width:750px){.ecmwf-fields{grid-template-columns:1fr}.ecmwf-controls strong{width:100%}}
 </style>
 <style id="meteofox-v1-brand"> 
 /* MeteoFox professional visual refresh. Overrides only the original palette/layout. */
@@ -128,7 +138,12 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .sat-widgets .sat-status{font-size:11px;color:#526b7e;flex-basis:100%}
 .sat-widgets .sat-attribution{font-size:10px;color:#667f93;flex-basis:100%}
 </style>
-</head>
+<style id="meteofox-4-legends">
+.metar-table-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.metar-table{border:1px solid #d4e1eb;border-radius:10px;background:#fff;padding:12px;overflow:auto}
+.metar-table h3{font-size:13px;margin:0 0 9px;color:#1a3d5a}.metar-table table{width:100%;border-collapse:collapse;font-size:12px}.metar-table td,.metar-table th{padding:7px 5px;text-align:left;border-bottom:1px solid #e2e9ef;white-space:nowrap}.metar-chip{display:inline-block;min-width:62px;text-align:center;font-weight:800;border-radius:5px;padding:5px 7px}.metar-caveat{font-size:11px;color:#58778b;line-height:1.5}.metar-table-grid .metar-table{max-width:100%}
+@media(max-width:780px){.metar-table-grid{grid-template-columns:1fr}}
+</style></head>
 <body>
 <div class="wrap">
 <header class="top">
@@ -137,7 +152,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa" selected>Lisboa</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
 </header>
 <nav class="tabs">
- <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">🌧 Chuva, Rajadas e Satélite Simulado</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
+ <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">▤ Produtos</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
 </nav>
 <section id="overview" class="section active">
  <div class="heading"><div><h2 id="placeTitle">Previsão ECMWF IFS — Lisboa</h2><div class="sub" id="summary">A obter previsão ECMWF IFS…</div></div><span class="status" id="coords"></span></div>
@@ -176,8 +191,20 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="card">
   <h3>Precipitação (mm) e rajadas de vento (kt)</h3>
   <p class="note" style="margin-top:0;margin-bottom:12px">Os mapas mantêm a cartografia, as cores e as setas que aprovámos. A linha temporal sincroniza os dois campos de 3 em 3 horas.</p>
-  <div class="meteomap-frame"><iframe id="ecmwfMapsFrame" title="Mapas ECMWF MeteoFox: precipitação e rajadas sincronizadas" src="./MeteoFox_animacao_48h.html" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe></div>
-  <div class="meteomap-links"><a class="action" href="https://dfraposo1991-lang.github.io/MeteoFox/" target="_blank" rel="noopener noreferrer">↗ Abrir cartas ECMWF numa nova janela</a><span class="note">Os mapas são servidos pelo GitHub Pages e atualizados sem o computador ligado. Se o painel estiver indisponível, utiliza o link.</span></div>
+  <div class="ecmwf-native" aria-label="Produtos ECMWF: chuva e rajadas">
+    <div class="ecmwf-controls">
+      <button class="action" id="ecmwfPrevious" type="button">◀ Anterior</button>
+      <button class="action" id="ecmwfPlay" type="button">▶ Animar</button>
+      <button class="action" id="ecmwfNext" type="button">Seguinte ▶</button>
+      <input id="ecmwfSlider" aria-label="Prazo comum da chuva e rajadas" type="range" min="0" max="15" step="1" value="0">
+      <strong id="ecmwfStep" aria-live="polite">+03 h · 1 / 16</strong>
+    </div>
+    <div class="ecmwf-fields">
+      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"></div>
+      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"></div>
+    </div>
+    <p id="ecmwfMessage" class="note" aria-live="polite">16 passos · +3 a +48 h · imagens atualizadas pelo GitHub Pages.</p>
+  </div>
   <p class="note">Fonte: ECMWF IFS Open Data (CC BY 4.0). A chuva apresentada é acumulada nas últimas 3 horas. As cores das rajadas indicam intensidade máxima; as setas representam a direção do vento a 10 m. Os passos são de 3 horas e não horários.</p>
  </div>
 
@@ -211,8 +238,23 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
    <div class="obs-map-head"><h3>Mapa meteorológico de aeródromos</h3><span class="status" id="aviMapStatus">A carregar…</span></div>
     <div id="aviationMap" class="obs-map" role="application" aria-label="Mapa de categorias meteorológicas dos aeródromos"></div>
     <p class="obs-notice"><a href="./mapa.html" style="color:#07518b;font-weight:700">⛶ Abrir mapa meteorológico em grande</a> · As imagens Meteosat animadas estão disponíveis apenas no mapa em grande, para manter esta página leve.</p>
-   <div class="obs-legend" id="aviMapLegend"><span><i class="obs-dot" style="background:#2176ff"></i>AZ</span><span><i class="obs-dot" style="background:#19aa66"></i>VD</span><span><i class="obs-dot" style="background:#ffe04d"></i>AM</span><span><i class="obs-dot" style="background:#f49b24"></i>AB</span><span><i class="obs-dot" style="background:#dc3044"></i>VM</span><span><i class="obs-dot" style="background:#8a939d"></i>Sem METAR / classificação indisponível</span></div>
-   <p class="obs-notice">Classificação visual calculada a partir do METAR disponível. AZ/VD/AM/AB/VM e VFR/MVFR/IFR/LIFR são escalas distintas. As observações podem estar desatualizadas; a categoria não substitui informação aeronáutica oficial. Ao selecionar um marcador são apresentados os boletins originais.</p>
+   <div class="obs-legend" id="aviMapLegend"><span><i class="obs-dot" style="background:#2563eb"></i>BLU</span><span><i class="obs-dot" style="background:#f8fafc"></i>WHT</span><span><i class="obs-dot" style="background:#16a34a"></i>GRN</span><span><i class="obs-dot" style="background:#facc15"></i>YLO1</span><span><i class="obs-dot" style="background:#eab308"></i>YLO2</span><span><i class="obs-dot" style="background:#f59e0b"></i>AMB</span><span><i class="obs-dot" style="background:#dc2626"></i>RED</span><span><i class="obs-dot" style="background:#89939e"></i>Indisponível</span></div><div class="metar-table-grid">
+<section class="metar-table"><h3>MILITARY COLOUR CODE</h3><table><thead><tr><th>Código</th><th>Visibilidade</th><th>Teto</th></tr></thead><tbody>
+<tr><td><span class="metar-chip" style="background:#2563eb;color:white">BLU</span></td><td>≥ 8000 m</td><td>≥ 2500 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#f8fafc;color:#192735">WHT</span></td><td>≥ 5000 m</td><td>≥ 1500 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#16a34a;color:white">GRN</span></td><td>≥ 3700 m</td><td>≥ 700 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#facc15;color:#192735">YLO1</span></td><td>≥ 2500 m</td><td>≥ 500 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#eab308;color:#192735">YLO2</span></td><td>≥ 1600 m</td><td>≥ 300 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#f59e0b;color:#192735">AMB</span></td><td>≥ 800 m</td><td>≥ 200 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#dc2626;color:white">RED</span></td><td>&lt; 800 m</td><td>&lt; 200 ft</td></tr>
+</tbody></table></section>
+<section class="metar-table"><h3>FLIGHT CATEGORY</h3><table><thead><tr><th>Código</th><th>Visibilidade</th><th>Teto</th></tr></thead><tbody>
+<tr><td><span class="metar-chip" style="background:#16a34a;color:white">VFR</span></td><td>&gt; 5 SM</td><td>&gt; 3000 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#2563eb;color:white">MVFR</span></td><td>3–5 SM</td><td>1000–3000 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#dc2626;color:white">IFR</span></td><td>1–&lt;3 SM</td><td>500–&lt;1000 ft</td></tr>
+<tr><td><span class="metar-chip" style="background:#9333ea;color:white">LIFR</span></td><td>&lt;1 SM</td><td>&lt;500 ft</td></tr>
+</tbody></table></section></div><p class="metar-caveat">Categoria determinada pela condição mais restritiva de visibilidade e teto. SM = milha terrestre. Classificação indicativa baseada no METAR disponível; não substitui informação aeronáutica oficial.</p>
+   <p class="obs-notice">Classificação visual calculada a partir do METAR disponível. BLU/WHT/GRN/YLO1/YLO2/AMB/RED e VFR/MVFR/IFR/LIFR são escalas distintas. As observações podem estar desatualizadas; a categoria não substitui informação aeronáutica oficial. Ao selecionar um marcador são apresentados os boletins originais.</p>
  </div>
  <div class="card aviation-panel">
   <div class="aviation-toolbar">
@@ -530,7 +572,7 @@ $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
 async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
 function showRadar(i){if(!radarFrames.length||!map)return;radarIndex=Math.max(0,Math.min(i,radarFrames.length-1));if(radarLayer)map.removeLayer(radarLayer);let frame=radarFrames[radarIndex];radarLayer=L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.72,zIndex:10,attribution:'Radar © RainViewer'});if(radarOn)radarLayer.addTo(map);let d=new Date(frame.time*1000);$('radarTime').textContent=d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust')visLoad();if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
+function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust'){visLoad();ecmwfInit();}if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
 function switchObservation(which){
  const radar=which==='radar';
@@ -559,6 +601,29 @@ $('radarLatest').onclick=()=>showRadar(radarFrames.length-1);
 $('radarPlay').onclick=()=>{if(radarTimer){clearInterval(radarTimer);radarTimer=null;$('radarPlay').textContent='▶ Animar'}else{$('radarPlay').textContent='Ⅱ Pausar';radarTimer=setInterval(()=>showRadar((radarIndex+1)%radarFrames.length),650)}};
 (async()=>{await loadOverview();initMap()})();
 
+
+/* Os 16 passos das duas cartas usam o mesmo índice; radar/Meteosat não é alterado. */
+const ECMWF_STEPS=Array.from({length:16},(_,i)=>(i+1)*3);
+let ecmwfAt=0,ecmwfTimer=null,ecmwfReady=false;
+function ecmwfRender(i){
+ ecmwfAt=(i+ECMWF_STEPS.length)%ECMWF_STEPS.length;
+ const step=String(ECMWF_STEPS[ecmwfAt]).padStart(3,'0');
+ $('ecmwfRain').src='./chuva_'+step+'.png';
+ $('ecmwfGust').src='./rajadas_'+step+'.png';
+ $('ecmwfSlider').value=String(ecmwfAt);
+ $('ecmwfStep').textContent='+'+String(ECMWF_STEPS[ecmwfAt]).padStart(2,'0')+' h · '+(ecmwfAt+1)+' / 16';
+}
+function ecmwfStop(){if(ecmwfTimer){clearInterval(ecmwfTimer);ecmwfTimer=null}$('ecmwfPlay').textContent='▶ Animar'}
+function ecmwfInit(){
+ if(ecmwfReady)return;ecmwfReady=true;
+ $('ecmwfPrevious').onclick=()=>{ecmwfStop();ecmwfRender(ecmwfAt-1)};
+ $('ecmwfNext').onclick=()=>{ecmwfStop();ecmwfRender(ecmwfAt+1)};
+ $('ecmwfSlider').oninput=e=>{ecmwfStop();ecmwfRender(Number(e.target.value))};
+ $('ecmwfPlay').onclick=()=>{if(ecmwfTimer){ecmwfStop();return}$('ecmwfPlay').textContent='Ⅱ Pausar';ecmwfTimer=setInterval(()=>ecmwfRender(ecmwfAt+1),1100)};
+ const unavailable=()=>{$('ecmwfMessage').textContent='Não foi possível carregar as cartas ECMWF; confirma os 32 PNG no GitHub Pages.'};
+ $('ecmwfRain').onerror=unavailable;$('ecmwfGust').onerror=unavailable;
+ ecmwfRender(0);
+}
 /* ECMWF VIS simulado: manifesto e imagens servidos de forma independente do deploy GitHub Pages. */
 const VIS_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_vis/';
 let visData=null,visAt=0,visTimer=null,visLoading=null;
@@ -697,21 +762,13 @@ function obsMetarParsed(item){
  return {raw,complete,visibility,ceiling:hasCeiling?ceiling:Infinity,significant,
   reason:complete?'':'Visibilidade ou informação de nebulosidade ausente/não reconhecida'};
 }
+const MILITARY_SCALE=[["BLU","#2563eb",8000,2500],["WHT","#f8fafc",5000,1500],["GRN","#16a34a",3700,700],["YLO1","#facc15",2500,500],["YLO2","#eab308",1600,300],["AMB","#f59e0b",800,200],["RED","#dc2626",0,0]];
 function obsClasses(item){
  const p=obsMetarParsed(item);
  if(!p||!p.complete)return {color:'#89939e',code:'—',flight:'Indisponível',parsed:p};
  const v=p.visibility,c=p.ceiling;
- // Escala AZ/VD/AM/AB/VM: usa o critério mais restritivo visibilidade/teto.
- let severity=0;
- if(v<1000||c<200)severity=4;
- else if(v<1600||c<500)severity=3;
- else if(v<5000||c<1500)severity=2;
- else if(v<10000||c<=5000)severity=1;
- // Tempo significativo impede AZ; em trovoada impede também VD.
- if(p.significant)severity=Math.max(severity,2);
- const choices=[['AZ','#2176ff'],['VD','#19aa66'],['AM','#ffe04d'],['AB','#f49b24'],['VM','#dc3044']];
- const [code,color]=choices[severity];
- // FAA flight category thresholds: visibilidade em statute miles; ceiling AGL ft.
+ const band=MILITARY_SCALE.find(([name,color,vis,base])=>v>=vis&&c>=base)||MILITARY_SCALE[MILITARY_SCALE.length-1];
+ const [code,color]=band;
  const miles=v/1609.344;
  let flight='VFR';
  if(miles<1||c<500)flight='LIFR';

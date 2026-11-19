@@ -1,0 +1,48 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1440,height:900}});
+const errors=[];
+page.on('pageerror',e=>errors.push(String(e)));
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lQAAAABJRU5ErkJggg==','base64');
+const respondPNG=r=>r.fulfill({status:200,contentType:'image/png',body:png,headers:{'access-control-allow-origin':'*'}});
+const current=Math.floor(Date.now()/600000)*600000;
+const frames=Array.from({length:5},(_,i)=>current-(4-i)*600000);
+await page.route(/\/(chuva|rajadas)_\d{3}\.png(?:\?.*)?$/,respondPNG);
+await page.route('**/api.rainviewer.com/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({host:'https://tilecache.rainviewer.com',radar:{past:frames.map((t,i)=>({time:Math.floor(t/1000),path:'/mock'+i}))}})}));
+await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString())})}));
+await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
+await page.route(/tilecache\.rainviewer\.com/,respondPNG);
+await page.route(/tile\.openstreetmap\.org/,respondPNG);
+await page.route(/view\.eumetsat\.int/,respondPNG);
+
+try{
+ await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
+ assert.equal(await page.locator('[data-tab="precipGust"]').innerText(),'▤ Produtos');
+ await page.locator('[data-tab="precipGust"]').click();
+ await page.waitForFunction(()=>document.getElementById('ecmwfRain')?.getAttribute('src')?.includes('chuva_003.png'));
+ const first=await page.locator('#ecmwfRain').getAttribute('src');
+ const satValueBefore=await page.locator('#visSimSlider').inputValue();
+ await page.locator('#ecmwfNext').click();
+ const r=await page.locator('#ecmwfRain').getAttribute('src'),w=await page.locator('#ecmwfGust').getAttribute('src');
+ assert.equal(first,'./chuva_003.png');assert.equal(r,'./chuva_006.png');assert.equal(w,'./rajadas_006.png');
+ assert.equal(await page.locator('#visSimSlider').inputValue(),satValueBefore);
+ await page.locator('#ecmwfSlider').fill('15');
+ assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_048.png');
+ assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_048.png');
+ await page.locator('[data-tab="aerodromes"]').click();
+ assert.equal(await page.locator('#aerodromes .metar-table:first-child tbody tr').count(),7);
+ assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
+ await page.goto('http://127.0.0.1:8765/mapa.html',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.waitForSelector('#satTools button',{timeout:25000});
+ assert.equal(await page.locator('.metar-table:first-child tbody tr').count(),7);
+ assert.equal(await page.locator('.metar-table:nth-child(2) tbody tr').count(),4);
+ await page.getByRole('button',{name:/Satélite: desligado/}).click();
+ await page.getByRole('button',{name:/Radar: desligado/}).click();
+ await page.waitForFunction(()=>{const slider=document.querySelector('#satTools input[type="range"]');return slider&&!slider.disabled&&Number(slider.max)>=1;},{timeout:15000});
+ const endText=await page.locator('#satTools .sat-clock').last().innerText();
+ assert.ok(endText.includes('Z'),endText);
+ console.log('PASS: Produtos, 16 passos chuva+rajadas, independência VIS, tabelas METAR, mapa radar/Meteosat sincronizado');
+ assert.deepEqual(errors,[],'Erros JavaScript inesperados');
+}finally{await browser.close();}
