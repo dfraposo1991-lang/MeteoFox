@@ -33,13 +33,9 @@ let request=0;
 let focusBefore=null;
 function closeFox(){
  const panel=$('foxVerifiedPanel'),button=$('foxVerifiedButton');
- if(!panel||panel.hidden)return;
+ if(!panel||!panel.open)return;
  request++;
- panel.hidden=true;
- document.body.classList.remove('fox-modal-open');
- button?.setAttribute('aria-expanded','false');
- if(button)button.disabled=false;
- if(focusBefore?.isConnected)focusBefore.focus();else button?.focus();
+ panel.close();
 }
 function showFox(panel,html){
  panel.innerHTML='<div class="fox-modal" role="document">'+html+'</div>';
@@ -51,9 +47,10 @@ async function verify(){
  const id=++request;
  focusBefore=document.activeElement;
  button.disabled=true;panel.hidden=false;
- document.body.classList.add('fox-modal-open');
- button.setAttribute('aria-expanded','true');
  showFox(panel,'<div class="fox-panel-head"><div><strong>Fox Verified · '+esc(place)+'</strong><span>ECMWF IFS × observações instrumentais</span></div><button type="button" class="action" data-fox-close>✕ Fechar</button></div><div class="fox-wait" role="status">A consultar previsões ECMWF e observações METAR/SYNOP…</div>');
+ panel.showModal();
+ button.setAttribute('aria-expanded','true');
+ panel.querySelector('[data-fox-close]')?.focus();
  try{
   const url='https://api.open-meteo.com/v1/forecast?latitude='+info.lat+'&longitude='+info.lon+
    '&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation'+
@@ -105,15 +102,22 @@ function init(){
  button.type='button';button.id='foxVerifiedButton';button.className='action fox-trigger';
  button.textContent='✓ Fox Verified';button.setAttribute('aria-controls','foxVerifiedPanel');button.setAttribute('aria-expanded','false');
  heading.append(button);
- const panel=document.createElement('section');panel.id='foxVerifiedPanel';panel.className='card fox-verified';panel.hidden=true;
- panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Fox Verified · comparação meteorológica');
+ const panel=document.createElement('dialog');panel.id='foxVerifiedPanel';panel.className='fox-verified';panel.hidden=true;
+ panel.setAttribute('aria-label','Fox Verified · comparação meteorológica');
  document.body.append(panel);
  panel.addEventListener('click',event=>{
-  if(event.target===panel||event.target.closest?.('[data-fox-close]'))closeFox();
+  if(event.target.closest?.('[data-fox-close]')){closeFox();return;}
+  if(event.target===panel)closeFox();
  });
- document.addEventListener('keydown',event=>{if(!panel.hidden&&event.key==='Escape'){event.preventDefault();closeFox();}});
+ panel.addEventListener('close',()=>{
+  request++;
+  panel.hidden=true;
+  button.setAttribute('aria-expanded','false');
+  button.disabled=false;
+  if(focusBefore?.isConnected)focusBefore.focus();else button.focus();
+ });
 
- function sync(){closeFox();request++;const active=!!sites[place.value];button.hidden=!active;panel.hidden=true;button.disabled=false;button.setAttribute('aria-expanded','false');}
+ function sync(){closeFox();request++;const active=!!sites[place.value];button.hidden=!active;if(!panel.open)panel.hidden=true;button.disabled=false;button.setAttribute('aria-expanded','false');}
  place.addEventListener('change',sync);
  button.addEventListener('click',verify);sync();
 }
