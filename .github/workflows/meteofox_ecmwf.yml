@@ -80,6 +80,14 @@ jobs:
           main_site = Path("index.html")
           assert main_site.exists() and main_site.stat().st_size > 1000, "Falta index.html na raiz do repositorio"
           shutil.copy2(main_site, out / "index.html")
+          # O mapa interativo e a sincronização radar/Meteosat fazem parte
+          # obrigatória do pacote, também nas publicações automáticas ECMWF.
+          for name in ("mapa.html", "meteofox_satelite.js"):
+              source_file = Path(name)
+              assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
+              shutil.copy2(source_file, out / name)
+          assert all((out / name).is_file() for name in
+                     ("index.html", "mapa.html", "meteofox_satelite.js")), "Site incompleto"
           (out / ".nojekyll").write_text("")
           print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
           PY
