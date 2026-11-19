@@ -10,6 +10,7 @@ const respondPNG=r=>r.fulfill({status:200,contentType:'image/png',body:png,heade
 const current=Math.floor(Date.now()/600000)*600000;
 const frames=Array.from({length:5},(_,i)=>current-(4-i)*600000);
 await page.route(/\/(chuva|rajadas)_\d{3}\.png(?:\?.*)?$/,respondPNG);
+await page.route('**/meteofox_ecmwf_manifest.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cycle_utc:new Date().toISOString(),images:Object.fromEntries(Array.from({length:16},(_,i)=>'chuva_'+String(9+i*3).padStart(3,'0')+'.png').map(k=>[k,'ok']))})}));
 await page.route('**/api.rainviewer.com/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({host:'https://tilecache.rainviewer.com',radar:{past:frames.map((t,i)=>({time:Math.floor(t/1000),path:'/mock'+i}))}})}));
 await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString())})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
@@ -22,16 +23,16 @@ try{
  assert.equal(await page.locator('[data-tab="precipGust"]').innerText(),'▤ Produtos');
  assert.equal(await page.locator('[data-tab="satRadar"]').count(),0);
  await page.locator('[data-tab="precipGust"]').click();
- await page.waitForFunction(()=>document.getElementById('ecmwfRain')?.getAttribute('src')?.includes('chuva_003.png'));
+ await page.waitForFunction(()=>document.getElementById('ecmwfRain')?.getAttribute('src')?.includes('chuva_009.png'));
  const first=await page.locator('#ecmwfRain').getAttribute('src');
  const satValueBefore=await page.locator('#visSimSlider').inputValue();
  await page.locator('#ecmwfNext').click();
  const r=await page.locator('#ecmwfRain').getAttribute('src'),w=await page.locator('#ecmwfGust').getAttribute('src');
- assert.equal(first,'./chuva_003.png');assert.equal(r,'./chuva_006.png');assert.equal(w,'./rajadas_006.png');
+ assert.equal(first,'./chuva_003.png');assert.equal(r,'./chuva_012.png');assert.equal(w,'./rajadas_012.png');
  assert.equal(await page.locator('#visSimSlider').inputValue(),satValueBefore);
  await page.locator('#ecmwfSlider').fill('15');
- assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_048.png');
- assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_048.png');
+ assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_054.png');
+ assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_054.png');
  await page.locator('[data-tab="aerodromes"]').click();
  assert.equal(await page.locator('#aerodromes .metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
