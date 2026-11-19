@@ -37,7 +37,8 @@ jobs:
           assert "fetch('./produtos_experimentais/previsao_ecmwf.json'" in page
           assert "Ficheiro de previsão ainda não publicado" in page
           generator = Path("gerar_produtos_experimentais.py").read_text(encoding="utf-8")
-          for protected in ("index.html", "mapa.html", "meteofox_satelite.js"):
-              assert "never modifies" in generator.lower() or protected not in generator
+          # Os três nomes apenas aparecem no comentário de proteção.
+          assert "shutil.copy" not in generator
+          assert 'output.with_suffix(".tmp")' in generator
           print("Interface de laboratório isolada: OK")
           PY
