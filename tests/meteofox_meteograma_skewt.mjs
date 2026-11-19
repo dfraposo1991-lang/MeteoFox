@@ -43,7 +43,7 @@ try{
  assert.equal(await page.locator('#meteoTimeSlider').inputValue(),'2');
  await page.keyboard.press('Escape');
  assert.equal(await page.locator('#meteoDialog').isVisible(),false);
- assert.equal(await page.locator('a#openSkewT').getAttribute('href'),'./laboratorio.html?tab=skewt');
+ assert.equal(await page.locator('a#openSkewT').getAttribute('href'),'./laboratorio.html?embedded=1');
 
  assert.doesNotMatch(await page.locator('#summary').innerText(),/idx is not defined/);
  await page.locator('#place').selectOption('Porto');
@@ -61,6 +61,25 @@ try{
  await page.locator('#place').selectOption('Lisboa');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Lisboa · ECMWF IFS'));
  await page.locator('[data-tab="precipGust"]').click();
+ await page.locator('#openSkewT').click();
+ assert.equal(await page.locator('#skewDialog').isVisible(),true,'Skew-T abre no portal sem navegar');
+ assert.match(page.url(),/index.html/);
+ const embedded=page.frameLocator('#skewFrame');
+ await embedded.locator('#hodograph circle').first().waitFor({timeout:20000});
+ assert.equal(await embedded.locator('#skew').isVisible(),true);
+ assert.equal(await embedded.locator('#hodograph circle').count()>3,true);
+ const first=await embedded.locator('#hodograph line').last().getAttribute('x2');
+ await embedded.locator('#city').selectOption('Porto');
+ assert.match(await embedded.locator('#validSounding').innerText(),/Porto/);
+ const second=await embedded.locator('#hodograph line').last().getAttribute('x2');
+ assert.notEqual(first,second,'Hodógrafo muda quando selecionamos Porto');
+ await embedded.locator('#skewNext').click();
+ assert.equal(await embedded.locator('#skewSlider').inputValue(),'1');
+ await embedded.locator('#skewNext').focus();
+ await page.keyboard.press('Escape');
+ await page.waitForFunction(()=>document.getElementById('skewDialog')?.hidden===true,{timeout:3000});
+ assert.equal(await page.locator('#skewDialog').isVisible(),false,'Esc fecha o modal mesmo com foco no iframe');
+ assert.equal(await page.locator('#meteoDialog').isVisible(),false,'Meteograma permanece independente');
  await page.locator('#ecmwfSlider').fill('0');
  await page.locator('#ecmwfNext').focus();
  await page.keyboard.press('ArrowRight');
@@ -112,6 +131,8 @@ try{
  await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
 
  assert.equal(await page.locator('#skew circle').count()>10,true);
+ assert.equal(await page.locator('#hodograph circle').count()>3,true,'Hodógrafo previsto deve estar presente no laboratório');
+ assert.equal(await page.locator('.hodo-scroll').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
  assert.equal(await page.locator('.skew-scroll').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)','Skew-T deve ter fundo branco');
  await page.locator('#skewPrev').focus();
  await page.keyboard.press('ArrowRight');
