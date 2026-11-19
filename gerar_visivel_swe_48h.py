@@ -134,6 +134,17 @@ def main():
     else:
         dt=datetime.now(timezone.utc)-timedelta(hours=9)
         base=dt.replace(hour=dt.hour-dt.hour%6,minute=0,second=0,microsecond=0)
+    # Nunca tentar substituir uma série mais recente por um ciclo mais antigo.
+    existing_manifest = OUT / 'manifest.json'
+    if existing_manifest.exists():
+        try:
+            existing = json.loads(existing_manifest.read_text(encoding='utf-8'))
+            existing_run = datetime.fromisoformat(existing['run_utc'].replace('Z', '+00:00'))
+            if base <= existing_run and len(existing.get('frames', [])) == 16:
+                print('Conjunto já atualizado ou mais recente: ' + iso(existing_run) + '; pedido: ' + iso(base), flush=True)
+                return 0
+        except (OSError, KeyError, ValueError, TypeError):
+            pass
     report={'created_utc':iso(datetime.now(timezone.utc)),'product':'medium-simulated-vis',
         'requested_run_utc':iso(base),'projection':PROJECTION,'layer_name':LAYER,
         'target_steps_h':list(range(3,49,3)),'attempts':[], 'frames':[], 'completed':False,
