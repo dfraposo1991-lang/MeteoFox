@@ -20,11 +20,37 @@ main{padding:14px;max-width:1900px;margin:auto}.toolbar{display:flex;gap:8px;ali
 .metar-table{border:1px solid #d4e1eb;border-radius:10px;background:#fff;padding:12px;overflow:auto}
 .metar-table h3{font-size:13px;margin:0 0 9px;color:#1a3d5a}.metar-table table{width:100%;border-collapse:collapse;font-size:12px}.metar-table td,.metar-table th{padding:7px 5px;text-align:left;border-bottom:1px solid #e2e9ef;white-space:nowrap}.metar-chip{display:inline-block;min-width:62px;text-align:center;font-weight:800;border-radius:5px;padding:5px 7px}.metar-caveat{font-size:11px;color:#58778b;line-height:1.5}.metar-table-grid .metar-table{max-width:100%}
 @media(max-width:780px){.metar-table-grid{grid-template-columns:1fr}}
+</style><style id="meteofox-map-fullscreen">
+html,body{height:100%;height:100dvh;overflow:hidden}
+body{display:flex;flex-direction:column}
+header{flex:none;position:relative;z-index:1100}
+#mapMain{flex:1;min-height:0;min-width:0;max-width:none;width:100%;margin:0;padding:0;position:relative;overflow:hidden}
+#largeMap{position:absolute;inset:0;width:100%;height:100%;min-height:0;border:0;border-radius:0;background:#d7e6ef}
+.map-overlays{position:absolute;top:12px;left:12px;right:12px;z-index:1000;background:rgba(250,253,255,.95);border:1px solid #bad2e3;border-radius:12px;box-shadow:0 6px 24px #1b3d5a38;padding:10px 12px;max-height:55%;overflow-y:auto;overscroll-behavior:contain}
+.map-overlays .toolbar{margin:0 0 7px;gap:6px}.map-overlays .toolbar button,.map-footer-controls button{border:1px solid #bdd7e8;border-radius:7px;background:#fff;color:#17527c;padding:7px 10px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
+#satTools{padding:6px 0;gap:6px;border-top:1px solid #d9e6ef}#satTools button{padding:7px 9px;font-size:12px}
+#satTools .sat-status,#satTools .sat-attribution{flex-basis:auto}
+.map-footer-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;border-top:1px solid #d9e6ef;padding-top:7px}
+#showLegends{background:#07518b;color:#fff;white-space:nowrap}#source{flex:1;min-width:180px;font-size:11px}
+.map-legends-panel{position:absolute;z-index:1200;top:12px;right:12px;bottom:12px;width:min(660px,calc(100% - 24px));overflow-y:auto;background:#f5f9fc;border:1px solid #abc8db;border-radius:13px;padding:14px;box-shadow:0 18px 50px #071a2c66}
+.map-legends-panel[hidden]{display:none}
+.map-legends-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;color:#153c57}.map-legends-head strong{font-size:16px}
+#closeLegends{border:1px solid #c3d7e5;border-radius:7px;background:white;color:#173e59;padding:7px 11px;cursor:pointer}
+.map-legends-panel .legend{margin:10px 0}
+.map-legends-panel .metar-table-grid{grid-template-columns:1fr 1fr}
+@media(max-width:850px){.map-overlays{top:7px;left:7px;right:7px;padding:8px;max-height:52%}.map-legends-panel{top:7px;right:7px;bottom:7px;width:calc(100% - 14px)}.map-legends-panel .metar-table-grid{grid-template-columns:1fr}#satTools .sat-status,#satTools .sat-attribution{flex-basis:100%}}
+@media(max-width:480px){header{padding:8px 10px}header strong{font-size:17px}header span{font-size:10px}.map-overlays .toolbar button{font-size:11px;padding:6px 8px}#satTools button{font-size:11px;padding:6px 8px}.map-overlays{max-height:54%}}
 </style></head><body>
 <header><div><strong>⛅ MeteoFox</strong> <span>Mapa meteorológico · Portugal e Ilhas</span></div><a href="./index.html">← Voltar ao MeteoFox</a></header>
-<main><div class="toolbar"><button id="all">Portugal e Ilhas</button><button id="mainland">Continente</button><button id="islands">Açores</button><button id="madeira">Madeira</button><button id="refresh">↻ Atualizar boletins</button><span id="count" aria-live="polite">A carregar mapa…</span></div>
-<div id="satTools" aria-label="Controlos Meteosat"></div>
+<main id="mapMain">
 <div id="largeMap" aria-label="Mapa interativo de aeródromos e imagens de satélite"></div>
+<div class="map-overlays">
+<div class="toolbar"><button id="all">Portugal e Ilhas</button><button id="mainland">Continente</button><button id="islands">Açores</button><button id="madeira">Madeira</button><button id="refresh">↻ Atualizar boletins</button><span id="count" aria-live="polite">A carregar mapa…</span></div>
+<div id="satTools" aria-label="Controlos Meteosat e radar"></div>
+<div class="map-footer-controls"><button id="showLegends" type="button" aria-expanded="false" aria-controls="mapLegends">☰ Legendas METAR e Voo</button><span id="source">METAR/SPECI OGIMET · TAF NOAA, recolhidos pelo MeteoFox</span></div>
+</div>
+<aside id="mapLegends" class="map-legends-panel" hidden aria-label="Tabelas de cores METAR e categorias de voo">
+<div class="map-legends-head"><strong>Legendas meteorológicas</strong><button id="closeLegends" type="button" aria-label="Fechar legendas">✕</button></div>
 <div class="legend"><span><i style="background:#2563eb"></i>BLU</span><span><i style="background:#f8fafc"></i>WHT</span><span><i style="background:#16a34a"></i>GRN</span><span><i style="background:#facc15"></i>YLO1</span><span><i style="background:#eab308"></i>YLO2</span><span><i style="background:#f59e0b"></i>AMB</span><span><i style="background:#dc2626"></i>RED</span><span><i style="background:#89939e"></i>Indisponível</span></div><div class="metar-table-grid">
 <section class="metar-table"><h3>MILITARY COLOUR CODE</h3><table><thead><tr><th>Código</th><th>Visibilidade</th><th>Teto</th></tr></thead><tbody>
 <tr><td><span class="metar-chip" style="background:#2563eb;color:white">BLU</span></td><td>≥ 8000 m</td><td>≥ 2500 ft</td></tr>
@@ -41,7 +67,8 @@ main{padding:14px;max-width:1900px;margin:auto}.toolbar{display:flex;gap:8px;ali
 <tr><td><span class="metar-chip" style="background:#dc2626;color:white">IFR</span></td><td>1–&lt;3 SM</td><td>500–&lt;1000 ft</td></tr>
 <tr><td><span class="metar-chip" style="background:#9333ea;color:white">LIFR</span></td><td>&lt;1 SM</td><td>&lt;500 ft</td></tr>
 </tbody></table></section></div><p class="metar-caveat">Categoria determinada pela condição mais restritiva de visibilidade e teto. SM = milha terrestre. Classificação indicativa baseada no METAR disponível; não substitui informação aeronáutica oficial.</p>
-<div id="source">METAR/SPECI OGIMET · TAF NOAA, recolhidos pelo MeteoFox</div>
+
+</aside>
 </main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./meteofox_satelite.js"></script><script>
 const $=id=>document.getElementById(id);
 const DATA_URL='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/aviation.json';
@@ -180,7 +207,7 @@ async function refresh(){
 }
 function initialize(){
  if(!window.L){$('count').textContent='Biblioteca cartográfica indisponível';return;}
- appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true}).setView([37.5,-14.8],5);
+ appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true,zoomControl:false}).setView([37.5,-14.8],5);L.control.zoom({position:'bottomright'}).addTo(appMap);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
  markers=L.layerGroup().addTo(appMap);
  if(window.MeteoFoxSatellite){sat=new MeteoFoxSatellite(appMap,$('satTools'));}
@@ -192,5 +219,15 @@ function initialize(){
  $('islands').addEventListener('click',()=>appMap.setView([37.7,-25.5],7));
  $('madeira').addEventListener('click',()=>appMap.setView([32.8,-16.7],9));
 }
+
+function setupMapLegends(){
+ const panel=$('mapLegends'),open=$('showLegends'),close=$('closeLegends');
+ const show=visible=>{panel.hidden=!visible;open.setAttribute('aria-expanded',String(visible));if(visible)close.focus();else open.focus();};
+ open.addEventListener('click',()=>show(panel.hidden));
+ close.addEventListener('click',()=>show(false));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)show(false)});
+}
+setupMapLegends();
+
 initialize();
 </script></body></html>
