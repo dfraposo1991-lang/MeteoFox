@@ -11,9 +11,10 @@ main{padding:14px;max-width:1900px;margin:auto}.toolbar{display:flex;gap:8px;ali
 #satTools button[aria-pressed=true]{background:#07518b;color:white}#satTools button:disabled{opacity:.5;cursor:not-allowed}
 #satTools label{font-size:12px}#satTools input{accent-color:#07518b}#satTools .sat-status,#satTools .sat-attribution{font-size:11px;color:#607e90}#satTools .sat-status{flex-basis:100%}
 #satTools .sat-attribution{flex-basis:100%}#satTools .sat-clock{font-weight:700;color:#13527c;font-size:12px;white-space:nowrap}#count,#source{color:#59778b;font-size:12px}
-.popup{font:12px Inter,system-ui,sans-serif;color:#183c54;max-width:355px}.popup h3{margin:4px 0 9px}.popup pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:165px;overflow:auto;background:#edf4fa;padding:9px;border-radius:8px;font:11px Consolas,monospace}.cat{padding:4px 6px;background:#eef4f8;border-radius:6px;font-weight:700;display:inline-block}
+.popup{font:12px Inter,system-ui,sans-serif;color:#183c54;width:680px;max-width:calc(100vw - 64px)}.popup h3{margin:4px 0 9px}.popup pre{white-space:pre;overflow-x:auto;overflow-y:auto;max-height:210px;background:#edf4fa;padding:9px;border-radius:8px;font:11px Consolas,monospace}.cat{padding:4px 6px;background:#eef4f8;border-radius:6px;font-weight:700;display:inline-block}
 .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11px;color:#496a81;margin:8px 0}.legend i{display:inline-block;border-radius:50%;width:10px;height:10px;margin-right:4px}
 @media(max-width:600px){header{padding:11px}header strong{font-size:18px}main{padding:8px}#largeMap{height:calc(100dvh - 315px);min-height:350px}}
+.leaflet-popup-content-wrapper{max-width:calc(100vw - 24px)}.leaflet-popup-content{max-width:calc(100vw - 64px)}
 </style></head><body>
 <header><div><strong>⛅ MeteoFox</strong> <span>Mapa meteorológico · Portugal e Ilhas</span></div><a href="./index.html">← Voltar ao MeteoFox</a></header>
 <main><div class="toolbar"><button id="all">Portugal e Ilhas</button><button id="mainland">Continente</button><button id="islands">Açores</button><button id="madeira">Madeira</button><button id="refresh">↻ Atualizar boletins</button><span id="count" aria-live="polite">A carregar mapa…</span></div>
@@ -129,9 +130,13 @@ function obsClasses(item){
 }
 
 let appMap=null, markers=null, data=null, sat=null;
+function formatOriginalTAF(raw){
+ // Apenas os grupos de mudança iniciam linhas; nenhum grupo é partido a meio.
+ return String(raw||'').replace(/\s+(?=(?:BECMG|TEMPO|FM\d{6}|PROB(?:30|40))(?:\s|$))/g,'\n');
+}
 function reportBlock(label,item){if(!item?.raw?.trim())return '';
  const pre=document.createElement('pre');pre.textContent=item.raw;
- return '<p><b>'+label+'</b> · '+safe(aviationDateUTC(item.utc))+'</p><pre>'+safe(item.raw)+'</pre>';
+ return '<p><b>'+label+'</b> · '+safe(aviationDateUTC(item.utc))+'</p><pre>'+safe(label.startsWith('TAF')?formatOriginalTAF(item.raw):item.raw)+'</pre>';
 }
 function paintMarkers(){
  markers.clearLayers();let n=0;
@@ -147,7 +152,7 @@ function paintMarkers(){
      (!m?.raw?'<p>Sem METAR disponível</p>':'')+
      reportBlock('METAR',m)+(s?.raw?reportBlock('SPECI',s):'')+reportBlock(/\bAMD\b/.test(t?.raw||'')?'TAF AMD':'TAF',t)+
      (!m?.raw&&!t?.raw?'<p>Sem boletins disponíveis.</p>':'')+'</div>';
-  },{maxWidth:385});n++;
+  },{maxWidth:720});n++;
  }
  $('count').textContent=n+' aeródromos no mapa · '+(data?'boletins consultados':'a aguardar boletins');
 }
