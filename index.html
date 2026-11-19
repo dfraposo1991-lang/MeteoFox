@@ -165,7 +165,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
   <div class="card metric"><span class="ico">💨</span><div class="k">Vento</div><div class="v" id="wind">—</div><div class="u" id="gust">Rajada —</div></div>
  </div>
  <div class="grid two">
-  <div class="card"><h3>Meteograma</h3><button class="meteo-preview" id="meteoPreview" type="button" aria-label="Ampliar meteograma ECMWF de Lisboa" disabled><svg id="meteoSmallSvg" aria-label="Nuvens, precipitação, temperatura e vento ao longo do tempo"></svg><span class="meteo-preview-hint">⛶ Ampliar</span></button><p id="meteoInfo" class="meteo-caption" role="status">A consultar dados ECMWF de Lisboa…</p></div>
+  <div class="card"><h3>Meteograma</h3><button class="meteo-preview" id="meteoPreview" type="button" aria-label="Ampliar meteograma ECMWF da localidade selecionada" disabled><svg id="meteoSmallSvg" aria-label="Nuvens, precipitação, temperatura e vento ao longo do tempo"></svg><span class="meteo-preview-hint">⛶ Ampliar</span></button><p id="meteoInfo" class="meteo-caption" role="status">A consultar dados ECMWF de Lisboa…</p></div>
   <div class="card"><h3>Previsão diária · 7 dias</h3><div id="daily" class="forecast"></div></div>
  </div>
  <div class="card" style="margin-top:13px"><h3>Previsão horária · próximas 12 horas</h3><div class="hourly"><div id="hours" class="hourrow"></div></div></div>
@@ -286,6 +286,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  </section>
 <footer class="footer"><span>MeteoFox · Ferramenta de apoio à análise meteorológica</span><span>Previsão: Open-Meteo/ECMWF · Radar: RainViewer · Satélite: Windy · METAR/SYNOP: OGIMET · TAF: NOAA</span></footer>
 </div>
+<script src="./meteofox_meteograma.js"></script>
+<script src="./meteofox_keyboard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -868,5 +870,5 @@ document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListene
   <div class="meteo-modal-foot"><button id="meteoPrevious" class="meteo-control" type="button" aria-label="Prazo anterior">◀</button><input id="meteoTimeSlider" type="range" min="0" max="29" value="0" step="1" aria-label="Selecionar prazo do meteograma"><button id="meteoNext" class="meteo-control" type="button" aria-label="Prazo seguinte">▶</button><div id="meteoDetails" class="meteo-details" aria-live="polite"></div></div>
  </div>
 </div>
-<script src="./meteofox_meteograma.js" defer></script>
+
 </body></html>
