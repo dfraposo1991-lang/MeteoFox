@@ -30,6 +30,16 @@
 .obs-popup p{margin:4px 0}
 .obs-notice{color:var(--muted);font-size:11px;line-height:1.5}
 @media(max-width:650px){.obs-map{height:390px}}
+
+/* MeteoFox 4: cartas ECMWF sem iframe, integradas na página. */
+.ecmwf-native{width:100%;min-width:0}.ecmwf-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 15px}
+.ecmwf-controls input[type=range]{flex:1 1 220px;min-width:140px;accent-color:var(--cyan)}
+.ecmwf-controls strong{min-width:112px;font:700 12px 'DM Mono',monospace;color:var(--txt)}
+.ecmwf-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.ecmwf-field{min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:10px;overflow:hidden}
+.ecmwf-field h4{font-size:12px;color:var(--txt);padding:11px 13px;margin:0;border-bottom:1px solid var(--line)}
+.ecmwf-field img{display:block;width:100%;height:auto;background:#e7edf4}
+@media(max-width:750px){.ecmwf-fields{grid-template-columns:1fr}.ecmwf-controls strong{width:100%}}
 </style>
 <style id="meteofox-v1-brand"> 
 /* MeteoFox professional visual refresh. Overrides only the original palette/layout. */
@@ -137,7 +147,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa" selected>Lisboa</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
 </header>
 <nav class="tabs">
- <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">🌧 Chuva, Rajadas e Satélite Simulado</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
+ <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="satRadar">◉ Satélite e Radar</button><button class="tab" data-tab="precipGust">▤ Produtos</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
 </nav>
 <section id="overview" class="section active">
  <div class="heading"><div><h2 id="placeTitle">Previsão ECMWF IFS — Lisboa</h2><div class="sub" id="summary">A obter previsão ECMWF IFS…</div></div><span class="status" id="coords"></span></div>
@@ -176,8 +186,20 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="card">
   <h3>Precipitação (mm) e rajadas de vento (kt)</h3>
   <p class="note" style="margin-top:0;margin-bottom:12px">Os mapas mantêm a cartografia, as cores e as setas que aprovámos. A linha temporal sincroniza os dois campos de 3 em 3 horas.</p>
-  <div class="meteomap-frame"><iframe id="ecmwfMapsFrame" title="Mapas ECMWF MeteoFox: precipitação e rajadas sincronizadas" src="./MeteoFox_animacao_48h.html" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe></div>
-  <div class="meteomap-links"><a class="action" href="https://dfraposo1991-lang.github.io/MeteoFox/" target="_blank" rel="noopener noreferrer">↗ Abrir cartas ECMWF numa nova janela</a><span class="note">Os mapas são servidos pelo GitHub Pages e atualizados sem o computador ligado. Se o painel estiver indisponível, utiliza o link.</span></div>
+  <div class="ecmwf-native" aria-label="Produtos ECMWF: chuva e rajadas">
+    <div class="ecmwf-controls">
+      <button class="action" id="ecmwfPrevious" type="button">◀ Anterior</button>
+      <button class="action" id="ecmwfPlay" type="button">▶ Animar</button>
+      <button class="action" id="ecmwfNext" type="button">Seguinte ▶</button>
+      <input id="ecmwfSlider" aria-label="Prazo comum da chuva e rajadas" type="range" min="0" max="15" step="1" value="0">
+      <strong id="ecmwfStep" aria-live="polite">+03 h · 1 / 16</strong>
+    </div>
+    <div class="ecmwf-fields">
+      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"></div>
+      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"></div>
+    </div>
+    <p id="ecmwfMessage" class="note" aria-live="polite">16 passos · +3 a +48 h · imagens atualizadas pelo GitHub Pages.</p>
+  </div>
   <p class="note">Fonte: ECMWF IFS Open Data (CC BY 4.0). A chuva apresentada é acumulada nas últimas 3 horas. As cores das rajadas indicam intensidade máxima; as setas representam a direção do vento a 10 m. Os passos são de 3 horas e não horários.</p>
  </div>
 
@@ -530,7 +552,7 @@ $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
 async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
 function showRadar(i){if(!radarFrames.length||!map)return;radarIndex=Math.max(0,Math.min(i,radarFrames.length-1));if(radarLayer)map.removeLayer(radarLayer);let frame=radarFrames[radarIndex];radarLayer=L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.72,zIndex:10,attribution:'Radar © RainViewer'});if(radarOn)radarLayer.addTo(map);let d=new Date(frame.time*1000);$('radarTime').textContent=d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust')visLoad();if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
+function selectTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust'){visLoad();ecmwfInit();}if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab)));
 function switchObservation(which){
  const radar=which==='radar';
@@ -559,6 +581,29 @@ $('radarLatest').onclick=()=>showRadar(radarFrames.length-1);
 $('radarPlay').onclick=()=>{if(radarTimer){clearInterval(radarTimer);radarTimer=null;$('radarPlay').textContent='▶ Animar'}else{$('radarPlay').textContent='Ⅱ Pausar';radarTimer=setInterval(()=>showRadar((radarIndex+1)%radarFrames.length),650)}};
 (async()=>{await loadOverview();initMap()})();
 
+
+/* Os 16 passos das duas cartas usam o mesmo índice; radar/Meteosat não é alterado. */
+const ECMWF_STEPS=Array.from({length:16},(_,i)=>(i+1)*3);
+let ecmwfAt=0,ecmwfTimer=null,ecmwfReady=false;
+function ecmwfRender(i){
+ ecmwfAt=(i+ECMWF_STEPS.length)%ECMWF_STEPS.length;
+ const step=String(ECMWF_STEPS[ecmwfAt]).padStart(3,'0');
+ $('ecmwfRain').src='./chuva_'+step+'.png';
+ $('ecmwfGust').src='./rajadas_'+step+'.png';
+ $('ecmwfSlider').value=String(ecmwfAt);
+ $('ecmwfStep').textContent='+'+String(ECMWF_STEPS[ecmwfAt]).padStart(2,'0')+' h · '+(ecmwfAt+1)+' / 16';
+}
+function ecmwfStop(){if(ecmwfTimer){clearInterval(ecmwfTimer);ecmwfTimer=null}$('ecmwfPlay').textContent='▶ Animar'}
+function ecmwfInit(){
+ if(ecmwfReady)return;ecmwfReady=true;
+ $('ecmwfPrevious').onclick=()=>{ecmwfStop();ecmwfRender(ecmwfAt-1)};
+ $('ecmwfNext').onclick=()=>{ecmwfStop();ecmwfRender(ecmwfAt+1)};
+ $('ecmwfSlider').oninput=e=>{ecmwfStop();ecmwfRender(Number(e.target.value))};
+ $('ecmwfPlay').onclick=()=>{if(ecmwfTimer){ecmwfStop();return}$('ecmwfPlay').textContent='Ⅱ Pausar';ecmwfTimer=setInterval(()=>ecmwfRender(ecmwfAt+1),1100)};
+ const unavailable=()=>{$('ecmwfMessage').textContent='Não foi possível carregar as cartas ECMWF; confirma os 32 PNG no GitHub Pages.'};
+ $('ecmwfRain').onerror=unavailable;$('ecmwfGust').onerror=unavailable;
+ ecmwfRender(0);
+}
 /* ECMWF VIS simulado: manifesto e imagens servidos de forma independente do deploy GitHub Pages. */
 const VIS_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_vis/';
 let visData=null,visAt=0,visTimer=null,visLoading=null;
