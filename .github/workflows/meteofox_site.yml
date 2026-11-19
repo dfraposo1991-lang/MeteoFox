@@ -85,9 +85,26 @@ jobs:
           print('Incluído: laboratório e dados ECMWF reais validados')
 
           base = 'https://dfraposo1991-lang.github.io/MeteoFox/'
+          # Aceitar o conjunto previamente publicado enquanto o primeiro novo run
+          # (+9 a +54 h) ainda não tiver sido gerado.
+          import json
+          from urllib.error import HTTPError
+          old_steps = list(range(3, 49, 3))
+          new_steps = list(range(9, 55, 3))
+          existing_metadata = None
+          try:
+              manifest_req = Request('https://dfraposo1991-lang.github.io/MeteoFox/meteofox_ecmwf_manifest.json',
+                  headers={'Cache-Control': 'no-cache'})
+              with urlopen(manifest_req, timeout=20) as response:
+                  existing_metadata = json.load(response)
+          except (HTTPError, OSError, ValueError) as exc:
+              print('Manifesto ainda não disponível:', exc)
+          published_images = set((existing_metadata or {}).get('images', {}))
+          expected_new = {f'{kind}_{step:03d}.png' for step in new_steps for kind in ('chuva','rajadas')}
+          selected_steps = new_steps if published_images == expected_new else old_steps
           files = ['MeteoFox_animacao_48h.html']
           files += [f'{kind}_{step:03d}.png'
-                    for step in range(3, 49, 3)
+                    for step in selected_steps
                     for kind in ('chuva', 'rajadas')]
 
           def download(name):
