@@ -108,9 +108,9 @@ try{
  await page.goto('http://127.0.0.1:8765/index.html?tab=precipGust',{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('#precipGust').isVisible(),true,'Link direto Produtos');
  await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ await page.waitForFunction(()=>document.getElementById('step')?.options.length===16,{timeout:20000});
  await page.reload({waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ await page.waitForFunction(()=>document.getElementById('step')?.options.length===16,{timeout:20000});
  assert.equal(await page.locator('#skew').isVisible(),true,'F5 deve preservar pagina Skew-T');
  assert.equal(await page.locator('header .brand h1').innerText(),'MeteoFox');
  assert.equal(await page.locator('#brandProdutos').getAttribute('href'),'./index.html?tab=precipGust');
@@ -128,7 +128,7 @@ try{
  assert.equal(await page.locator('[data-tab="precipGust"]').getAttribute('class'),'tab active');
  assert.equal(await page.locator('#precipGust').isVisible(),true);
  await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ await page.waitForFunction(()=>document.getElementById('step')?.options.length===16,{timeout:20000});
 
  assert.equal(await page.locator('#skew circle').count()>10,true);
  assert.equal(await page.locator('#hodograph circle').count()>3,true,'Hodógrafo previsto deve estar presente no laboratório');
