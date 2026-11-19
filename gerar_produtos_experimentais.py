@@ -96,7 +96,7 @@ def extract_grib(path, expected_step, expected_cycle, expected_params, locations
                 for name, (lat, lon) in locations.items():
                     nearest = codes_grib_find_nearest(gid, lat, lon)
                     hit = nearest[0] if isinstance(nearest, list) else nearest
-                    result[name] = float(hit["value"])
+                    result[name] = float(hit[2] if isinstance(hit, tuple) else hit["value"])
                 found[key] = (result, units)
             finally:
                 codes_release(gid)
