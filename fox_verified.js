@@ -30,12 +30,30 @@ function row(label,model,obs,unit,desc,dec=1){
  '</td><td>'+esc(unit)+'</td><td class="fox-cell-note">'+esc(desc)+'</td></tr>';
 }
 let request=0;
+let focusBefore=null;
+function closeFox(){
+ const panel=$('foxVerifiedPanel'),button=$('foxVerifiedButton');
+ if(!panel||panel.hidden)return;
+ request++;
+ panel.hidden=true;
+ document.body.classList.remove('fox-modal-open');
+ button?.setAttribute('aria-expanded','false');
+ if(button)button.disabled=false;
+ if(focusBefore?.isConnected)focusBefore.focus();else button?.focus();
+}
+function showFox(panel,html){
+ panel.innerHTML='<div class="fox-modal" role="document">'+html+'</div>';
+}
 async function verify(){
  const place=$('place')?.value;
  const info=sites[place],panel=$('foxVerifiedPanel'),button=$('foxVerifiedButton');
  if(!info||!panel)return;
  const id=++request;
- button.disabled=true;panel.hidden=false;panel.innerHTML='<div class="fox-wait" role="status">A consultar previsões ECMWF e observações METAR/SYNOP…</div>';
+ focusBefore=document.activeElement;
+ button.disabled=true;panel.hidden=false;
+ document.body.classList.add('fox-modal-open');
+ button.setAttribute('aria-expanded','true');
+ showFox(panel,'<div class="fox-panel-head"><div><strong>Fox Verified · '+esc(place)+'</strong><span>ECMWF IFS × observações instrumentais</span></div><button type="button" class="action" data-fox-close>✕ Fechar</button></div><div class="fox-wait" role="status">A consultar previsões ECMWF e observações METAR/SYNOP…</div>');
  try{
   const url='https://api.open-meteo.com/v1/forecast?latitude='+info.lat+'&longitude='+info.lon+
    '&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation'+
@@ -65,7 +83,7 @@ async function verify(){
   }
   const metarNote=metarOK?info.icao+' · '+utc(mTime):'METAR recente indisponível';
   const rainNote=p?info.wmo+' · '+hours+' h até '+utc(p.utc):'Acumulado SYNOP recente indisponível';
-  const content='<div class="fox-panel-head"><div><strong>Fox Verified · '+esc(place)+'</strong><span>ECMWF IFS × observações instrumentais</span></div><button type="button" id="foxHide" class="action">✕ Fechar</button></div>'+
+  const content='<div class="fox-panel-head"><div><strong>Fox Verified · '+esc(place)+'</strong><span>ECMWF IFS × observações instrumentais</span></div><button type="button" class="action" data-fox-close>✕ Fechar</button></div>'+
    '<div class="tablewrap"><table class="fox-table"><thead><tr><th>Elemento</th><th>Modelo</th><th>Observado</th><th>Diferença</th><th>Unid.</th><th>Referência</th></tr></thead><tbody>'+
    row('Temperatura',metarOK&&mi>=0?Number(h.temperature_2m?.[mi]):null,metarOK?mm.temp:null,'°C',metarNote)+
    row('Vento médio',metarOK&&mi>=0?Number(h.wind_speed_10m?.[mi]):null,metarOK?mm.wind:null,'kt',metarNote)+
@@ -74,12 +92,10 @@ async function verify(){
    '</tbody></table></div>'+
    '<p class="note">Diferença = modelo − observado. As horas e intervalos são aproximados à resolução horária do modelo. A rajada METAR é uma observação reportada e pode não ser diretamente equivalente à rajada horária prevista. A precipitação é comparada apenas em intervalos de igual duração.</p>'+
    '<p class="note"><strong>Nota metodológica:</strong> comparação indicativa com previsões consultadas no momento, que podem já incorporar observações recentes; não constitui verificação histórica de um ciclo ECMWF arquivado. Dados em falta ou desatualizados ficam assinalados como «—».</p>';
-  panel.innerHTML=content;
-  $('foxHide')?.addEventListener('click',()=>{panel.hidden=true;button.setAttribute('aria-expanded','false');});
-  button.setAttribute('aria-expanded','true');
+  showFox(panel,content);
  }catch(e){
   if(id!==request)return;
-  panel.innerHTML='<div role="status" class="fox-fail">Não foi possível obter a comparação: '+esc(e.message)+'.</div>';
+  showFox(panel,'<div class="fox-panel-head"><strong>Fox Verified · '+esc(place)+'</strong><button type="button" class="action" data-fox-close>✕ Fechar</button></div><div role="status" class="fox-fail">Não foi possível obter a comparação: '+esc(e.message)+'.</div>');
  }finally{if(id===request)button.disabled=false;}
 }
 function init(){
@@ -90,8 +106,14 @@ function init(){
  button.textContent='✓ Fox Verified';button.setAttribute('aria-controls','foxVerifiedPanel');button.setAttribute('aria-expanded','false');
  heading.append(button);
  const panel=document.createElement('section');panel.id='foxVerifiedPanel';panel.className='card fox-verified';panel.hidden=true;
- const metrics=region.querySelector('.grid.metrics');metrics?.insertAdjacentElement('afterend',panel);
- function sync(){request++;const active=!!sites[place.value];button.hidden=!active;panel.hidden=true;button.disabled=false;button.setAttribute('aria-expanded','false');}
+ panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Fox Verified · comparação meteorológica');
+ document.body.append(panel);
+ panel.addEventListener('click',event=>{
+  if(event.target===panel||event.target.closest?.('[data-fox-close]'))closeFox();
+ });
+ document.addEventListener('keydown',event=>{if(!panel.hidden&&event.key==='Escape'){event.preventDefault();closeFox();}});
+
+ function sync(){closeFox();request++;const active=!!sites[place.value];button.hidden=!active;panel.hidden=true;button.disabled=false;button.setAttribute('aria-expanded','false');}
  place.addEventListener('change',sync);
  button.addEventListener('click',verify);sync();
 }
