@@ -208,6 +208,29 @@ jobs:
           assert all((out / name).is_file() for name in
                      ("index.html", "mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "laboratorio.html",
                       "produtos_experimentais/previsao_ecmwf.json")), "Site incompleto"
+          # Manifesto meteorológico público mínimo; não contém credenciais,
+          # dados administrativos nem informação privada.
+          from datetime import datetime, timezone
+          import hashlib, os
+          metadata = {
+              "schema": 1,
+              "model": "ECMWF IFS Open Data",
+              "resolution": "0p1",
+              "cycle_utc": run,
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "images": {
+                  f"{kind}_{step:03d}.png": hashlib.sha256(
+                      (out / f"{kind}_{step:03d}.png").read_bytes()
+                  ).hexdigest()
+                  for step in range(3, 49, 3)
+                  for kind in ("chuva", "rajadas")
+              },
+          }
+          assert len(metadata["images"]) == 32
+          (out / "meteofox_ecmwf_manifest.json").write_text(
+              json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+          )
+          print("Manifesto do ciclo ECMWF publicado:", run)
           (out / ".nojekyll").write_text("")
           print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
           PY
