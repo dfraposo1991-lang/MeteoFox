@@ -140,16 +140,16 @@ def main():
         try:
             existing = json.loads(existing_manifest.read_text(encoding='utf-8'))
             existing_run = datetime.fromisoformat(existing['run_utc'].replace('Z', '+00:00'))
-            if base <= existing_run and len(existing.get('frames', [])) == 16:
+            if base <= existing_run and [frame.get('step_h') for frame in existing.get('frames', [])] == list(range(9, 55, 3)):
                 print('Conjunto já atualizado ou mais recente: ' + iso(existing_run) + '; pedido: ' + iso(base), flush=True)
                 return 0
         except (OSError, KeyError, ValueError, TypeError):
             pass
     report={'created_utc':iso(datetime.now(timezone.utc)),'product':'medium-simulated-vis',
         'requested_run_utc':iso(base),'projection':PROJECTION,'layer_name':LAYER,
-        'target_steps_h':list(range(3,49,3)),'attempts':[], 'frames':[], 'completed':False,
+        'target_steps_h':list(range(9,55,3)),'attempts':[], 'frames':[], 'completed':False,
         'stop_reason':None, 'source_credit':'© ECMWF · CC BY 4.0',
-        'note':'Publicar somente apos validar todos os passos (+3 a +48 h).'}
+        'note':'Publicar somente apos validar todos os passos (+9 a +54 h).'}
     def log_failure(exc, *, name, step):
         record={'name':name,'step_h':step,'error':str(exc)}
         if isinstance(exc,RequestFailure):
@@ -181,11 +181,11 @@ def main():
             try:
                 first,query_url=query(base,3,fmt,layer)
                 chosen=(fmt,layer)
-                report['attempts'].append({'name':'probe_ok','step_h':3,'format':fmt,'layer_name_included':layer,'query_url':query_url})
+                report['attempts'].append({'name':'probe_ok','step_h':9,'format':fmt,'layer_name_included':layer,'query_url':query_url})
                 print(f'Parâmetros aceites: {fmt}; layer_name={layer}',flush=True)
                 break
             except RequestFailure as exc:
-                log_failure(exc,name=f'probe_{fmt}_layer_{layer}',step=3)
+                log_failure(exc,name=f'probe_{fmt}_layer_{layer}',step=9)
                 if exc.status==429:
                     report['stop_reason']='Limite HTTP 429; interrompido imediatamente; aguardar período indicado pelo servidor'
                     break
@@ -197,12 +197,12 @@ def main():
                 report['stop_reason']='Resposta inesperada, sem continuar pedidos';break
             time.sleep(5)
         if chosen is None:
-            if not report['stop_reason']:report['stop_reason']='Nenhum dos três formatos de pedido foi aceite no +3 h'
+            if not report['stop_reason']:report['stop_reason']='Nenhum dos três formatos de pedido foi aceite no +9 h'
             return 1
         seen=set()
-        for step in range(3,3*(a.max_frames+1),3):
+        for step in range(9,55,3):
             try:
-                result=first if step==3 else query(base,step,*chosen)[0]
+                result=first if step==9 else query(base,step,*chosen)[0]
                 blob,ctype=get_bytes(result['png_url'],image=True)
                 if not blob.startswith(b'\x89PNG\r\n\x1a\n'): raise ValueError(f'Imagem não é PNG válido: {ctype}')
                 digest=hashlib.sha256(blob).hexdigest()
@@ -222,7 +222,7 @@ def main():
                 log_failure(exc,name='frame',step=step)
                 report['stop_reason']=f'Erro de verificação no +{step}h'
                 break
-            if step < 3*a.max_frames:time.sleep(5)
+            if step < 54:time.sleep(5)
         report['completed']=len(report['frames'])==a.max_frames
         if report['completed']:
             manifest={'product':report['product'],'projection':PROJECTION,'layer':LAYER,
