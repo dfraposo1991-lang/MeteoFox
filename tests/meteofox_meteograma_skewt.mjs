@@ -78,6 +78,19 @@ try{
  assert.ok(calls.some(x=>x>40)&&calls.some(x=>x<34)&&calls.some(x=>x>38&&x<39),'ECMWF requests must use regional coordinates');
  await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ assert.equal(await page.locator('header .brand h1').innerText(),'MeteoFox');
+ assert.equal(await page.locator('#brandProdutos').getAttribute('href'),'./index.html?tab=precipGust');
+ assert.equal(await page.locator('nav.tabs .tab').count(),5);
+ assert.equal(await page.locator('nav.tabs .tab.active').innerText(),'▤ Produtos');
+ assert.equal(await page.locator('.skew-scroll').evaluate(x=>getComputedStyle(x).backgroundColor),'rgb(255, 255, 255)');
+ const brandHref=await page.locator('#brandProdutos').getAttribute('href');
+ await page.locator('#brandProdutos').click();
+ await page.waitForURL('**/index.html?tab=precipGust');
+ assert.equal(await page.locator('[data-tab="precipGust"]').getAttribute('class'),'tab active');
+ assert.equal(await page.locator('#precipGust').isVisible(),true);
+ await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+
  assert.equal(await page.locator('#skew circle').count()>10,true);
  assert.equal(await page.locator('.skew-scroll').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)','Skew-T deve ter fundo branco');
  await page.locator('#skewPrev').focus();
