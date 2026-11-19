@@ -1,0 +1,43 @@
+name: MeteoFox Labs | Testes de meteograma e sondagens
+
+on:
+  push:
+    branches:
+      - meteofox-meteograma-skewt-dev
+    paths:
+      - 'gerar_produtos_experimentais.py'
+      - 'laboratorio.html'
+      - 'tests/test_produtos_experimentais.py'
+      - '.github/workflows/meteofox_labs_tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validar Python e cálculos meteorológicos
+        run: |
+          python -m py_compile gerar_produtos_experimentais.py
+          python -m unittest discover -s tests -p 'test_produtos_experimentais.py' -v
+      - name: Confirmar isolamento do portal e funcionalidade da interface
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          page = Path("laboratorio.html").read_text(encoding="utf-8")
+          assert "meteogram_lisboa" in page and "soundings" in page
+          assert "Porto" in page and "Lisboa" in page and "Beja" in page
+          assert "fetch('./produtos_experimentais/previsao_ecmwf.json'" in page
+          assert "Ficheiro de previsão ainda não publicado" in page
+          generator = Path("gerar_produtos_experimentais.py").read_text(encoding="utf-8")
+          for protected in ("index.html", "mapa.html", "meteofox_satelite.js"):
+              assert "never modifies" in generator.lower() or protected not in generator
+          print("Interface de laboratório isolada: OK")
+          PY
