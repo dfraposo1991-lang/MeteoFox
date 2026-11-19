@@ -1,0 +1,56 @@
+name: MeteoFox | Vigia de agendamento ECMWF
+
+# Independente do processo de mapas. Nunca publica nem altera GitHub Pages.
+# Cada verificação ocorre >70 min após o cron ECMWF correspondente.
+on:
+  schedule:
+    - cron: '17 4,11,16,23 * * *'
+  workflow_dispatch:
+  push:
+    branches: [meteofox-ecmwf-watchdog-v1]
+    paths:
+      - 'scripts/ecmwf_watchdog.py'
+      - 'tests/test_ecmwf_watchdog.py'
+      - '.github/workflows/meteofox_ecmwf_watchdog.yml'
+      - '.github/workflows/meteofox_ecmwf.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: meteofox-ecmwf-watchdog
+  cancel-in-progress: false
+
+jobs:
+  testes:
+    name: Verificar janelas horárias e proteção contra duplicados
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Testes de lógica sem pedidos à API
+        run: python3 -m unittest discover -s tests -p 'test_ecmwf_watchdog.py' -v
+      - name: Validar sintaxe Python e YAML
+        run: |
+          python3 -m py_compile scripts/ecmwf_watchdog.py
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/meteofox_ecmwf.yml').read_text()
+          assert "ECMWF_REQUESTED_CYCLE" in text
+          assert 'workflow_dispatch:' in text
+          print('Validação estática aprovada')
+          PY
+
+  vigiar:
+    name: Medir atraso e recuperar um ciclo sem execução
+    needs: testes
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar agendamento e disparar recuperação apenas se necessário
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/ecmwf_watchdog.py
