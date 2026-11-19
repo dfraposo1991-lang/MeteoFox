@@ -1,7 +1,7 @@
-/* MeteoFox · meteograma único ECMWF Lisboa. Dados: previsão ECMWF IFS 0p25, não ilustrativos. */
+/* MeteoFox · meteograma por localidade, a partir da previsão ECMWF IFS 0p25 via Open-Meteo (sem ciclos inferidos). */
 (function () {
 'use strict';
-var svgNS='http://www.w3.org/2000/svg', rows=[], run='', active=0, expanded=false, previousFocus=null;
+var svgNS='http://www.w3.org/2000/svg', rows=[], region='', active=0, expanded=false, previousFocus=null;
 var $=function(id){return document.getElementById(id);};
 function node(tag,attrs,value){var el=document.createElementNS(svgNS,tag);Object.keys(attrs||{}).forEach(function(k){el.setAttribute(k,attrs[k]);});if(value!==undefined)el.textContent=value;return el;}
 function add(parent,tag,attrs,value){var el=node(tag,attrs,value);parent.appendChild(el);return el;}
@@ -59,16 +59,52 @@ function draw(target,compact){
  });
 }
 function select(i){active=Math.max(0,Math.min(rows.length-1,i));draw('meteoLargeSvg',false);if(!$('meteoDetails'))return;var r=rows[active],d=dateOf(r);
- $('meteoDetails').textContent=dayName(d)+' '+hour(d)+' UTC · Chuva '+Number(r.rain_3h_mm).toFixed(2)+' mm/3h · Temperatura '+Number(r.temp_c).toFixed(1)+' °C · Vento '+Number(r.wind_kt).toFixed(0)+' kt · Rajadas '+Number(r.gust_kt).toFixed(0)+' kt · Nuvens '+Math.round(r.cloud_percent)+'%';$('meteoTimeSlider').value=String(active);
+ $('meteoDetails').textContent=region+' · '+dayName(d)+' '+hour(d)+' UTC · Chuva '+Number(r.rain_3h_mm).toFixed(2)+' mm/3h · Temperatura '+Number(r.temp_c).toFixed(1)+' °C · Vento '+Number(r.wind_kt).toFixed(0)+' kt · Rajadas '+Number(r.gust_kt).toFixed(0)+' kt · Nuvens '+Math.round(r.cloud_percent)+'%';$('meteoTimeSlider').value=String(active);
 }
 function open(){if(!rows.length)return;expanded=true;previousFocus=document.activeElement;$('meteoDialog').hidden=false;document.body.classList.add('meteo-dialog-open');select(active);$('meteoClose').focus();}
 function close(){if(!expanded)return;expanded=false;$('meteoDialog').hidden=true;document.body.classList.remove('meteo-dialog-open');if(previousFocus)previousFocus.focus();}
-function validate(data){
- if(!data||!Array.isArray(data.meteogram_lisboa)||data.meteogram_lisboa.length!==30)throw Error('Faltam os 30 períodos ECMWF de Lisboa');
- var arr=data.meteogram_lisboa;
- arr.forEach(function(r,i){if(r.step_h!==(i+1)*3||!Number.isFinite(Date.parse(r.valid_utc))||!['rain_3h_mm','temp_c','wind_dir_deg','wind_kt','gust_kt','cloud_percent'].every(function(k){return Number.isFinite(Number(r[k]));}))throw Error('Dados meteorológicos incompletos no prazo '+i);});
- return arr;
+function fromHourly(data){
+ var h=data&&data.hourly;
+ if(!h||!Array.isArray(h.time))throw Error('Previsão horária não disponível');
+ var required=['temperature_2m','cloud_cover','precipitation','wind_speed_10m','wind_direction_10m','wind_gusts_10m'];
+ if(required.some(function(k){return !Array.isArray(h[k])||h[k].length!==h.time.length;}))throw Error('Faltam variáveis horárias do meteograma');
+ var look=new Map(h.time.map(function(t,i){return [String(t).slice(0,16),i];}));
+ var now=new Date(),start=new Date(now);
+ start.setUTCMinutes(0,0,0);
+ start.setUTCHours(Math.ceil((start.getUTCHours()+1)/3)*3);
+ var output=[];
+ for(var i=0;i<30;i++){
+  var valid=new Date(start.getTime()+i*3*3600000);
+  var indexes=[];
+  for(var back=2;back>=0;back--){
+   var d=new Date(valid.getTime()-back*3600000),key=d.toISOString().slice(0,16),idx=look.get(key);
+   if(idx===undefined)throw Error('Períodos ECMWF incompletos para esta localidade: '+key);
+   indexes.push(idx);
+  }
+  var last=indexes[2],v=function(key,j){var n=Number(h[key][j]);if(!Number.isFinite(n))throw Error('Valor ECMWF inválido: '+key);return n;};
+  output.push({
+   step_h:(i+1)*3,valid_utc:valid.toISOString(),
+   temp_c:v('temperature_2m',last),
+   cloud_percent:indexes.reduce(function(sum,j){return sum+v('cloud_cover',j);},0)/3,
+   rain_3h_mm:indexes.reduce(function(sum,j){return sum+Math.max(0,v('precipitation',j));},0),
+   wind_kt:indexes.reduce(function(sum,j){return sum+v('wind_speed_10m',j);},0)/3,
+   wind_dir_deg:v('wind_direction_10m',last),
+   gust_kt:Math.max.apply(null,indexes.map(function(j){return v('wind_gusts_10m',j);}))
+  });
+ }
+ return output;
 }
+function reset(){rows=[];$('meteoPreview').disabled=true;$('meteoSmallSvg').replaceChildren();$('meteoLargeSvg').replaceChildren();}
+function loading(name){region=name;reset();$('meteoInfo').textContent=name+' · A consultar previsão ECMWF…';$('meteoModalTitle').textContent='Meteograma · '+name;}
+function error(name,exception){if(name!==region)return;reset();$('meteoInfo').textContent=name+' · Meteograma indisponível: '+exception.message;}
+function setForecast(name,data){
+ region=name;rows=fromHourly(data);active=0;
+ $('meteoModalTitle').textContent='Meteograma · '+name;
+ draw('meteoSmallSvg',true);select(0);
+ $('meteoInfo').textContent=name+' · ECMWF IFS 0,25° via Open-Meteo · horas UTC · clicar para ampliar';
+ $('meteoPreview').disabled=false;
+}
+window.MeteoFoxMeteogram={loading:loading,error:error,setForecast:setForecast};
 function init(){
  var preview=$('meteoPreview'),dialog=$('meteoDialog');if(!preview||!dialog)return;
  preview.addEventListener('click',open);$('meteoClose').addEventListener('click',close);
@@ -76,8 +112,8 @@ function init(){
  $('meteoPrevious').addEventListener('click',function(){select(active-1);});
  $('meteoNext').addEventListener('click',function(){select(active+1);});
  $('meteoTimeSlider').addEventListener('input',function(e){select(Number(e.target.value));});
- document.addEventListener('keydown',function(e){if(!expanded)return;if(e.key==='Escape'){e.preventDefault();close();}else if(e.key==='ArrowLeft'){e.preventDefault();select(active-1);}else if(e.key==='ArrowRight'){e.preventDefault();select(active+1);}});
- fetch('./produtos_experimentais/previsao_ecmwf.json?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(function(data){rows=validate(data);run=data.run_utc;draw('meteoSmallSvg',true);select(0);$('meteoInfo').textContent='Lisboa · ECMWF IFS '+data.resolution+' · ciclo '+new Date(run).toLocaleString('pt-PT',{timeZone:'UTC'})+' UTC · selecionar para ampliar';preview.disabled=false;}).catch(function(e){$('meteoInfo').textContent='Meteograma indisponível: '+e.message;preview.disabled=true;});
+ document.addEventListener('keydown',function(e){if(!expanded||e.altKey||e.ctrlKey||e.metaKey)return;if(e.key==='Escape'){e.preventDefault();close();}else if(e.key==='ArrowLeft'){e.preventDefault();select(active-1);}else if(e.key==='ArrowRight'){e.preventDefault();select(active+1);}});
+ loading('Lisboa');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

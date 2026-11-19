@@ -1,7 +1,7 @@
 name: MeteoFox | Validar Meteograma e Skew-T
 on:
   push:
-    branches: [meteofox-skewt-produtos-timeline]
+    branches: [meteofox-skewt-produtos-timeline, meteofox-region-meteograms-keyboard-fix]
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,6 +17,7 @@ jobs:
       - name: Verificar scripts e pacote de publicação
         run: |
           node --check meteofox_meteograma.js
+          node --check meteofox_keyboard.js
           python3 - <<'PY'
           import re, subprocess
           from pathlib import Path

@@ -5,6 +5,23 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+
+ const calls=[];
+ await page.route('https://api.open-meteo.com/v1/forecast?*',async route=>{
+  const url=new URL(route.request().url());
+  const lat=Number(url.searchParams.get('latitude'));
+  calls.push(lat);
+  const base=new Date();base.setUTCHours(0,0,0,0);
+  const time=Array.from({length:168},(_,i)=>new Date(base.getTime()+i*3600000).toISOString().slice(0,16));
+  const temp=lat>40?10:lat<34?24:16;
+  const h={time};
+  for(const [key,baseValue] of Object.entries({temperature_2m:temp,relative_humidity_2m:80,apparent_temperature:temp-1,precipitation:0.25,precipitation_probability:20,wind_speed_10m:12,wind_direction_10m:270,wind_gusts_10m:22,pressure_msl:1018,dew_point_2m:10,cloud_cover:70,weather_code:3})){
+   h[key]=time.map(()=>baseValue);
+  }
+  const days=Array.from({length:7},(_,i)=>new Date(base.getTime()+i*86400000).toISOString().slice(0,10));
+  const daily={time:days,temperature_2m_max:days.map(()=>temp+2),temperature_2m_min:days.map(()=>temp-2),precipitation_sum:days.map(()=>2),precipitation_probability_max:days.map(()=>40),uv_index_max:days.map(()=>3),weather_code:days.map(()=>3)};
+  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({current:{time:new Date().toISOString().slice(0,16),temperature_2m:temp,apparent_temperature:temp-1,relative_humidity_2m:80,precipitation:0.25,wind_speed_10m:12,wind_gusts_10m:22},hourly:h,daily})});
+ });
  await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('meteoPreview')?.disabled===false,{timeout:20000});
  assert.equal(await page.locator('#meteoSmallSvg rect').count()>5,true,'SVG do meteograma deve estar preenchido');
@@ -22,9 +39,40 @@ try{
  await page.keyboard.press('Escape');
  assert.equal(await page.locator('#meteoDialog').isVisible(),false);
  assert.equal(await page.locator('a#openSkewT').getAttribute('href'),'./laboratorio.html?tab=skewt');
+
+ assert.doesNotMatch(await page.locator('#summary').innerText(),/idx is not defined/);
+ await page.locator('#place').selectOption('Porto');
+ await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Porto · ECMWF IFS'));
+ assert.match(await page.locator('#meteoModalTitle').innerText(),/Porto/);
+ assert.match(await page.locator('#meteoSmallSvg').textContent(),/10°/);
+ await page.locator('#place').selectOption('Madeira');
+ await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Funchal · ECMWF IFS'));
+ await page.locator('[data-island="1"]').click();
+ await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Porto Santo · ECMWF IFS'));
+ assert.match(await page.locator('#meteoModalTitle').innerText(),/Porto Santo/);
+ await page.locator('#place').selectOption('Açores');
+ await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Terceira \/ Lajes · ECMWF IFS'));
+ assert.match(await page.locator('#meteoSmallSvg').textContent(),/16°/);
+ await page.locator('#place').selectOption('Lisboa');
+ await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Lisboa · ECMWF IFS'));
+ await page.locator('[data-tab="precipGust"]').click();
+ await page.locator('#ecmwfSlider').focus();
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.locator('#ecmwfSlider').inputValue(),'1');
+ await page.keyboard.press('End');
+ assert.equal(await page.locator('#ecmwfSlider').inputValue(),'15');
+ await page.keyboard.press('Home');
+ assert.equal(await page.locator('#ecmwfSlider').inputValue(),'0');
+ await page.locator('[data-tab="overview"]').click();
+ assert.ok(calls.some(x=>x>40)&&calls.some(x=>x<34)&&calls.some(x=>x>38&&x<39),'ECMWF requests must use regional coordinates');
  await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
  assert.equal(await page.locator('#skew circle').count()>10,true);
+ await page.locator('#skewSlider').focus();
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.locator('#skewSlider').inputValue(),'1');
+ await page.keyboard.press('Home');
+ assert.equal(await page.locator('#skewSlider').inputValue(),'0');
  await page.locator('#skewNext').click();
  assert.equal(await page.locator('#skewSlider').inputValue(),'1');
  await page.keyboard.press('ArrowRight');

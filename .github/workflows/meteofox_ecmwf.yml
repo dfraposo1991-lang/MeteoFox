@@ -112,7 +112,7 @@ jobs:
           shutil.copy2(main_site, out / "index.html")
           # O mapa interativo e a sincronização radar/Meteosat fazem parte
           # obrigatória do pacote, também nas publicações automáticas ECMWF.
-          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css"):
+          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js"):
               source_file = Path(name)
               assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
               shutil.copy2(source_file, out / name)
