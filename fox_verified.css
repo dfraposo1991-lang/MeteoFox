@@ -15,3 +15,12 @@
 .fox-table td.fox-cell-note{font:11px Inter,system-ui,sans-serif;color:var(--muted)}
 .fox-wait{color:var(--muted);padding:16px 4px}.fox-fail{color:var(--red);padding:12px 4px}
 @media(max-width:650px){.fox-trigger{margin:6px 0 0}.fox-verified{padding:12px}.fox-table th,.fox-table td{padding:9px}}
+
+/* Janela central sobreposta ao portal, como o meteograma ampliado. */
+.fox-verified{position:fixed;inset:0;z-index:100003;display:flex;align-items:center;justify-content:center;padding:clamp(10px,2vw,25px);margin:0;background:rgba(1,8,18,.84);border:0;border-radius:0;box-shadow:none;overflow:auto}
+.fox-verified .fox-modal{width:min(1160px,100%);max-height:min(90dvh,960px);overflow:auto;background:var(--panel,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;box-shadow:0 25px 90px #0008;padding:clamp(14px,2vw,27px)}
+.fox-verified .fox-panel-head{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.fox-verified .fox-panel-head strong{font-size:19px}
+.fox-verified .fox-table{min-width:720px}
+body.fox-modal-open{overflow:hidden}
+@media(max-width:650px){.fox-verified{padding:8px}.fox-verified .fox-modal{max-height:96dvh;padding:14px}.fox-verified .fox-panel-head strong{font-size:16px}}
