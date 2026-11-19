@@ -25,7 +25,7 @@ jobs:
               'index.html', 'laboratorio.html',
               'produtos_experimentais/previsao_ecmwf.json',
               'mapa.html', 'meteofox_satelite.js',
-              'chuva_003.png', 'rajadas_048.png',
+              'chuva_009.png', 'rajadas_054.png',
           ]
           result={}
           for name in files:
@@ -53,7 +53,7 @@ jobs:
           data=json.loads(result['produtos_experimentais/previsao_ecmwf.json'])
           assert len(data['meteogram_lisboa'])==30
           assert [v['step_h'] for v in data['meteogram_lisboa']]==list(range(3,91,3))
-          assert len(data['soundings'])==9
+          assert len(data['soundings'])==16
           assert all(set(v['cities'])=={'Porto','Lisboa','Beja'} for v in data['soundings'])
           print('SITE PUBLICADO OK | Dados ECMWF:',data['run_utc'],flush=True)
           PY
