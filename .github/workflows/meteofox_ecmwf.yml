@@ -98,7 +98,7 @@ jobs:
           base = Path("dados_meteofox_48h")
           manifest = json.loads((base / "ultimo_run.json").read_text())
           run_folder = base / manifest["pasta"]
-          for step in range(3,49,3):
+          for step in range(9,55,3):
               p = run_folder / f"step_{step:03d}.grib2"
               assert p.exists() and p.stat().st_size > 100_000, f"Incompleto: {p}"
           print("16 GRIB2 completos:", manifest["run"])
@@ -124,7 +124,7 @@ jobs:
           assert folder.is_dir(), f"Run sem pasta: {folder}"
           out = Path("mapas_ecmwf")
           out.mkdir(exist_ok=True)
-          for step in range(3, 49, 3):
+          for step in range(9, 55, 3):
               for kind in ("chuva", "rajadas"):
                   p = folder / f"{kind}_{step:03d}.png"
                   assert p.is_file() and p.stat().st_size > 10000, f"Carta incompleta: {p}"
@@ -172,7 +172,7 @@ jobs:
           source = Path("mapas_ecmwf")
           out = Path("public")
           out.mkdir(exist_ok=True)
-          for step in range(3, 49, 3):
+          for step in range(9, 55, 3):
               for kind in ("chuva", "rajadas"):
                   f = source / f"{kind}_{step:03d}.png"
                   assert f.exists() and f.stat().st_size > 1000, f"Falta {f}"
@@ -230,7 +230,7 @@ jobs:
                   f"{kind}_{step:03d}.png": hashlib.sha256(
                       (out / f"{kind}_{step:03d}.png").read_bytes()
                   ).hexdigest()
-                  for step in range(3, 49, 3)
+                  for step in range(9, 55, 3)
                   for kind in ("chuva", "rajadas")
               },
           }
