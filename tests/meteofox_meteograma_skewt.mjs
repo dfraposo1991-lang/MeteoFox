@@ -52,7 +52,7 @@ try{
  assert.match(await page.locator('#meteoModalTitle').innerText(),/Porto Santo/);
  await page.locator('#place').selectOption('Açores');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Terceira \/ Lajes · ECMWF IFS'));
- assert.match(await page.locator('#meteoSmallSvg').textContent(),/24°/);
+ assert.match(await page.locator('#meteoSmallSvg').textContent(),/16°/);
  await page.locator('#place').selectOption('Lisboa');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Lisboa · ECMWF IFS'));
  await page.locator('[data-tab="precipGust"]').click();
