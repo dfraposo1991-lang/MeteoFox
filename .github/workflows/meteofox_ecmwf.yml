@@ -3,8 +3,13 @@ name: MeteoFox | ECMWF 48h
 on:
   workflow_dispatch:
   schedule:
-    # Horas UTC, com margem para o ECMWF publicar os novos ciclos.
-    - cron: '27 4,10,16,22 * * *'
+    # IFS Open Data 0p1: a resolução 0,1° chega ~2 h após a de 0,25°.
+    # Correspondência: 02:40 -> run 18 UTC anterior; 09:45 -> 00 UTC;
+    # 14:40 -> 06 UTC; 21:45 -> 12 UTC.
+    - cron: '40 2 * * *'
+    - cron: '45 9 * * *'
+    - cron: '40 14 * * *'
+    - cron: '45 21 * * *'
 
 permissions:
   contents: read
@@ -17,11 +22,23 @@ jobs:
   gerar:
     name: Descarregar e gerar os mapas
     runs-on: ubuntu-24.04
-    timeout-minutes: 110
+    timeout-minutes: 220
 
     steps:
       - name: Obter os programas MeteoFox
         uses: actions/checkout@v4
+
+      # A verificação é leve: não instala Cartopy, ecCodes nem cria mapas.
+      - name: Preparar Python para verificar os dados
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar cliente de verificação ECMWF
+        run: python -m pip install 'ecmwf-opendata>=0.3,<1'
+
+      - name: Aguardar novo ciclo completo (verificar cada 10 minutos)
+        run: python verificar_ecmwf_48h.py --tries 10 --interval 600
 
       - name: Instalar dependências meteorológicas
         run: |
