@@ -44,7 +44,7 @@ try{
  await page.locator('#place').selectOption('Porto');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Porto · ECMWF IFS'));
  assert.match(await page.locator('#meteoModalTitle').innerText(),/Porto/);
- assert.match(await page.locator('#meteoSmallSvg').innerText(),/10°/);
+ assert.match(await page.locator('#meteoSmallSvg').textContent(),/10°/);
  await page.locator('#place').selectOption('Madeira');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Funchal · ECMWF IFS'));
  await page.locator('[data-island="1"]').click();
@@ -52,7 +52,7 @@ try{
  assert.match(await page.locator('#meteoModalTitle').innerText(),/Porto Santo/);
  await page.locator('#place').selectOption('Açores');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Terceira \/ Lajes · ECMWF IFS'));
- assert.match(await page.locator('#meteoSmallSvg').innerText(),/24°/);
+ assert.match(await page.locator('#meteoSmallSvg').textContent(),/24°/);
  await page.locator('#place').selectOption('Lisboa');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Lisboa · ECMWF IFS'));
  await page.locator('[data-tab="precipGust"]').click();
