@@ -8,6 +8,8 @@ on:
       - 'index.html'
       - 'mapa.html'
       - 'meteofox_satelite.js'
+      - 'laboratorio.html'
+      - 'produtos_experimentais/previsao_ecmwf.json'
       - '.github/workflows/meteofox_site.yml'
       - '.github/workflows/meteofox_ecmwf.yml'
 
@@ -40,13 +42,28 @@ jobs:
           public.mkdir(exist_ok=True)
 
           # Publicar todas as paginas e o JavaScript do mapa grande.
-          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js'):
+          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js', 'laboratorio.html'):
               source = Path(name)
               assert source.is_file() and source.stat().st_size > 0, f'{name} nao encontrado ou vazio'
               if name.endswith('.html'):
                   assert source.stat().st_size > 1000, f'{name} demasiado pequeno'
               shutil.copy2(source, public / name)
               print('Incluido no site:', name)
+
+          # Produtos ECMWF experimentais são ficheiros validados e versionados
+          # no GitHub. Não dependem de serviços externos durante a publicação.
+          import json
+          source_data = Path('produtos_experimentais/previsao_ecmwf.json')
+          assert source_data.is_file(), 'Faltam dados ECMWF de Lisboa e sondagens'
+          raw = json.loads(source_data.read_text(encoding='utf-8'))
+          assert len(raw['meteogram_lisboa']) == 30
+          assert [x['step_h'] for x in raw['meteogram_lisboa']] == list(range(3, 91, 3))
+          assert len(raw['soundings']) == 9
+          assert all(set(x['cities']) == {'Porto', 'Lisboa', 'Beja'} for x in raw['soundings'])
+          target = public / 'produtos_experimentais'
+          target.mkdir(exist_ok=True)
+          shutil.copy2(source_data, target / 'previsao_ecmwf.json')
+          print('Incluído: laboratório e dados ECMWF reais validados')
 
           base = 'https://dfraposo1991-lang.github.io/MeteoFox/'
           files = ['MeteoFox_animacao_48h.html']
