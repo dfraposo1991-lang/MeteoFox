@@ -2,6 +2,11 @@ name: MeteoFox Labs | Atualizar meteograma e sondagens
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'gerar_produtos_experimentais.py'
+      - '.github/workflows/meteofox_labs_refresh.yml'
   schedule:
     # IFS Open Data 0p25. Começar a verificar depois do início da disseminação.
     # Novo ciclo pretendido 18/00/06/12 UTC, respetivamente.
@@ -42,18 +47,21 @@ jobs:
           client=Client(source="ecmwf",model="ifs",resol="0p25")
           # A verificação não descarrega GRIB; os 30 ficheiros são validados no gerador.
           surface=client.latest(stream="oper",type="fc",levtype="sfc",step=90,param=list(SURFACE_PARAMS))
-          pressure=client.latest(stream="oper",type="fc",levtype="pl",step=48,param=list(PRESSURE_PARAMS))
+          pressure=client.latest(stream="oper",type="fc",levtype="pl",step=54,param=list(PRESSURE_PARAMS))
           if surface!=pressure:
               raise RuntimeError(f"Ciclo 0p25 ainda incompleto: superfície={surface}, pressão={pressure}")
           selected=surface.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
           existing=Path("produtos_experimentais/previsao_ecmwf.json")
-          previous=json.loads(existing.read_text())["run_utc"] if existing.exists() else None
+          prior=json.loads(existing.read_text()) if existing.exists() else {}
+          previous=prior.get("run_utc")
+          expected=list(range(9,55,3))
+          schema_current=[r.get("step_h") for r in prior.get("soundings",[])]==expected
           print(f"Ciclo confirmado: {selected}; último ciclo guardado: {previous}")
           Path("selected_cycle.txt").write_text(selected)
           with open(os.environ["GITHUB_OUTPUT"],"a") as output:
-              output.write("changed="+("false" if selected==previous else "true")+"\n")
+              output.write("changed="+("false" if selected==previous and schema_current else "true")+"\n")
           PY
-      - name: Gerar 30 períodos de Lisboa e nove sondagens previstas
+      - name: Gerar 30 períodos de Lisboa e 16 sondagens previstas
         if: steps.verificar.outputs.changed == 'true'
         run: python gerar_produtos_experimentais.py --cycle "$(cat selected_cycle.txt)"
       - name: Verificar conjunto completo antes de atualizar
@@ -65,10 +73,10 @@ jobs:
           data=json.loads(Path("produtos_experimentais/previsao_ecmwf.json").read_text())
           assert len(data["meteogram_lisboa"])==30
           assert [x["step_h"] for x in data["meteogram_lisboa"]]==list(range(3,91,3))
-          assert len(data["soundings"])==9
-          assert [x["step_h"] for x in data["soundings"]]==list(range(0,49,6))
+          assert len(data["soundings"])==16
+          assert [x["step_h"] for x in data["soundings"]]==list(range(9,55,3))
           assert all(set(x["cities"])=={"Porto","Lisboa","Beja"} for x in data["soundings"])
-          print("Validado:",data["run_utc"],"30 períodos; 9 sondagens por cidade")
+          print("Validado:",data["run_utc"],"30 períodos; 16 sondagens por cidade")
           PY
       - name: Guardar apenas os dados validados no repositório
         if: steps.verificar.outputs.changed == 'true'
