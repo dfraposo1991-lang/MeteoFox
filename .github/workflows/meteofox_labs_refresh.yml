@@ -23,7 +23,7 @@ concurrency:
 jobs:
   atualizar:
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 110
     steps:
       - name: Obter código do MeteoFox
         uses: actions/checkout@v4
