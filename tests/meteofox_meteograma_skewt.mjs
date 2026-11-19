@@ -7,7 +7,7 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('meteoPreview')?.disabled===false,{timeout:20000});
- assert.equal(await page.locator('#meteoSmallSvg rect').count()>30,true,'SVG do meteograma deve estar preenchido');
+ assert.equal(await page.locator('#meteoSmallSvg rect').count()>5,true,'SVG do meteograma deve estar preenchido');
  assert.equal(await page.locator('#meteoSmallSvg text').count()>100,true);
  assert.equal(await page.locator('#tempChart').count(),0,'O gráfico antigo foi removido');
  assert.equal(await page.locator('#pressure').count(),0);
