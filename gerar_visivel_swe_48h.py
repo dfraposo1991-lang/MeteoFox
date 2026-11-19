@@ -32,20 +32,42 @@ class RequestFailure(Exception):
 
 
 def get_bytes(url, *, image=False, size_limit=8_000_000):
+    """Aguarda e repete apenas falhas transitórias de rede e HTTP 5xx.
+
+    Nunca repetir HTTP 429 (limite de pedidos) ou 400/404. Os tempos de
+    espera são curtos e fixos, para não prolongar desnecessariamente o job.
+    """
     if urlparse(url).hostname != 'charts.ecmwf.int' or not url.startswith('https://'):
         raise ValueError('URL não autorizado; apenas charts.ecmwf.int')
     headers = dict(HEADERS)
-    if image: headers['Accept'] = 'image/png'
+    if image:
+        headers['Accept'] = 'image/png'
     req = Request(url, headers=headers)
-    try:
-        with urlopen(req, timeout=50) as response:
-            content = response.read(size_limit + 1)
-            if len(content) > size_limit: raise ValueError('Resposta excedeu limite de tamanho')
-            return content, response.headers.get('Content-Type', '')
-    except HTTPError as e:
-        try: body = e.read(1800).decode('utf-8', 'replace')
-        except Exception: body = ''
-        raise RequestFailure(e.code, url, body, e.headers.get('Retry-After', '')) from e
+    delays = (10, 25)  # total máximo 3 pedidos para falhas transitórias
+    for attempt in range(len(delays) + 1):
+        try:
+            with urlopen(req, timeout=50) as response:
+                content = response.read(size_limit + 1)
+                if len(content) > size_limit:
+                    raise ValueError('Resposta excedeu limite de tamanho')
+                return content, response.headers.get('Content-Type', '')
+        except HTTPError as e:
+            try:
+                body = e.read(1800).decode('utf-8', 'replace')
+            except Exception:
+                body = ''
+            # Nunca insistir em pedidos rejeitados, sobretudo HTTP 429.
+            if e.code not in (500, 502, 503, 504) or attempt == len(delays):
+                raise RequestFailure(e.code, url, body, e.headers.get('Retry-After', '')) from e
+            print(f'HTTP {e.code} transitório no ECMWF; tentativa {attempt + 2}/3 após {delays[attempt]} s',
+                  flush=True)
+        except (URLError, ConnectionError, TimeoutError) as e:
+            if attempt == len(delays):
+                raise
+            print(f'Ligação ECMWF interrompida ({type(e).__name__}); '
+                  f'tentativa {attempt + 2}/3 após {delays[attempt]} s', flush=True)
+        time.sleep(delays[attempt])
+    raise AssertionError('Loop de tentativas terminou inesperadamente')
 
 
 def iso(dt): return dt.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
