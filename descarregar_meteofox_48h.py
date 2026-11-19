@@ -7,7 +7,8 @@ No PowerShell Windows:
 Acesso aos dados ECMWF Open Data (CC BY 4.0).
 """
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
+import os
 import json
 import time
 
@@ -31,13 +32,25 @@ def descarregar():
     if temporario.exists():
         temporario.unlink()
     print("\nA consultar o Run disponivel...", flush=True)
+    # O GitHub Actions fixa o run confirmado no pré-teste de disponibilidade.
+    # Não mudar silenciosamente para um ciclo anterior caso faltem dados.
+    expected_raw = os.environ.get("ECMWF_EXPECTED_RUN_UTC")
+    options = {}
+    if expected_raw:
+        expected = datetime.fromisoformat(expected_raw.replace("Z", "+00:00"))
+        options = {"date": expected.strftime("%Y%m%d"), "time": expected.hour}
     result = client.retrieve(
         stream="oper", type="fc", levtype="sfc", step=3,
-        param=PARAMETROS, target=str(temporario)
+        param=PARAMETROS, target=str(temporario), **options
     )
     ciclo = result.datetime
     if isinstance(ciclo, str):
         ciclo = datetime.fromisoformat(ciclo.replace("Z", "+00:00"))
+    if expected_raw:
+        if ciclo.tzinfo is None:
+            ciclo = ciclo.replace(tzinfo=timezone.utc)
+        if ciclo.astimezone(timezone.utc) != expected:
+            raise RuntimeError(f"Ciclo inesperado: pedido {expected}, recebido {ciclo}")
     pasta_run = RAIZ / ciclo.strftime("run_%Y%m%d_%H")
     pasta_run.mkdir(parents=True, exist_ok=True)
     destino = pasta_run / "step_003.grib2"
