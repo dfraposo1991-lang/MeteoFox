@@ -17,12 +17,12 @@ from ecmwf.opendata import Client
 BASE = Path(__file__).resolve().parent
 RAIZ = BASE / "dados_meteofox_48h"
 RAIZ.mkdir(exist_ok=True)
-PASSOS = list(range(3, 49, 3))
+PASSOS = list(range(9, 55, 3))
 PARAMETROS = ["tp", "10fg", "10u", "10v"]
 
 
 def descarregar():
-    print("MeteoFox | ECMWF IFS 0,1° | 3 h a 48 h")
+    print("MeteoFox | ECMWF IFS 0,1° | 9 h a 54 h")
     print("Campos:", ", ".join(PARAMETROS))
     print("16 passos, um unico Run, com 3h de intervalo")
     client = Client(source="ecmwf", model="ifs", resol="0p1")
@@ -40,7 +40,7 @@ def descarregar():
         expected = datetime.fromisoformat(expected_raw.replace("Z", "+00:00"))
         options = {"date": expected.strftime("%Y%m%d"), "time": expected.hour}
     result = client.retrieve(
-        stream="oper", type="fc", levtype="sfc", step=3,
+        stream="oper", type="fc", levtype="sfc", step=9,
         param=PARAMETROS, target=str(temporario), **options
     )
     ciclo = result.datetime
@@ -53,10 +53,10 @@ def descarregar():
             raise RuntimeError(f"Ciclo inesperado: pedido {expected}, recebido {ciclo}")
     pasta_run = RAIZ / ciclo.strftime("run_%Y%m%d_%H")
     pasta_run.mkdir(parents=True, exist_ok=True)
-    destino = pasta_run / "step_003.grib2"
+    destino = pasta_run / "step_009.grib2"
     temporario.replace(destino)
     print("Run encontrado:", ciclo, "UTC")
-    print("+03 h: OK —", round(destino.stat().st_size / 1048576, 2), "MB", flush=True)
+    print("+09 h: OK —", round(destino.stat().st_size / 1048576, 2), "MB", flush=True)
 
     # Manifesto é gravado no inicio (e atualizado) para retomar downloads.
     manifesto = {
