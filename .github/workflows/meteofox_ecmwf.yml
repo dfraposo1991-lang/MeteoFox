@@ -39,35 +39,56 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Reutilizar cache pip ECMWF
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: meteofx-ecmwf-pip-v2-ubuntu24-py312
+          restore-keys: |
+            meteofx-ecmwf-pip-v2-ubuntu24-
+
       - name: Instalar cliente de verificação ECMWF
-        run: python -m pip install 'ecmwf-opendata>=0.3,<1'
+        shell: bash
+        run: |
+          start=$(date +%s)
+          python -m pip install 'ecmwf-opendata>=0.3,<1'
+          echo "- Cliente de verificação ECMWF: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Aguardar novo ciclo completo (verificar cada 10 minutos)
         env:
           ECMWF_REQUESTED_CYCLE: ${{ inputs.cycle || '' }}
         shell: bash
         run: |
+          started=$(date +%s)
           if [[ -n "$ECMWF_REQUESTED_CYCLE" ]]; then
             python verificar_ecmwf_48h.py --tries 10 --interval 600 --cycle "$ECMWF_REQUESTED_CYCLE"
           else
             python verificar_ecmwf_48h.py --tries 10 --interval 600
           fi
+          echo "- Esperar ciclo ECMWF completo: $(($(date +%s)-started)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Instalar dependências meteorológicas
         run: |
+          start=$(date +%s)
           sudo apt-get update
           sudo apt-get install -y \
             python3-venv python3-eccodes python3-numpy \
             python3-matplotlib python3-cartopy libeccodes-tools
+          echo "- Dependências meteorológicas apt: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Preparar Python
         run: |
+          start=$(date +%s)
           /usr/bin/python3 -m venv --system-site-packages .venv
           .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install 'ecmwf-opendata>=0.3,<1'
+          echo "- Ambiente Python de geração: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Descarregar 16 passos do mesmo Run
-        run: .venv/bin/python descarregar_meteofox_48h.py
+        run: |
+          start=$(date +%s)
+          .venv/bin/python descarregar_meteofox_48h.py
+          echo "- Descarregar 16 GRIB ECMWF: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verificar todos os GRIB2
         run: |
@@ -84,18 +105,71 @@ jobs:
           PY
 
       - name: Gerar os 32 mapas e o HTML
-        run: .venv/bin/python gerar_meteofox_48h.py
-
-      - name: Preparar publicação do site completo com o Run mais recente
         run: |
+          start=$(date +%s)
+          .venv/bin/python gerar_meteofox_48h.py
+          echo "- Gerar 32 cartas e animação: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar 32 cartas e animação como artefacto independente
+        shell: bash
+        run: |
+          set -euo pipefail
+          started=$(date +%s)
           .venv/bin/python - <<'PY'
-          import json
-          import shutil
+          import json, shutil
           from pathlib import Path
           manifest = json.loads(Path("dados_meteofox_48h/ultimo_run.json").read_text())
           run = manifest["run"]
-          name = "MeteoFox_48h_" + run[:10].replace("-", "") + "_" + run[11:13] + "UTC"
-          source = Path(name)
+          folder = Path("MeteoFox_48h_" + run[:10].replace("-", "") + "_" + run[11:13] + "UTC")
+          assert folder.is_dir(), f"Run sem pasta: {folder}"
+          out = Path("mapas_ecmwf")
+          out.mkdir(exist_ok=True)
+          for step in range(3, 49, 3):
+              for kind in ("chuva", "rajadas"):
+                  p = folder / f"{kind}_{step:03d}.png"
+                  assert p.is_file() and p.stat().st_size > 10000, f"Carta incompleta: {p}"
+                  shutil.copy2(p, out / p.name)
+          animation = folder / "MeteoFox_animacao_48h.html"
+          assert animation.is_file() and animation.stat().st_size > 1000
+          shutil.copy2(animation, out / animation.name)
+          (out / "cycle.txt").write_text(run + "\n", encoding="utf-8")
+          assert len(list(out.glob("*.png"))) == 32
+          print("Pacote independente validado: 32 PNG e animação |", run)
+          PY
+          echo "- Pacote de 32 cartas e animação: $(($(date +%s)-started)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Disponibilizar pacote de cartas entre processos
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteofox-ecmwf-32-cartas
+          path: mapas_ecmwf
+          if-no-files-found: error
+          retention-days: 2
+
+  preparar:
+    name: Construir interface e preparar publicação
+    needs: gerar
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Obter interface MeteoFox aprovada
+        uses: actions/checkout@v4
+
+      - name: Recuperar apenas cartas produzidas e validadas
+        uses: actions/download-artifact@v4
+        with:
+          name: meteofox-ecmwf-32-cartas
+          path: mapas_ecmwf
+
+      - name: Montar o site com cartas validadas e interface atual
+        run: |
+          start=$(date +%s)
+          python3 - <<'PY'
+          import json
+          import shutil
+          from pathlib import Path
+          run = Path("mapas_ecmwf/cycle.txt").read_text(encoding="utf-8").strip()
+          source = Path("mapas_ecmwf")
           out = Path("public")
           out.mkdir(exist_ok=True)
           for step in range(3, 49, 3):
@@ -137,6 +211,7 @@ jobs:
           (out / ".nojekyll").write_text("")
           print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
           PY
+          echo "- Validar interface e preparar Pages: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Preparar GitHub Pages
         uses: actions/configure-pages@v5
@@ -149,7 +224,7 @@ jobs:
 
   publicar:
     name: Atualizar site MeteoFox
-    needs: gerar
+    needs: preparar
     runs-on: ubuntu-24.04
     permissions:
       pages: write
