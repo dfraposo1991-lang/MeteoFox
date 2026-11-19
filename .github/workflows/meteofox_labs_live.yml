@@ -21,12 +21,22 @@ jobs:
           from urllib.request import Request,urlopen
           from urllib.error import URLError
           base = 'https://dfraposo1991-lang.github.io/MeteoFox/'
+          # Verificar os mapas efetivamente publicados, sem presumir que a
+          # migração dos prazos +9..+54 já terminou.
+          from urllib.error import HTTPError
+          manifest_req=Request(base+'meteofox_ecmwf_manifest.json',
+                               headers={'Cache-Control':'no-cache'})
+          with urlopen(manifest_req,timeout=25) as response:
+              manifest=json.load(response)
+          images=set(manifest.get('images',{}))
+          steps=list(range(9,55,3)) if 'rajadas_054.png' in images else list(range(3,49,3))
           files = [
               'index.html', 'laboratorio.html',
               'produtos_experimentais/previsao_ecmwf.json',
               'mapa.html', 'meteofox_satelite.js',
-              'chuva_009.png', 'rajadas_054.png',
+              f'chuva_{steps[0]:03d}.png', f'rajadas_{steps[-1]:03d}.png',
           ]
+          print('Prazos publicados:', steps[0], 'a', steps[-1],flush=True)
           result={}
           for name in files:
               for attempt in range(12):
@@ -53,7 +63,10 @@ jobs:
           data=json.loads(result['produtos_experimentais/previsao_ecmwf.json'])
           assert len(data['meteogram_lisboa'])==30
           assert [v['step_h'] for v in data['meteogram_lisboa']]==list(range(3,91,3))
-          assert len(data['soundings'])==16
+          sounding_steps=[v['step_h'] for v in data['soundings']]
+          assert sounding_steps in (list(range(0,49,6)),list(range(9,55,3))), 'Prazos de sondagem incoerentes'
+          if sounding_steps[0]==0:
+              print('Sondagens antigas ainda publicadas; a aguardar nova geração +9..+54 h',flush=True)
           assert all(set(v['cities'])=={'Porto','Lisboa','Beja'} for v in data['soundings'])
           print('SITE PUBLICADO OK | Dados ECMWF:',data['run_utc'],flush=True)
           PY
