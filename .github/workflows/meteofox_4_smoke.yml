@@ -1,0 +1,53 @@
+name: MeteoFox 4.0 | Testes de navegador (desenvolvimento)
+
+on:
+  push:
+    branches: [meteofox-4-dev]
+    paths:
+      - 'index.html'
+      - 'mapa.html'
+      - 'meteofox_satelite.js'
+      - 'tests/meteofox_4_smoke.mjs'
+      - '.github/workflows/meteofox_4_smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Verificar Produtos, METAR e Radar/Meteosat
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar sintaxe dos scripts integrados
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          for name in ('index.html','mapa.html'):
+              html=Path(name).read_text()
+              scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',html)
+              assert scripts, f'Não foi encontrado JavaScript em {name}'
+              for i,js in enumerate(scripts):
+                  if not js.strip(): continue
+                  p=Path(f'/tmp/meteofox_{name}_{i}.js')
+                  p.write_text(js)
+                  import subprocess
+                  subprocess.run(['node','--check',str(p)],check=True)
+          subprocess.run(['node','--check','meteofox_satelite.js'],check=True)
+          print('Sintaxe dos scripts: OK')
+          PY
+      - name: Instalar Playwright e Chromium
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Iniciar servidor de testes e executar testes do navegador
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/meteofox_http.log 2>&1 &
+          sleep 2
+          node tests/meteofox_4_smoke.mjs
