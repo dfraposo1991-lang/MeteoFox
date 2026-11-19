@@ -94,6 +94,32 @@ jobs:
               for name in pool.map(download, files):
                   print('Conservado:', name)
 
+          # Preservar a identificação do ciclo ECMWF ao republicar a interface.
+          # Sites antigos sem manifesto continuam a funcionar normalmente.
+          from urllib.error import HTTPError
+          import hashlib
+          metadata_url = base + 'meteofox_ecmwf_manifest.json'
+          try:
+              req = Request(metadata_url, headers={'Cache-Control': 'no-cache',
+                                                   'User-Agent': 'MeteoFox-GitHub-Actions/1.0'})
+              with urlopen(req, timeout=20) as reply:
+                  metadata = json.loads(reply.read(500000))
+              assert metadata.get('schema') == 1, 'Manifesto ECMWF com versão desconhecida'
+              images = metadata.get('images', {})
+              assert set(images) == set(files[1:]), 'Lista de cartas incompleta no manifesto'
+              for name, checksum in images.items():
+                  actual = hashlib.sha256((public / name).read_bytes()).hexdigest()
+                  assert actual == checksum, f'Manifesto ECMWF incompatível: {name}'
+              (public / 'meteofox_ecmwf_manifest.json').write_text(
+                  json.dumps(metadata, indent=2, ensure_ascii=False), encoding='utf-8'
+              )
+              print('Conservado manifesto do ciclo ECMWF:', metadata['cycle_utc'])
+          except HTTPError as exc:
+              if exc.code == 404:
+                  print('Manifesto ainda não disponível: aguardamos nova produção ECMWF')
+              else:
+                  raise
+
           (public / '.nojekyll').write_text('', encoding='utf-8')
           assert len(list(public.glob('*.png'))) == 32, 'Faltam mapas ECMWF'
           print('Site pronto: index.html, mapa.html, meteofox_satelite.js, animacao e 32 mapas ECMWF')
