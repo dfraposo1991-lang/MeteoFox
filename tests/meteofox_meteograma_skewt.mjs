@@ -77,6 +77,7 @@ try{
  assert.equal(await embedded.locator('#skewSlider').inputValue(),'1');
  await embedded.locator('#skewNext').focus();
  await page.keyboard.press('Escape');
+ await page.waitForFunction(()=>document.getElementById('skewDialog')?.hidden===true,{timeout:3000});
  assert.equal(await page.locator('#skewDialog').isVisible(),false,'Esc fecha o modal mesmo com foco no iframe');
  assert.equal(await page.locator('#meteoDialog').isVisible(),false,'Meteograma permanece independente');
  await page.locator('#ecmwfSlider').fill('0');
