@@ -5,7 +5,7 @@ var svgNS='http://www.w3.org/2000/svg', rows=[], region='', active=0, expanded=f
 var $=function(id){return document.getElementById(id);};
 function node(tag,attrs,value){var el=document.createElementNS(svgNS,tag);Object.keys(attrs||{}).forEach(function(k){el.setAttribute(k,attrs[k]);});if(value!==undefined)el.textContent=value;return el;}
 function add(parent,tag,attrs,value){var el=node(tag,attrs,value);parent.appendChild(el);return el;}
-function txt(svg,value,x,y,size,color,weight,anchor){return add(svg,'text',{x:x,y:y,'font-family':'Inter,system-ui,sans-serif','font-size':size||13,fill:color||'#e8f1f8','font-weight':weight||500,'text-anchor':anchor||'start'},value);}
+function txt(svg,value,x,y,size,color,weight,anchor){return add(svg,'text',{x:x,y:y,'font-family':'Inter,system-ui,sans-serif','font-size':size||13,fill:color||'#26374b','font-weight':weight||500,'text-anchor':anchor||'start'},value);}
 function dateOf(row){return new Date(row.valid_utc);}
 function dayName(d){return d.toLocaleDateString('pt-PT',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'});}
 function hour(d){return d.toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',hourCycle:'h23'}).slice(0,2)+'h';}
@@ -16,45 +16,45 @@ function draw(target,compact){
  var col=42, left=170, top=33, width=left+col*rows.length+10, height=420;
  svg.setAttribute('viewBox','0 0 '+width+' '+height);
  svg.setAttribute('role','img');
- add(svg,'rect',{x:0,y:0,width:width,height:height,rx:10,fill:'#071b2d'});
+ add(svg,'rect',{x:0,y:0,width:width,height:height,rx:10,fill:'#ffffff'});
  var boundaries=[0,33,70,127,275,315,350,385,419];
- boundaries.forEach(function(y){add(svg,'line',{x1:0,x2:width,y1:y,y2:y,stroke:'#28475e','stroke-width':1});});
- for(var i=0;i<=rows.length;i++)add(svg,'line',{x1:left+i*col,x2:left+i*col,y1:33,y2:419,stroke:'#244056','stroke-width':0.8});
- txt(svg,'Hora UTC',12,56,13,'#a8bdce');
- txt(svg,'Nuvens',12,107,16,'#d4eafa',600);
- txt(svg,'Precipitação',12,193,15,'#d4eafa',600);
- txt(svg,'(mm/3 h)',12,212,12,'#9ebbd1');
- txt(svg,'Temperatura (°C)',12,303,14,'#e8f1f8',600);
- txt(svg,'Direção do vento',12,338,13,'#e8f1f8',600);
- txt(svg,'Vento médio (kt)',12,373,13,'#e8f1f8',600);
- txt(svg,'Rajadas (kt)',12,408,14,'#e8f1f8',600);
+ boundaries.forEach(function(y){add(svg,'line',{x1:0,x2:width,y1:y,y2:y,stroke:'#d9e2ea','stroke-width':1});});
+ for(var i=0;i<=rows.length;i++)add(svg,'line',{x1:left+i*col,x2:left+i*col,y1:33,y2:419,stroke:'#e2e8f0','stroke-width':0.8});
+ txt(svg,'Hora UTC',12,56,13,'#475569');
+ txt(svg,'Nuvens',12,107,16,'#243447',600);
+ txt(svg,'Precipitação',12,193,15,'#243447',600);
+ txt(svg,'(mm/3 h)',12,212,12,'#667788');
+ txt(svg,'Temperatura (°C)',12,303,14,'#26374b',600);
+ txt(svg,'Direção do vento',12,338,13,'#26374b',600);
+ txt(svg,'Vento médio (kt)',12,373,13,'#26374b',600);
+ txt(svg,'Rajadas (kt)',12,408,14,'#26374b',600);
  var groups=[],key='';
  rows.forEach(function(r,i){var d=dateOf(r),k=r.valid_utc.slice(0,10);if(k!==key){groups.push({start:i,n:1,date:d});key=k;}else groups[groups.length-1].n++;});
  groups.forEach(function(g,j){
   var x=left+g.start*col;
-  add(svg,'rect',{x:x,y:0,width:g.n*col,height:33,fill:j%2?'#12324b':'#0e283e',stroke:'#35576e'});
-  txt(svg,dayName(g.date),x+g.n*col/2,22,14,'#e6f6ff',700,'middle');
-  add(svg,'line',{x1:x,x2:x,y1:33,y2:419,stroke:'#69869c','stroke-width':1.5});
+  add(svg,'rect',{x:x,y:0,width:g.n*col,height:33,fill:j%2?'#f1f5f9':'#f8fafc',stroke:'#dde5ec'});
+  txt(svg,dayName(g.date),x+g.n*col/2,22,14,'#26374b',700,'middle');
+  add(svg,'line',{x1:x,x2:x,y1:33,y2:419,stroke:'#c5d2df','stroke-width':1.5});
  });
  var rainScale=Math.max(1,Math.ceil(Math.max.apply(null,rows.map(function(r){return Number(r.rain_3h_mm)||0;}))*2)/2);
  for(var j=0;j<=4;j++){
   var y=266-j*124/4, val=rainScale*j/4;
-  add(svg,'line',{x1:left,x2:width,y1:y,y2:y,stroke:'#35536c','stroke-dasharray':'3 5'});
-  txt(svg,val.toFixed(1),left-8,y+4,11,'#aec8d8',400,'end');
+  add(svg,'line',{x1:left,x2:width,y1:y,y2:y,stroke:'#d2dce7','stroke-dasharray':'3 5'});
+  txt(svg,val.toFixed(1),left-8,y+4,11,'#4f6477',400,'end');
  }
  rows.forEach(function(r,i){
   var x=left+i*col, mid=x+col/2, d=dateOf(r), precip=Math.max(0,Number(r.rain_3h_mm)||0), cover=Math.max(0,Number(r.cloud_percent)||0);
-  txt(svg,hour(d),mid,55,13,'#e8f1f8',500,'middle');
+  txt(svg,hour(d),mid,55,13,'#26374b',500,'middle');
   txt(svg,cloudIcon(cover,precip),mid,107,23,'#d3eaf4',500,'middle');
   var bar=Math.max(0,precip/rainScale*124);
   if(precip>0)add(svg,'rect',{x:x+6,y:266-Math.max(2,bar),width:col-12,height:Math.max(2,bar),rx:2,fill:'#3797ec'});
-  txt(svg,Math.round(Number(r.temp_c))+'°',mid,303,16,'#ffca72',700,'middle');
+  txt(svg,Math.round(Number(r.temp_c))+'°',mid,303,16,'#a15b10',700,'middle');
   var degrees=Number(r.wind_dir_deg)||0;
   // Seta orientada para onde o vento sopra (180° oposto à direção meteorológica de origem).
-  txt(svg,'↑',mid,340,25,'#b9efff',700,'middle').setAttribute('transform','rotate('+((degrees+180)%360)+' '+mid+' 333)');
-  txt(svg,String(Math.round(Number(r.wind_kt))),mid,373,15,'#edf8ff',600,'middle');
-  txt(svg,String(Math.round(Number(r.gust_kt))),mid,408,15,'#ffd58c',700,'middle');
-  if(!compact&&active===i)add(svg,'rect',{x:x+1,y:33,width:col-2,height:385,rx:3,fill:'#51d6e7','fill-opacity':0.11,stroke:'#51d6e7','stroke-width':1.5,'pointer-events':'none'});
+  txt(svg,'↑',mid,340,25,'#1a567b',700,'middle').setAttribute('transform','rotate('+((degrees+180)%360)+' '+mid+' 333)');
+  txt(svg,String(Math.round(Number(r.wind_kt))),mid,373,15,'#26374b',600,'middle');
+  txt(svg,String(Math.round(Number(r.gust_kt))),mid,408,15,'#9b4e13',700,'middle');
+  if(!compact&&active===i)add(svg,'rect',{x:x+1,y:33,width:col-2,height:385,rx:3,fill:'#dbeafe','fill-opacity':0.45,stroke:'#356d9b','stroke-width':1.5,'pointer-events':'none'});
   if(!compact){var hit=add(svg,'rect',{x:x,y:33,width:col,height:385,fill:'transparent',style:'cursor:pointer'});hit.addEventListener('click',function(){select(i);});}
  });
 }
