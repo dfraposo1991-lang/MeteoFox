@@ -1,7 +1,7 @@
 name: MeteoFox | Validar Meteograma e Skew-T
 on:
   push:
-    branches: [meteofox-skewt-produtos-timeline, meteofox-region-meteograms-keyboard-fix, meteofox-white-charts-global-keys]
+    branches: [meteofox-skewt-produtos-timeline, meteofox-region-meteograms-keyboard-fix, meteofox-white-charts-global-keys, meteofox-skewt-portal-consistency]
   workflow_dispatch:
 permissions:
   contents: read
