@@ -14,7 +14,7 @@
 <div class="columns"><div><h3>Temperatura e ponto de orvalho (°C)</h3><svg id="chartTemp" class="chart" role="img" aria-label="Temperatura e ponto de orvalho para Lisboa"></svg></div>
 <div><h3>Precipitação em 3 horas (mm)</h3><svg id="chartRain" class="chart" role="img" aria-label="Precipitação prevista em Lisboa"></svg></div>
 <div><h3>Vento e rajadas (kt)</h3><svg id="chartWind" class="chart" role="img" aria-label="Vento e rajadas previstas para Lisboa"></svg></div>
-<div><h3>Pressão (hPa) e nebulosidade (%)</h3><svg id="chartPressure" class="chart" role="img" aria-label="Pressão prevista para Lisboa"></svg><p class="muted" id="cloudSummary"></p></div></div>
+<div><h3>Pressão ao nível do mar (hPa)</h3><svg id="chartPressure" class="chart" role="img" aria-label="Pressão prevista para Lisboa"></svg></div><div><h3>Nebulosidade total (%)</h3><svg id="chartCloud" class="chart" role="img" aria-label="Nebulosidade total prevista para Lisboa"></svg></div></div>
 <p class="muted">Precipitação de 3h = diferença do acumulado desde o início do ciclo. A primeira barra corresponde às primeiras 3 horas.</p></div>
 </section>
 <section id="panelS" class="panel">
@@ -67,7 +67,7 @@ function initialize(data){
  plot('chartRain',rows,[{key:'rain_3h_mm',color:'#56b1ef',label:'Chuva 3 h'}],{zero:true,bar:true});
  plot('chartWind',rows,[{key:'wind_kt',color:'#6ce3d1',label:'Vento'},{key:'gust_kt',color:'#f8b65d',label:'Rajadas'}],{zero:true});
  plot('chartPressure',rows,[{key:'pressure_hpa',color:'#c9a8ff',label:'Pressão'}]);
- $('cloudSummary').textContent='Nebulosidade total: '+rows[0].cloud_percent.toFixed(0)+'% no início → '+rows.at(-1).cloud_percent.toFixed(0)+'% em +120 h';
+ plot('chartCloud',rows,[{key:'cloud_percent',color:'#a6b8c9',label:'Nebulosidade'}],{zero:true});
  for(const s of steps){const option=document.createElement('option');option.value=String(s.step_h);option.textContent='+'+s.step_h+' h · '+s.valid_utc.replace('T',' ').slice(0,16)+' UTC';$('step').append(option)}
  function redraw(){const record=steps.find(s=>s.step_h===Number($('step').value));if(!record)return;drawSkew(record.cities[$('city').value],$('city').value);$('validSounding').textContent=$('city').value+' · válido '+record.valid_utc+' · ECMWF '+data.run_utc;}
  $('step').addEventListener('change',redraw);$('city').addEventListener('change',redraw);redraw();
