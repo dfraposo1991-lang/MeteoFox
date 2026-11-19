@@ -35,11 +35,11 @@ const $=id=>document.getElementById(id);
 const ns='http://www.w3.org/2000/svg';
 const el=(name,attrs={},text='')=>{const n=document.createElementNS(ns,name);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(text)n.textContent=text;return n};
 const add=(parent,name,attrs={},text='')=>{const n=el(name,attrs,text);parent.append(n);return n};
-function plot(id,rows,series,{zero=false,bar=false}={}){
+function plot(id,rows,series,{zero=false,bar=false,ceiling=null}={}){
  const svg=$(id);svg.replaceChildren();svg.setAttribute('viewBox','0 0 650 270');const X=51,Y=14,W=580,H=204;
  const values=rows.flatMap(row=>series.map(s=>Number(row[s.key]))).filter(Number.isFinite);
  if(!values.length)return;let lo=zero?0:Math.min(...values),hi=Math.max(...values);
- if(lo===hi){lo-=1;hi+=1}const pad=(hi-lo)*.1;if(!zero)lo-=pad;hi+=pad;
+ if(lo===hi){lo-=1;hi+=1}const pad=(hi-lo)*.1;if(!zero)lo-=pad;hi+=pad;if(ceiling!==null){lo=0;hi=ceiling;}
  const px=i=>X+(i/(rows.length-1))*W,py=v=>Y+H-(v-lo)/(hi-lo)*H;
  for(let j=0;j<=4;j++){const y=Y+H*j/4;add(svg,'line',{x1:X,y1:y,x2:X+W,y2:y,stroke:'#33506a'});add(svg,'text',{x:4,y:y+4},(hi-j*(hi-lo)/4).toFixed(1))}
  const xMark=[0,5,11,17,23,29];for(const i of xMark){const x=px(i);add(svg,'text',{x:x-13,y:245},'+'+rows[i].step_h+'h')}
@@ -67,7 +67,7 @@ function initialize(data){
  plot('chartRain',rows,[{key:'rain_3h_mm',color:'#56b1ef',label:'Chuva 3 h'}],{zero:true,bar:true});
  plot('chartWind',rows,[{key:'wind_kt',color:'#6ce3d1',label:'Vento'},{key:'gust_kt',color:'#f8b65d',label:'Rajadas'}],{zero:true});
  plot('chartPressure',rows,[{key:'pressure_hpa',color:'#c9a8ff',label:'Pressão'}]);
- plot('chartCloud',rows,[{key:'cloud_percent',color:'#a6b8c9',label:'Nebulosidade'}],{zero:true});
+ plot('chartCloud',rows,[{key:'cloud_percent',color:'#a6b8c9',label:'Nebulosidade'}],{zero:true,ceiling:100});
  for(const s of steps){const option=document.createElement('option');option.value=String(s.step_h);option.textContent='+'+s.step_h+' h · '+s.valid_utc.replace('T',' ').slice(0,16)+' UTC';$('step').append(option)}
  function redraw(){const record=steps.find(s=>s.step_h===Number($('step').value));if(!record)return;drawSkew(record.cities[$('city').value],$('city').value);$('validSounding').textContent=$('city').value+' · válido '+record.valid_utc+' · ECMWF '+data.run_utc;}
  $('step').addEventListener('change',redraw);$('city').addEventListener('change',redraw);redraw();
