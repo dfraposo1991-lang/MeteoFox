@@ -193,7 +193,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
   </div>
   <p class="note" style="margin-top:10px">Skew-T: Porto, Lisboa e Beja · +0 a +48 h · previsão ECMWF IFS Open Data.</p>
  </div>
- <div class="heading"><div><h2>Chuva e Rajadas · ECMWF IFS</h2><div class="sub">Portugal continental e Atlântico próximo · 16°W a 6°W · previsão até 48 h · resolução 0,1°</div></div><span class="status">ECMWF Open Data · atualização na nuvem</span></div>
+ <div class="heading"><div><h2>Chuva e Rajadas · ECMWF IFS</h2><div class="sub">Portugal continental e Atlântico próximo · 16°W a 6°W · previsão de +9 a +54 h · resolução 0,1°</div></div><span class="status">ECMWF Open Data · atualização na nuvem</span></div>
  <div class="card">
   <h3>Precipitação (mm) e rajadas de vento (kt)</h3>
   <p class="note" style="margin-top:0;margin-bottom:12px">Os mapas mantêm a cartografia, as cores e as setas que aprovámos. A linha temporal sincroniza os dois campos de 3 em 3 horas.</p>
@@ -203,19 +203,19 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
       <button class="action" id="ecmwfPlay" type="button">▶ Animar</button>
       <button class="action" id="ecmwfNext" type="button">Seguinte ▶</button>
       <input id="ecmwfSlider" aria-label="Prazo comum da chuva e rajadas" type="range" min="0" max="15" step="1" value="0">
-      <strong id="ecmwfStep" aria-live="polite">+03 h · 1 / 16</strong>
+      <strong id="ecmwfStep" aria-live="polite">+09 h · 1 / 16</strong>
     </div>
     <div class="ecmwf-fields">
       <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"></div>
       <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"></div>
     </div>
-    <p id="ecmwfMessage" class="note" aria-live="polite">16 passos · +3 a +48 h · imagens atualizadas pelo GitHub Pages.</p>
+    <p id="ecmwfMessage" class="note" aria-live="polite">16 passos · +9 a +54 h · imagens atualizadas pelo GitHub Pages.</p>
   </div>
   <p class="note">Fonte: ECMWF IFS Open Data (CC BY 4.0). A chuva apresentada é acumulada nas últimas 3 horas. As cores das rajadas indicam intensidade máxima; as setas representam a direção do vento a 10 m. Os passos são de 3 horas e não horários.</p>
  </div>
 
 <div id="visSimPane" style="display:block">
-  <div class="heading"><div><h2>Imagem de satélite simulada · ECMWF IFS</h2><div class="sub">Canais visíveis simulados · South West Europe · previsões até +48 h</div></div><span id="visSimStatus" class="status">A consultar imagens…</span></div>
+  <div class="heading"><div><h2>Imagem de satélite simulada · ECMWF IFS</h2><div class="sub">Canais visíveis simulados · South West Europe · previsões de +9 a +54 h</div></div><span id="visSimStatus" class="status">A consultar imagens…</span></div>
   <div class="card" style="padding:12px">
    <div class="maptools" style="align-items:center">
     <button class="action" id="visSimPrev" type="button">◀ Anterior</button><button class="action" id="visSimPlay" type="button">▶ Animar</button><button class="action" id="visSimNext" type="button">Seguinte ▶</button><button class="action" id="visSimRefresh" type="button">↻ Atualizar</button>
@@ -675,7 +675,33 @@ $('radarPlay').onclick=()=>{if(radarTimer){clearInterval(radarTimer);radarTimer=
 
 
 /* Os 16 passos das duas cartas usam o mesmo índice; radar/Meteosat não é alterado. */
-const ECMWF_STEPS=Array.from({length:16},(_,i)=>(i+1)*3);
+const ECMWF_STEPS=Array.from({length:16},(_,i)=>(i+3)*3);
+let ecmwfCycleUTC=null,ecmwfImagesReady=false;
+function ecmwfValidUTC(cycle,step){
+ if(!cycle||!Number.isFinite(Date.parse(cycle)))return 'validade UTC a confirmar';
+ const valid=new Date(Date.parse(cycle)+step*3600000);
+ return new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(valid)+' UTC';
+}
+async function ecmwfLoadCycle(){
+ try{
+  const resp=await fetch('./meteofox_ecmwf_manifest.json?v='+Date.now(),{cache:'no-store'});
+  if(!resp.ok)throw Error('Manifesto indisponível');
+  const manifest=await resp.json();
+  if(Number.isFinite(Date.parse(manifest.cycle_utc)))ecmwfCycleUTC=manifest.cycle_utc;
+  const actual=Object.keys(manifest.images||{}).filter(name=>/^chuva_\d{3}\.png$/.test(name)).sort();
+  const expected=ECMWF_STEPS.map(step=>'chuva_'+String(step).padStart(3,'0')+'.png');
+  if(JSON.stringify(actual)!==JSON.stringify(expected))throw Error('As cartas +9 a +54 h ainda não foram publicadas');
+  ecmwfImagesReady=true;
+  for(const id of ['ecmwfSlider','ecmwfPlay','ecmwfPrevious','ecmwfNext'])$(id).disabled=false;
+  ecmwfRender(ecmwfAt);
+ }catch(err){
+  ecmwfImagesReady=false;
+  $('ecmwfMessage').textContent='A aguardar o ciclo ECMWF +9 a +54 h: '+err.message;
+  for(const id of ['ecmwfSlider','ecmwfPlay','ecmwfPrevious','ecmwfNext'])$(id).disabled=true;
+  $('ecmwfRain').removeAttribute('src');
+  $('ecmwfGust').removeAttribute('src');
+ }
+}
 let ecmwfAt=0,ecmwfTimer=null,ecmwfReady=false;
 function ecmwfRender(i){
  ecmwfAt=(i+ECMWF_STEPS.length)%ECMWF_STEPS.length;
@@ -683,7 +709,7 @@ function ecmwfRender(i){
  $('ecmwfRain').src='./chuva_'+step+'.png';
  $('ecmwfGust').src='./rajadas_'+step+'.png';
  $('ecmwfSlider').value=String(ecmwfAt);
- $('ecmwfStep').textContent='+'+String(ECMWF_STEPS[ecmwfAt]).padStart(2,'0')+' h · '+(ecmwfAt+1)+' / 16';
+ $('ecmwfStep').textContent='+'+String(ECMWF_STEPS[ecmwfAt]).padStart(2,'0')+' h · '+ecmwfValidUTC(ecmwfCycleUTC,ECMWF_STEPS[ecmwfAt])+' · '+(ecmwfAt+1)+' / 16';
 }
 function ecmwfStop(){if(ecmwfTimer){clearInterval(ecmwfTimer);ecmwfTimer=null}$('ecmwfPlay').textContent='▶ Animar'}
 function ecmwfInit(){
@@ -694,19 +720,19 @@ function ecmwfInit(){
  $('ecmwfPlay').onclick=()=>{if(ecmwfTimer){ecmwfStop();return}$('ecmwfPlay').textContent='Ⅱ Pausar';ecmwfTimer=setInterval(()=>ecmwfRender(ecmwfAt+1),1100)};
  const unavailable=()=>{$('ecmwfMessage').textContent='Não foi possível carregar as cartas ECMWF; confirma os 32 PNG no GitHub Pages.'};
  $('ecmwfRain').onerror=unavailable;$('ecmwfGust').onerror=unavailable;
- ecmwfRender(0);
+ ecmwfLoadCycle();
 }
 /* ECMWF VIS simulado: manifesto e imagens servidos de forma independente do deploy GitHub Pages. */
 const VIS_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_vis/';
 let visData=null,visAt=0,visTimer=null,visLoading=null,visRunNotice='',visRunStatus='';
 function visStop(){if(visTimer){clearInterval(visTimer);visTimer=null;}$('visSimPlay').textContent='▶ Animar'}
-function visUTC(s){const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+' UTC':'—'}
+function visUTC(s){const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString('pt-PT',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+' UTC':'—'}
 function visShow(i){
  if(!visData||!visData.frames.length)return;
  visAt=(i+visData.frames.length)%visData.frames.length;
  const f=visData.frames[visAt];
  $('visSimMeta').replaceChildren();
- for(const t of ['Run: '+visUTC(f.run_utc),'Validade: '+visUTC(f.valid_utc),'+'+f.step_h+' h']){
+ for(const t of ['Run: '+visUTC(f.run_utc),'Validade: '+visUTC(f.valid_utc),'+'+f.step_h+' h · '+visUTC(f.valid_utc)]){
   const s=document.createElement('span');s.textContent=t;$('visSimMeta').append(s);
  }
  $('visSimSlider').value=String(visAt);
@@ -755,7 +781,7 @@ async function visLoad(force=false){
    if(!r.ok)throw Error('O conjunto ainda não foi publicado (HTTP '+r.status+').');
    const d=await r.json();
    if(!Array.isArray(d.frames)||d.frames.length!==16||d.projection!=='opencharts_south_west_europe')throw Error('Manifesto incompleto ou região incorreta.');
-   const steps=Array.from({length:16},(_,i)=>(i+1)*3);
+   const steps=Array.from({length:16},(_,i)=>(i+3)*3);
    if(!d.frames.every((f,i)=>f.step_h===steps[i]&&/^VIS_\d{3}\.png$/.test(f.file)&&f.run_utc&&f.valid_utc))throw Error('Dados dos prazos de previsão inválidos.');
    visData=d;visAt=0;await visCheckRun(d);$('visSimSlider').disabled=false;visShow(0);
   }catch(e){visData=null;$('visSimImage').style.display='none';$('visSimSlider').disabled=true;$('visSimMeta').textContent='Sem imagens disponíveis';$('visSimStatus').textContent='Ainda sem atualização';$('visSimMessage').textContent=e.message+' Executa primeiro o workflow "MeteoFox | Satelite VIS SW Europe 48h" no GitHub.'}
