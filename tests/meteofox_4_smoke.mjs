@@ -64,10 +64,18 @@ try{
  const mapTimeline=page.locator('#satTools input[type="range"]');
  await mapTimeline.fill('0');
  await page.locator('#showLegends').focus();
+ await page.keyboard.press('Home');
+ const keyboardState=await page.evaluate(()=>{
+  const range=document.querySelector('#satTools input[type="range"]');
+  const p=document.querySelector('#satTools');
+  return {value:range.value,max:range.max,disabled:range.disabled,
+    rangeVisible:getComputedStyle(range).display,hostVisible:getComputedStyle(p).display,
+    focused:document.activeElement?.id,scriptPresent:!!document.querySelector('script[src="./meteofox_keyboard.js"]')};
+ });
+ assert.equal(await mapTimeline.inputValue(),'0','Mapa Home deve selecionar a primeira imagem: '+JSON.stringify(keyboardState));
  await page.keyboard.press('ArrowRight');
  assert.equal(await mapTimeline.inputValue(),'1','Mapa com radar/Meteosat deve navegar pelo teclado sem cursor focado');
- await page.keyboard.press('Home');
- assert.equal(await mapTimeline.inputValue(),'0');
+
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
  console.log('PASS: Produtos, 16 passos chuva+rajadas, independência VIS, tabelas METAR, mapa radar/Meteosat sincronizado');
