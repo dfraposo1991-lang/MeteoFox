@@ -18,8 +18,8 @@ CYCLE = datetime(2026,11,19,0,tzinfo=timezone.utc)
 class ForecastTests(unittest.TestCase):
     def test_expected_scope(self):
         self.assertEqual(set(LOCATIONS), {"Lisboa","Porto","Beja"})
-        self.assertEqual(len(METEOGRAM_STEPS),40)
-        self.assertEqual(METEOGRAM_STEPS[-1],120)
+        self.assertEqual(len(METEOGRAM_STEPS),30)
+        self.assertEqual(METEOGRAM_STEPS[-1],90)
         self.assertEqual(len(SOUNDING_STEPS),9)
         self.assertEqual(SOUNDING_STEPS[-1],48)
         self.assertIn(500,LEVELS)
