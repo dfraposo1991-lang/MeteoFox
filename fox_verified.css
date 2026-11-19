@@ -1,26 +1,23 @@
-/* Fox Verified · respeita as variáveis de cor do portal existente */
+/* Fox Verified · lightbox nativo com apresentação ampliada */
 .fox-trigger{margin-left:auto;white-space:nowrap;background:var(--panel2);color:var(--cyan);border:1px solid var(--cyan);font-weight:700}
 .fox-trigger:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-.fox-trigger[hidden],.fox-verified[hidden]{display:none!important}
-.fox-verified{margin:-1px 0 16px;border-color:var(--cyan);box-shadow:0 3px 15px #074c6e12}
-.fox-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.fox-panel-head strong{font-size:14px;color:var(--txt)}
-.fox-panel-head span{display:block;color:var(--muted);font-size:11px;margin-top:5px}
-.fox-table{width:100%;min-width:740px}
-.fox-table th,.fox-table td{text-align:left;padding:11px 12px;white-space:nowrap}
-.fox-table th{font-size:11px;color:var(--muted)}
-.fox-table td{font:12px 'DM Mono',monospace;color:var(--txt)}
+.fox-trigger[hidden],dialog.fox-verified[hidden]{display:none!important}
+dialog.fox-verified{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(1380px,calc(100vw - 48px));max-width:none;max-height:calc(100dvh - 64px);padding:0;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--txt);box-shadow:0 25px 110px #000a;overflow:auto}
+dialog.fox-verified::backdrop{background:rgba(2,8,20,.91);backdrop-filter:blur(7px)}
+dialog.fox-verified .fox-modal{width:100%;min-height:min(420px,70dvh);padding:clamp(20px,3vw,40px);background:var(--panel);color:var(--txt)}
+.fox-panel-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.fox-panel-head strong{font-size:clamp(19px,2.4vw,27px);font-weight:800;color:var(--txt)}
+.fox-panel-head span{display:block;margin-top:7px;color:var(--muted);font-size:13px}
+.fox-panel-head .action{font-size:13px;padding:10px 16px}
+.fox-verified .tablewrap{overflow-x:auto}
+.fox-table{width:100%;min-width:720px;border-collapse:collapse}
+.fox-table th,.fox-table td{text-align:left;padding:18px 14px;white-space:nowrap}
+.fox-table th{font-size:13px;color:var(--muted)}
+.fox-table td{font:clamp(13px,1.2vw,17px) 'DM Mono',monospace;color:var(--txt)}
 .fox-table td:first-child{font-family:Inter,system-ui,sans-serif;font-weight:700}
 .fox-table td.fox-delta{color:var(--cyan);font-weight:700}
-.fox-table td.fox-cell-note{font:11px Inter,system-ui,sans-serif;color:var(--muted)}
-.fox-wait{color:var(--muted);padding:16px 4px}.fox-fail{color:var(--red);padding:12px 4px}
-@media(max-width:650px){.fox-trigger{margin:6px 0 0}.fox-verified{padding:12px}.fox-table th,.fox-table td{padding:9px}}
-
-/* Janela central sobreposta ao portal, como o meteograma ampliado. */
-.fox-verified{position:fixed;inset:0;z-index:100003;display:flex;align-items:center;justify-content:center;padding:clamp(10px,2vw,25px);margin:0;background:rgba(1,8,18,.84);border:0;border-radius:0;box-shadow:none;overflow:auto}
-.fox-verified .fox-modal{width:min(1160px,100%);max-height:min(90dvh,960px);overflow:auto;background:var(--panel,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;box-shadow:0 25px 90px #0008;padding:clamp(14px,2vw,27px)}
-.fox-verified .fox-panel-head{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
-.fox-verified .fox-panel-head strong{font-size:19px}
-.fox-verified .fox-table{min-width:720px}
-body.fox-modal-open{overflow:hidden}
-@media(max-width:650px){.fox-verified{padding:8px}.fox-verified .fox-modal{max-height:96dvh;padding:14px}.fox-verified .fox-panel-head strong{font-size:16px}}
+.fox-table td.fox-cell-note{font:12px Inter,system-ui,sans-serif;color:var(--muted)}
+.fox-verified .note{font-size:12px;margin-top:18px;line-height:1.6}
+.fox-wait{color:var(--muted);padding:25px 4px}
+.fox-fail{color:var(--red);padding:18px 4px}
+@media(max-width:650px){dialog.fox-verified{width:calc(100vw - 16px);max-height:calc(100dvh - 24px);border-radius:11px}dialog.fox-verified .fox-modal{padding:17px}.fox-table th,.fox-table td{padding:12px 10px}.fox-panel-head{align-items:flex-start}.fox-panel-head .action{white-space:nowrap}}
