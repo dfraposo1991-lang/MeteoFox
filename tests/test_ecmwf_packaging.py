@@ -44,14 +44,18 @@ class PackagingTests(unittest.TestCase):
         data = work / "dados_meteofox_48h"
         data.mkdir()
         (data / "ultimo_run.json").write_text(json.dumps({"run": RUN}), encoding="utf-8")
-        for step in range(3, 49, 3):
+        for step in range(9, 55, 3):
             for kind in ("chuva", "rajadas"):
                 (source / f"{kind}_{step:03d}.png").write_bytes(b"PNG" * 5000)
         (source / "MeteoFox_animacao_48h.html").write_bytes(b"<html>" + b"."*2000)
         for name in ("index.html", "mapa.html", "meteofox_satelite.js",
                      "meteofox_meteograma.js", "meteofox_meteograma.css",
-                     "meteofox_keyboard.js", "laboratorio.html"):
+                     "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css", "laboratorio.html"):
             shutil.copy2(ROOT / name, work / name)
+        obs = work / "data"
+        obs.mkdir()
+        for name in ("aviation.json", "synop.json"):
+            shutil.copy2(ROOT / "data" / name, obs / name)
         lab = work / "produtos_experimentais"
         lab.mkdir()
         shutil.copy2(ROOT / "produtos_experimentais/previsao_ecmwf.json",
@@ -86,7 +90,7 @@ class PackagingTests(unittest.TestCase):
         with tmp:
             package = python_in("Guardar 32 cartas e animação como artefacto independente")
             prepare = python_in("Montar o site com cartas validadas e interface atual")
-            (work/FOLDER/"chuva_003.png").unlink()
+            (work/FOLDER/"chuva_009.png").unlink()
             self.invoke(package,work,False)
             (work/"mapas_ecmwf").mkdir(exist_ok=True)
             (work/"mapas_ecmwf/cycle.txt").write_text(RUN)
