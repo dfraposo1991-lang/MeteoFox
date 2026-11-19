@@ -85,5 +85,15 @@ jobs:
             echo 'Sem alteracoes a publicar.'
           else
             git commit -m 'Atualizar satelite VIS ECMWF 48h [skip ci]'
-            git push
+            # Evitar perda da atualização quando outros workflows publicam em simultâneo.
+            for attempt in 1 2 3 4 5; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep "$((attempt * 2))"
+            done
+            echo 'Falhou a publicação VIS após 5 tentativas.' >&2
+            exit 1
           fi
