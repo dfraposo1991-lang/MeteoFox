@@ -58,7 +58,8 @@ jobs:
           labs=result['laboratorio.html'].decode('utf-8')
           map_page=result['mapa.html'].decode('utf-8')
           assert './laboratorio.html' in home, 'Portal sem link para laboratório'
-          assert 'Meteograma' in labs and 'Skew-T' in labs
+          assert 'Skew-T' in labs and 'hodograph' in labs, 'Laboratório sem Skew-T/hodógrafo'
+          assert 'meteograma' in home.lower(), 'Portal principal sem meteograma'
           assert 'meteofox_satelite.js' in map_page, 'Falta integração de radar/Meteosat'
           data=json.loads(result['produtos_experimentais/previsao_ecmwf.json'])
           assert len(data['meteogram_lisboa'])==30
