@@ -20,6 +20,7 @@ await page.route(/view\.eumetsat\.int/,respondPNG);
 try{
  await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
  assert.equal(await page.locator('[data-tab="precipGust"]').innerText(),'▤ Produtos');
+ assert.equal(await page.locator('[data-tab="satRadar"]').count(),0);
  await page.locator('[data-tab="precipGust"]').click();
  await page.waitForFunction(()=>document.getElementById('ecmwfRain')?.getAttribute('src')?.includes('chuva_003.png'));
  const first=await page.locator('#ecmwfRain').getAttribute('src');
@@ -36,6 +37,18 @@ try{
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
  await page.goto('http://127.0.0.1:8765/mapa.html',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForSelector('#satTools button',{timeout:25000});
+ assert.equal(await page.locator('#mapLegends').isHidden(),true);
+ const viewport=page.viewportSize(),mapBounds=await page.locator('#largeMap').boundingBox(),headerBounds=await page.locator('header').boundingBox();
+ assert.ok(mapBounds.y>=headerBounds.y+headerBounds.height-3,'Mapa abaixo do cabeçalho');
+ assert.ok(Math.abs(mapBounds.height-(viewport.height-headerBounds.height))<8,'Mapa ocupa altura disponível');
+ assert.ok(Math.abs(mapBounds.width-viewport.width)<8,'Mapa ocupa largura do ecrã');
+ const ctrlBounds=await page.locator('.map-overlays').boundingBox();
+ assert.ok(ctrlBounds.y>=mapBounds.y&&ctrlBounds.y<mapBounds.y+mapBounds.height,'Controlos sobre o mapa');
+ await page.locator('#showLegends').click();
+ assert.equal(await page.locator('#mapLegends').isVisible(),true);
+ assert.equal(await page.locator('#showLegends').getAttribute('aria-expanded'),'true');
+ await page.locator('#closeLegends').click();
+ assert.equal(await page.locator('#mapLegends').isHidden(),true);
  assert.equal(await page.locator('.metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('.metar-table:nth-child(2) tbody tr').count(),4);
  await page.getByRole('button',{name:/Satélite: desligado/}).click();
