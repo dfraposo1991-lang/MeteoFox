@@ -9,6 +9,7 @@ on:
       - 'mapa.html'
       - 'meteofox_satelite.js'
       - '.github/workflows/meteofox_site.yml'
+      - '.github/workflows/meteofox_ecmwf.yml'
 
 permissions:
   contents: read
