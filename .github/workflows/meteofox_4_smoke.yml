@@ -2,11 +2,14 @@ name: MeteoFox 4.0 | Testes de navegador (desenvolvimento)
 
 on:
   push:
-    branches: [meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2]
+    branches: [meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2, meteofox-meteograma-skewt-dev]
     paths:
       - 'index.html'
       - 'mapa.html'
       - 'meteofox_satelite.js'
+      - 'laboratorio.html'
+      - '.github/workflows/meteofox_site.yml'
+      - '.github/workflows/meteofox_ecmwf.yml'
       - 'tests/meteofox_4_smoke.mjs'
       - '.github/workflows/meteofox_4_smoke.yml'
   workflow_dispatch:
