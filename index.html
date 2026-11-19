@@ -597,7 +597,7 @@ function selectTab(id,writeURL=false){if(writeURL){const url=new URL(location.hr
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab,true)));
 // Links da página Skew-T regressam à secção escolhida do portal.
 const requestedTab=new URLSearchParams(location.search).get('tab');
-if(['overview','precipGust','models','aerodromes','synop'].includes(requestedTab))selectTab(requestedTab);
+if(['overview','precipGust','models','aerodromes','synop'].includes(requestedTab))window.addEventListener('DOMContentLoaded',()=>selectTab(requestedTab),{once:true});
 // Voltar/avançar no navegador também restaura o separador da URL.
 window.addEventListener('popstate',()=>{const tab=new URLSearchParams(location.search).get('tab');selectTab(['overview','precipGust','models','aerodromes','synop'].includes(tab)?tab:'overview');});
 
