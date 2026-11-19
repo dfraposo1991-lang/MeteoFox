@@ -5,6 +5,7 @@ on:
     branches: [meteofox-meteograma-skewt-dev]
     paths:
       - '.github/workflows/meteofox_labs_probe.yml'
+      - 'gerar_produtos_experimentais.py'
   workflow_dispatch:
 
 permissions:
