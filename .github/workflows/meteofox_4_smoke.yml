@@ -2,7 +2,7 @@ name: MeteoFox 4.0 | Testes de navegador (desenvolvimento)
 
 on:
   push:
-    branches: [meteofox-4-dev, meteofox-map-fullscreen]
+    branches: [meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2]
     paths:
       - 'index.html'
       - 'mapa.html'
