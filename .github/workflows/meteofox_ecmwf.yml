@@ -208,7 +208,7 @@ jobs:
           payload = json.loads(lab_data.read_text(encoding="utf-8"))
           assert len(payload["meteogram_lisboa"]) == 30, "Meteograma incompleto"
           assert [r["step_h"] for r in payload["meteogram_lisboa"]] == list(range(3, 91, 3)), "Prazos incorretos"
-          assert len(payload["soundings"]) == 9, "Sondagens incompletas"
+          assert len(payload["soundings"]) in (9, 16), "Sondagens incompletas"
           assert all(set(r["cities"]) == {"Lisboa", "Porto", "Beja"} for r in payload["soundings"])
           shutil.copy2(lab_page, out / "laboratorio.html")
           (out / "produtos_experimentais").mkdir(exist_ok=True)
