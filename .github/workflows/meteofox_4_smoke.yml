@@ -2,7 +2,7 @@ name: MeteoFox 4.0 | Testes de navegador (desenvolvimento)
 
 on:
   push:
-    branches: [meteofox-4-dev, meteofox-map-fullscreen]
+    branches: [meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2]
     paths:
       - 'index.html'
       - 'mapa.html'
@@ -45,7 +45,7 @@ jobs:
       - name: Instalar Playwright e Chromium
         run: |
           npm install --no-save playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Iniciar servidor de testes e executar testes do navegador
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/meteofox_http.log 2>&1 &
