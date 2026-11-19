@@ -54,7 +54,7 @@ async function actualSatelliteTimes(){
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
@@ -72,7 +72,7 @@ class MeteoFoxSatellite{
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.stop();});
  }
  state(s){this.status.textContent=s;}
- async setSatellite(on){this.stop();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
+ async setSatellite(on){this.stop();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
   if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
   // A camada é criada com TIME explícito após obter horários publicados.
   // Opacidade fixa a 80%; sem controlos adicionais.
@@ -82,7 +82,7 @@ class MeteoFoxSatellite{
   catch(e){if(this.satRequest!==satRequest)return;this.satKnown=false;this.satTimes=[];this.state('Satélite disponível sem horários confirmados ('+e.message+'). Não será animado com horas inventadas.');}
   if(this.satRequest===satRequest)this.refreshTimeline();
  }
- async setRadar(on){this.stop();this.clearRadar();this.radarOn=on;this.radar.textContent='🌧 Radar: '+(on?'ligado':'desligado');this.radar.setAttribute('aria-pressed',String(on));
+ async setRadar(on){this.stop();this.cancelTransition();this.clearRadar();this.radarOn=on;this.radar.textContent='🌧 Radar: '+(on?'ligado':'desligado');this.radar.setAttribute('aria-pressed',String(on));
   if(!on){this.radarRequest=null;this.radarFrames=[];this.clearRadar();this.refreshTimeline();return;}
   this.state('A consultar horas de radar RainViewer…');
   const radarRequest=Symbol('radar');this.radarRequest=radarRequest;
@@ -94,6 +94,7 @@ class MeteoFoxSatellite{
   if(!this.radarOn)return;this.refreshTimeline();
  }
  refreshTimeline(){
+  this.cancelTransition();
   const sat=this.satOn&&this.satKnown?this.satTimes:[];
   const rad=this.radarOn?this.radarFrames.map(x=>x.time*1000):[];
   if(this.satOn&&this.radarOn){
@@ -122,91 +123,131 @@ class MeteoFoxSatellite{
   for(const f of this.radarFrames){const d=Math.abs(f.time*1000-time);if(d<delta){delta=d;best=f;}}
   return delta<=RADAR_MAX_DIFF?best:null;
  }
- ensureRadarAbove(){if(this.radarLayer&&this.radarOn&&this.map.hasLayer(this.radarLayer))this.radarLayer.bringToFront();}
+ // A transição só revela novas imagens quando TODOS os mosaicos das camadas ativas
+ // estiverem prontos. As imagens anteriores mantêm-se visíveis até esse instante.
+ cancelTransition(){
+  this.transitionSeq++;
+  const job=this.transition;this.transition=null;
+  if(!job)return;
+  clearTimeout(job.timeout);
+  for(const layer of job.layers){
+   layer.off('load');layer.off('tileerror');
+   if(this.map.hasLayer(layer))this.map.removeLayer(layer);
+  }
+ }
  clearRadar(){
-  // Invalida callbacks assíncronos de imagens antigas e elimina TODOS os mosaicos de radar.
   this.radarEpoch++;
   for(const layer of this.radarLayers){if(this.map.hasLayer(layer))this.map.removeLayer(layer);}
   if(this.radarLayer&&this.map.hasLayer(this.radarLayer))this.map.removeLayer(this.radarLayer);
   this.radarLayers.clear();this.radarLayer=null;
  }
- swapSatellite(time){
-  if(!this.satOn||time===null)return;
-  if((this.satRenderedTime===time&&this.satLayer&&this.map.hasLayer(this.satLayer))||this.satPendingTime===time)return;
-  if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);
-  this.satPendingLayer=null;this.satPendingTime=time;
-  // Dupla camada: a próxima imagem é desenhada invisível e só substitui a anterior
-  // depois de os mosaicos do viewport carregarem, reduzindo o piscar.
-  const seq=++this.satRequestSeq;
-  const old=this.satLayer;
-  const next=L.tileLayer.wms(WMS,{
-   layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
-   time:new Date(time).toISOString(),opacity:0,maxZoom:16,keepBuffer:0,
-   updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
-  });
-  let errors=0;let finished=false;
-  const finish=()=>{
-   if(finished||seq!==this.satRequestSeq||!this.satOn)return;
-   finished=true;this.satPendingTime=null;this.satPendingLayer=null;
-   if(errors){this.map.removeLayer(next);this.state('Meteosat: erro ao carregar a imagem de '+fmt(time)+'. Mantida imagem anterior; hora não validada.');return;}
-   next.setOpacity(0.8);
-   this.satLayer=next;this.satRenderedTime=time;
-   if(old&&old!==next&&this.map.hasLayer(old))this.map.removeLayer(old);
-   this.ensureRadarAbove();
-  };
-  next.on('tileerror',()=>{errors++;});
-  next.once('load',finish);
-  this.satPendingLayer=next;next.addTo(this.map);
-  this.ensureRadarAbove();
+ ensureRadarAbove(){
+  // Os símbolos METAR permanecem sobre as imagens meteorológicas.
+  if(this.radarLayer&&this.map.hasLayer(this.radarLayer))this.radarLayer.setZIndex(350);
  }
- swapRadar(frame){
-  if(!this.radarOn||!frame)return;
-  const url=this.radarHost+frame.path+'/256/{z}/{x}/{y}/2/1_1.png';
-  if(this.radarLayer?.meteofoxUrl===url && this.map.hasLayer(this.radarLayer))return;
-  // Apenas uma camada ativa: remove imediatamente a anterior antes de criar a nova.
-  // Evita os resíduos de mosaicos anteriores e os callbacks de pedidos antigos.
-  this.clearRadar();
-  if(!this.radarOn)return;
-  const epoch=this.radarEpoch;
-  const next=L.tileLayer(url,{
-   opacity:0.66,zIndex:420,maxNativeZoom:10,maxZoom:18,
-   attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true
-  });
-  next.meteofoxUrl=url;
-  this.radarLayer=next;this.radarLayers.add(next);
-  next.on('tileerror',()=>{
-   if(this.radarOn&&this.radarEpoch===epoch&&this.radarLayer===next)
-    this.state('Radar: alguns mosaicos indisponíveis nesta hora.');
-  });
-  next.addTo(this.map);next.bringToFront();
- }
- select(i){if(!this.timeline.length)return;
-  this.index=Math.max(0,Math.min(this.timeline.length-1,i));
-  const time=this.timeline[this.index];this.slider.value=String(this.index);
-  const texts=['Referência '+fmt(time)];
-  if(this.radarOn){
-   const frame=this.nearestRadar(time);
-   if(frame){this.swapRadar(frame);texts.push('Radar '+fmt(frame.time*1000));}
-   else{this.clearRadar();texts.push('Radar: sem imagem para este instante');}
-  }
+ stageFrame(time){
+  this.cancelTransition();
+  const seq=this.transitionSeq;
+  const satTime=this.satOn?this.nearestSat(time):null;
+  const radFrame=this.radarOn?this.nearestRadar(time):null;
+  const both=this.satOn&&this.radarOn;
+  const info=['Referência '+fmt(time)];
   if(this.satOn){
-   const satTime=this.nearestSat(time);
-   if(satTime!==null){
-    this.swapSatellite(satTime);
-    texts.push('Meteosat solicitado '+fmt(satTime));
-    if(satTime!==time)texts.push('Δ '+Math.round(Math.abs(time-satTime)/60000)+' min');
-   }else{
-    this.satRequestSeq++;this.satPendingTime=null;
-    if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;
-    if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);
-    this.satLayer=null;this.satRenderedTime=null;
-    texts.push('Meteosat: sem imagem temporal confirmada');
-   }
+   if(satTime===null){this.state('Sem imagem Meteosat confirmada para '+fmt(time));return Promise.resolve(false);}
+   info.push('Meteosat '+fmt(satTime));
   }
-  this.ensureRadarAbove();this.state(texts.join(' · '));
+  if(this.radarOn){
+   if(!radFrame){this.state('Sem imagem de radar confirmada para '+fmt(time));return Promise.resolve(false);}
+   info.push('Radar '+fmt(radFrame.time*1000));
+  }
+  if(both)info.push('diferença '+Math.round(Math.abs(satTime-radFrame.time*1000)/60000)+' min');
+  if(!this.satOn&&!this.radarOn)return Promise.resolve(false);
+  this.state('A preparar imagens · '+info.join(' · '));
+  const jobs=[];
+  if(this.satOn){
+   if(this.satLayer&&this.satRenderedTime===satTime&&this.map.hasLayer(this.satLayer))jobs.push({kind:'sat',layer:this.satLayer,reuse:true});
+   else jobs.push({kind:'sat',layer:L.tileLayer.wms(WMS,{
+    layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
+    time:new Date(satTime).toISOString(),opacity:0,zIndex:300,maxZoom:16,
+    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
+   })});
+  }
+  if(this.radarOn){
+   const url=this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png';
+   if(this.radarLayer?.meteofoxUrl===url&&this.map.hasLayer(this.radarLayer))jobs.push({kind:'radar',layer:this.radarLayer,reuse:true});
+   else {const layer=L.tileLayer(url,{
+    opacity:0,zIndex:350,maxNativeZoom:10,maxZoom:18,
+    attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true
+   });layer.meteofoxUrl=url;jobs.push({kind:'radar',layer});}
+  }
+  const pending=jobs.filter(x=>!x.reuse);
+  return new Promise(resolve=>{
+   let settled=false;
+   const job={layers:pending.map(x=>x.layer),timeout:null};
+   this.transition=job;
+   const finish=(success)=>{
+    if(settled)return;
+    settled=true;
+    clearTimeout(job.timeout);
+    if(seq!==this.transitionSeq||this.transition!==job){resolve(false);return;}
+    this.transition=null;
+    if(!success){
+     for(const x of pending){x.layer.off('load');x.layer.off('tileerror');if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);}
+     this.state('Não foi possível carregar todas as imagens de '+fmt(time)+'. Mantidas as anteriores.');
+     resolve(false);return;
+    }
+    // As duas camadas são reveladas numa única atualização gráfica.
+    requestAnimationFrame(()=>{
+     if(seq!==this.transitionSeq){for(const x of pending)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);resolve(false);return;}
+     const oldSat=this.satLayer,oldRadar=this.radarLayer;
+     for(const x of jobs){
+      if(x.kind==='sat'){x.layer.setOpacity(.8);x.layer.setZIndex(300);this.satLayer=x.layer;this.satRenderedTime=satTime;}
+      if(x.kind==='radar'){x.layer.setOpacity(.66);x.layer.setZIndex(350);this.radarLayer=x.layer;this.radarLayers.add(x.layer);}
+     }
+     if(oldSat&&oldSat!==this.satLayer&&this.map.hasLayer(oldSat))this.map.removeLayer(oldSat);
+     if(oldRadar&&oldRadar!==this.radarLayer){if(this.map.hasLayer(oldRadar))this.map.removeLayer(oldRadar);this.radarLayers.delete(oldRadar);}
+     this.state(info.join(' · '));
+     resolve(true);
+    });
+   };
+   if(!pending.length){finish(true);return;}
+   let remaining=pending.length;
+   for(const x of pending){
+    let errors=0;
+    x.layer.on('tileerror',()=>{errors++;});
+    x.layer.once('load',()=>{
+     if(errors){finish(false);return;}
+     remaining--;if(remaining===0)finish(true);
+    });
+   }
+   job.timeout=setTimeout(()=>finish(false),18000);
+   for(const x of pending)x.layer.addTo(this.map);
+  });
  }
- stop(){if(this.interval){clearInterval(this.interval);this.interval=null;}this.play.textContent='▶ Animar';}
- togglePlay(){if(this.interval){this.stop();return;}if(!this.timeline.length)return;this.play.textContent='Ⅱ Pausar';this.interval=setInterval(()=>{if(this.index>=this.timeline.length-1)this.select(0);else this.select(this.index+1);},2800);}
+ select(i){
+  if(!this.timeline.length)return Promise.resolve(false);
+  this.index=Math.max(0,Math.min(this.timeline.length-1,i));
+  this.slider.value=String(this.index);
+  return this.stageFrame(this.timeline[this.index]);
+ }
+ stop(){
+  this.playing=false;
+  if(this.frameTimeout){clearTimeout(this.frameTimeout);this.frameTimeout=null;}
+  this.play.textContent='▶ Animar';
+ }
+ togglePlay(){
+  if(this.playing){this.stop();return;}
+  if(!this.timeline.length)return;
+  this.playing=true;this.play.textContent='Ⅱ Pausar';
+  const tick=async()=>{
+   if(!this.playing)return;
+   const i=this.index>=this.timeline.length-1?0:this.index+1;
+   await this.select(i);
+   if(this.playing)this.frameTimeout=setTimeout(tick,1100);
+  };
+  tick();
+ }
+
 }
 window.MeteoFoxSatellite=MeteoFoxSatellite;
 })();
