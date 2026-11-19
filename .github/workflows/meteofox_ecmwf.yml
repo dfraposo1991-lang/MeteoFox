@@ -2,6 +2,11 @@ name: MeteoFox | ECMWF 48h
 
 on:
   workflow_dispatch:
+    inputs:
+      cycle:
+        description: 'Ciclo ECMWF UTC fixado pela recuperação automática (YYYY-MM-DDTHH:MM:SSZ)'
+        required: false
+        type: string
   schedule:
     # IFS Open Data 0p1: a resolução 0,1° chega ~2 h após a de 0,25°.
     # Correspondência: 02:40 -> run 18 UTC anterior; 09:45 -> 00 UTC;
@@ -38,7 +43,15 @@ jobs:
         run: python -m pip install 'ecmwf-opendata>=0.3,<1'
 
       - name: Aguardar novo ciclo completo (verificar cada 10 minutos)
-        run: python verificar_ecmwf_48h.py --tries 10 --interval 600
+        env:
+          ECMWF_REQUESTED_CYCLE: ${{ inputs.cycle || '' }}
+        shell: bash
+        run: |
+          if [[ -n "$ECMWF_REQUESTED_CYCLE" ]]; then
+            python verificar_ecmwf_48h.py --tries 10 --interval 600 --cycle "$ECMWF_REQUESTED_CYCLE"
+          else
+            python verificar_ecmwf_48h.py --tries 10 --interval 600
+          fi
 
       - name: Instalar dependências meteorológicas
         run: |
