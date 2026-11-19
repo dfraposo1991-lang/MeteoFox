@@ -76,8 +76,23 @@ try{
  assert.equal(await page.locator('#ecmwfSlider').inputValue(),'0');
  await page.locator('[data-tab="overview"]').click();
  assert.ok(calls.some(x=>x>40)&&calls.some(x=>x<34)&&calls.some(x=>x>38&&x<39),'ECMWF requests must use regional coordinates');
+
+ // F5 deve preservar cada separador (nao apenas a Sintese).
+ for(const tab of ['overview','precipGust','models','aerodromes','synop']){
+  await page.locator('[data-tab="'+tab+'"]').click();
+  if(tab==='overview')assert.equal(new URL(page.url()).searchParams.get('tab'),null);
+  else assert.equal(new URL(page.url()).searchParams.get('tab'),tab);
+  await page.reload({waitUntil:'domcontentloaded'});
+  assert.equal(await page.locator('#'+tab).isVisible(),true,'F5 deve preservar '+tab);
+  assert.equal(await page.locator('[data-tab="'+tab+'"]').getAttribute('class'),'tab active');
+ }
+ await page.goto('http://127.0.0.1:8765/index.html?tab=precipGust',{waitUntil:'domcontentloaded'});
+ assert.equal(await page.locator('#precipGust').isVisible(),true,'Link direto Produtos');
  await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ assert.equal(await page.locator('#skew').isVisible(),true,'F5 deve preservar pagina Skew-T');
  assert.equal(await page.locator('header .brand h1').innerText(),'MeteoFox');
  assert.equal(await page.locator('#brandProdutos').getAttribute('href'),'./index.html?tab=precipGust');
  assert.equal(await page.locator('nav.tabs .tab').count(),5);
