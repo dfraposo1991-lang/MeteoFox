@@ -2,105 +2,105 @@
   "product": "medium-simulated-vis",
   "projection": "opencharts_south_west_europe",
   "layer": "sim_image_vis_ch2",
-  "run_utc": "2026-11-18T12:00:00Z",
+  "run_utc": "2026-11-18T18:00:00Z",
   "credit": "© ECMWF · CC BY 4.0",
   "frames": [
     {
       "file": "VIS_003.png",
       "step_h": 3,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-18T15:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-18T21:00:00Z"
     },
     {
       "file": "VIS_006.png",
       "step_h": 6,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-18T18:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T00:00:00Z"
     },
     {
       "file": "VIS_009.png",
       "step_h": 9,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-18T21:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T03:00:00Z"
     },
     {
       "file": "VIS_012.png",
       "step_h": 12,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T00:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T06:00:00Z"
     },
     {
       "file": "VIS_015.png",
       "step_h": 15,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T03:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T09:00:00Z"
     },
     {
       "file": "VIS_018.png",
       "step_h": 18,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T06:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T12:00:00Z"
     },
     {
       "file": "VIS_021.png",
       "step_h": 21,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T09:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T15:00:00Z"
     },
     {
       "file": "VIS_024.png",
       "step_h": 24,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T12:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T18:00:00Z"
     },
     {
       "file": "VIS_027.png",
       "step_h": 27,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T15:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-19T21:00:00Z"
     },
     {
       "file": "VIS_030.png",
       "step_h": 30,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T18:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T00:00:00Z"
     },
     {
       "file": "VIS_033.png",
       "step_h": 33,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-19T21:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T03:00:00Z"
     },
     {
       "file": "VIS_036.png",
       "step_h": 36,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-20T00:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T06:00:00Z"
     },
     {
       "file": "VIS_039.png",
       "step_h": 39,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-20T03:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T09:00:00Z"
     },
     {
       "file": "VIS_042.png",
       "step_h": 42,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-20T06:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T12:00:00Z"
     },
     {
       "file": "VIS_045.png",
       "step_h": 45,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-20T09:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T15:00:00Z"
     },
     {
       "file": "VIS_048.png",
       "step_h": 48,
-      "run_utc": "2026-11-18T12:00:00Z",
-      "valid_utc": "2026-11-20T12:00:00Z"
+      "run_utc": "2026-11-18T18:00:00Z",
+      "valid_utc": "2026-11-20T18:00:00Z"
     }
   ],
-  "generated_utc": "2026-11-18T23:31:21Z"
+  "generated_utc": "2026-11-19T05:43:20Z"
 }
