@@ -29,9 +29,14 @@ try{
  assert.equal(await page.locator('#tempChart').count(),0,'O gráfico antigo foi removido');
  assert.equal(await page.locator('#pressure').count(),0);
  assert.equal(await page.locator('#dew').count(),0);
+ const previewColor=await page.locator('.meteo-preview').evaluate(el=>getComputedStyle(el).backgroundColor);
+ assert.equal(previewColor,'rgb(255, 255, 255)','Meteograma deve ter fundo branco');
+ assert.equal(await page.locator('#meteoSmallSvg rect').first().getAttribute('fill'),'#ffffff','SVG deve ter fundo branco');
  await page.locator('#meteoPreview').click();
  assert.equal(await page.locator('#meteoDialog').getAttribute('aria-modal'),'true');
  assert.equal(await page.locator('#meteoDialog').isVisible(),true);
+ assert.equal(await page.locator('.meteo-modal').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)','Ampliação deve ter fundo branco');
+
  await page.locator('#meteoNext').click();
  assert.equal(await page.locator('#meteoTimeSlider').inputValue(),'1');
  await page.keyboard.press('ArrowRight');
@@ -56,6 +61,12 @@ try{
  await page.locator('#place').selectOption('Lisboa');
  await page.waitForFunction(()=>document.getElementById('meteoInfo')?.textContent.includes('Lisboa · ECMWF IFS'));
  await page.locator('[data-tab="precipGust"]').click();
+ await page.locator('#ecmwfSlider').fill('0');
+ await page.locator('#ecmwfNext').focus();
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.locator('#ecmwfSlider').inputValue(),'1','Setas sem focar diretamente o cursor de Produtos');
+ await page.keyboard.press('Home');
+ assert.equal(await page.locator('#ecmwfSlider').inputValue(),'0');
  await page.locator('#ecmwfSlider').focus();
  await page.keyboard.press('ArrowRight');
  assert.equal(await page.locator('#ecmwfSlider').inputValue(),'1');
@@ -68,6 +79,12 @@ try{
  await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
  assert.equal(await page.locator('#skew circle').count()>10,true);
+ assert.equal(await page.locator('.skew-scroll').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)','Skew-T deve ter fundo branco');
+ await page.locator('#skewPrev').focus();
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.locator('#skewSlider').inputValue(),'1','Skew-T deve responder com botão focado');
+ await page.keyboard.press('Home');
+ assert.equal(await page.locator('#skewSlider').inputValue(),'0');
  await page.locator('#skewSlider').focus();
  await page.keyboard.press('ArrowRight');
  assert.equal(await page.locator('#skewSlider').inputValue(),'1');
