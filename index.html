@@ -698,7 +698,7 @@ function ecmwfInit(){
 }
 /* ECMWF VIS simulado: manifesto e imagens servidos de forma independente do deploy GitHub Pages. */
 const VIS_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_vis/';
-let visData=null,visAt=0,visTimer=null,visLoading=null;
+let visData=null,visAt=0,visTimer=null,visLoading=null,visRunNotice='',visRunStatus='';
 function visStop(){if(visTimer){clearInterval(visTimer);visTimer=null;}$('visSimPlay').textContent='▶ Animar'}
 function visUTC(s){const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+' UTC':'—'}
 function visShow(i){
@@ -713,8 +713,37 @@ function visShow(i){
  $('visSimImage').style.display='block';
  $('visSimImage').src=VIS_RAW+encodeURIComponent(f.file)+'?v='+encodeURIComponent(visData.generated_utc||visData.run_utc);
  $('visSimImage').onerror=()=>{$('visSimMessage').textContent='Não foi possível carregar esta imagem. Tenta atualizar.'};
- $('visSimImage').onload=()=>{$('visSimMessage').textContent=''};
- $('visSimStatus').textContent=(visAt+1)+' / '+visData.frames.length+' · previsão visível simulada';
+ $('visSimImage').onload=()=>{$('visSimMessage').textContent=visRunNotice};
+ $('visSimStatus').textContent=(visAt+1)+' / '+visData.frames.length+' · '+visRunStatus;
+}
+async function visCheckRun(vis){
+ const date=Date.parse(vis.run_utc);
+ if(!Number.isFinite(date)){
+  visRunStatus='ciclo não verificável';
+  visRunNotice='A hora do ciclo do satélite simulado não pôde ser verificada.';
+  return;
+ }
+ visRunStatus='ciclo '+visUTC(vis.run_utc);
+ visRunNotice='';
+ try{
+  const response=await fetch('./meteofox_ecmwf_manifest.json?t='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw Error('Manifesto das cartas indisponível');
+  const main=await response.json();
+  const reference=Date.parse(main.cycle_utc);
+  if(!Number.isFinite(reference))throw Error('Ciclo das cartas não identificado');
+  if(date<reference){
+   visRunStatus='SATÉLITE · CICLO ANTERIOR ('+visUTC(vis.run_utc)+')';
+   visRunNotice='Atenção: satélite simulado de um ciclo anterior ao das cartas ECMWF ('+visUTC(main.cycle_utc)+'). O conjunto antigo permanece visível até serem validadas as 16 imagens novas.';
+  }else if(date>reference){
+   visRunStatus='SATÉLITE · CICLO DIFERENTE ('+visUTC(vis.run_utc)+')';
+   visRunNotice='O satélite simulado utiliza um ciclo diferente e mais recente do que o das cartas ('+visUTC(main.cycle_utc)+').';
+  }else{
+   visRunStatus='mesmo ciclo das cartas · '+visUTC(vis.run_utc);
+  }
+ }catch(error){
+  visRunStatus='ciclo '+visUTC(vis.run_utc)+' · comparação indisponível';
+  visRunNotice='Não foi possível confirmar o ciclo das cartas ECMWF; o ciclo do satélite está identificado acima.';
+ }
 }
 async function visLoad(force=false){
  if(visData&&!force)return;
@@ -728,7 +757,7 @@ async function visLoad(force=false){
    if(!Array.isArray(d.frames)||d.frames.length!==16||d.projection!=='opencharts_south_west_europe')throw Error('Manifesto incompleto ou região incorreta.');
    const steps=Array.from({length:16},(_,i)=>(i+1)*3);
    if(!d.frames.every((f,i)=>f.step_h===steps[i]&&/^VIS_\d{3}\.png$/.test(f.file)&&f.run_utc&&f.valid_utc))throw Error('Dados dos prazos de previsão inválidos.');
-   visData=d;visAt=0;$('visSimSlider').disabled=false;visShow(0);
+   visData=d;visAt=0;await visCheckRun(d);$('visSimSlider').disabled=false;visShow(0);
   }catch(e){visData=null;$('visSimImage').style.display='none';$('visSimSlider').disabled=true;$('visSimMeta').textContent='Sem imagens disponíveis';$('visSimStatus').textContent='Ainda sem atualização';$('visSimMessage').textContent=e.message+' Executa primeiro o workflow "MeteoFox | Satelite VIS SW Europe 48h" no GitHub.'}
   finally{visLoading=null}
  })();
