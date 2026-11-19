@@ -286,6 +286,14 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  </section>
 <footer class="footer"><span>MeteoFox · Ferramenta de apoio à análise meteorológica</span><span>Previsão: Open-Meteo/ECMWF · Radar: RainViewer · Satélite: Windy · METAR/SYNOP: OGIMET · TAF: NOAA</span></footer>
 </div>
+<div id="meteoDialog" class="meteo-dialog" role="dialog" aria-modal="true" aria-labelledby="meteoModalTitle" hidden>
+ <div class="meteo-modal">
+  <div class="meteo-modal-head"><h2 id="meteoModalTitle">Meteograma · Lisboa</h2><button type="button" id="meteoClose" class="meteo-close" aria-label="Fechar meteograma ampliado">✕ Fechar</button></div>
+  <div class="meteo-modal-body"><svg id="meteoLargeSvg" role="img" aria-label="Meteograma ampliado de Lisboa com nebulosidade, precipitação, temperatura, direção do vento, vento médio e rajadas"></svg></div>
+  <div class="meteo-modal-foot"><button id="meteoPrevious" class="meteo-control" type="button" aria-label="Prazo anterior">◀</button><input id="meteoTimeSlider" type="range" min="0" max="29" value="0" step="1" aria-label="Selecionar prazo do meteograma"><button id="meteoNext" class="meteo-control" type="button" aria-label="Prazo seguinte">▶</button><div id="meteoDetails" class="meteo-details" aria-live="polite"></div></div>
+ </div>
+</div>
+
 <script src="./meteofox_meteograma.js"></script>
 <script src="./meteofox_keyboard.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -863,12 +871,5 @@ document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListene
 }));
 
 </script>
-<div id="meteoDialog" class="meteo-dialog" role="dialog" aria-modal="true" aria-labelledby="meteoModalTitle" hidden>
- <div class="meteo-modal">
-  <div class="meteo-modal-head"><h2 id="meteoModalTitle">Meteograma · Lisboa</h2><button type="button" id="meteoClose" class="meteo-close" aria-label="Fechar meteograma ampliado">✕ Fechar</button></div>
-  <div class="meteo-modal-body"><svg id="meteoLargeSvg" role="img" aria-label="Meteograma ampliado de Lisboa com nebulosidade, precipitação, temperatura, direção do vento, vento médio e rajadas"></svg></div>
-  <div class="meteo-modal-foot"><button id="meteoPrevious" class="meteo-control" type="button" aria-label="Prazo anterior">◀</button><input id="meteoTimeSlider" type="range" min="0" max="29" value="0" step="1" aria-label="Selecionar prazo do meteograma"><button id="meteoNext" class="meteo-control" type="button" aria-label="Prazo seguinte">▶</button><div id="meteoDetails" class="meteo-details" aria-live="polite"></div></div>
- </div>
-</div>
 
 </body></html>
