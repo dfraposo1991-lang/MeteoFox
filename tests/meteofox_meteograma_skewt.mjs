@@ -98,6 +98,11 @@ try{
  assert.equal(await page.locator('nav.tabs .tab').count(),5);
  assert.equal(await page.locator('nav.tabs .tab.active').innerText(),'▤ Produtos');
  assert.equal(await page.locator('.skew-scroll').evaluate(x=>getComputedStyle(x).backgroundColor),'rgb(255, 255, 255)');
+ assert.equal(await page.locator('body').evaluate(x=>getComputedStyle(x).color),'rgb(35, 54, 74)','Texto da página Skew-T deve ser escuro');
+ assert.equal(await page.locator('main .card').first().evaluate(x=>getComputedStyle(x).backgroundColor),'rgb(255, 255, 255)','Cartões Skew-T devem ser brancos');
+ assert.equal(await page.locator('body').evaluate(x=>getComputedStyle(x).backgroundImage),'none','Skew-T sem gradiente azul na página');
+ assert.equal(await page.locator('header .topright .pill').evaluate(x=>getComputedStyle(x).backgroundColor),'rgb(255, 255, 255)','Cabeçalho Skew-T também deve ter fundo branco');
+
  const brandHref=await page.locator('#brandProdutos').getAttribute('href');
  await page.locator('#brandProdutos').click();
  await page.waitForURL('**/index.html?tab=precipGust');
