@@ -21,7 +21,7 @@ LOCATIONS = {
 }
 LEVELS = (1000, 925, 850, 700, 600, 500, 400, 300, 250, 200)
 METEOGRAM_STEPS = tuple(range(3, 91, 3))
-SOUNDING_STEPS = (0, 6, 12, 18, 24, 30, 36, 42, 48)
+SOUNDING_STEPS = tuple(range(9, 55, 3))
 SURFACE_PARAMS = ("2t", "2d", "msl", "tcc", "tp", "10u", "10v", "10fg")
 PRESSURE_PARAMS = ("t", "r", "u", "v")
 KT = 1.9438444924406
@@ -209,19 +209,15 @@ def produce(cycle, output):
                 request(client, cycle, step, PRESSURE_PARAMS, path, levtype="pl", levels=LEVELS)
                 fields = extract_grib(path, step, cycle, level_required, LOCATIONS)
                 result["soundings"].append(build_sounding(fields, step, cycle))
-        # Sondagem inicial +0, sem precisar de alterar os 40 passos do meteograma.
-        step = 0
-        path = scratch / "pressure.grib2"
-        request(client, cycle, step, PRESSURE_PARAMS, path, levtype="pl", levels=LEVELS)
-        fields = extract_grib(path, step, cycle, level_required, LOCATIONS)
-        result["soundings"].insert(0, build_sounding(fields, step, cycle))
+        # A sondagem e o hodógrafo usam os 16 prazos +9..+54 h.
+        # O meteograma +3..+90 h permanece integralmente inalterado.
     if len(result["meteogram_lisboa"]) != 30 or len(result["soundings"]) != len(SOUNDING_STEPS):
         raise RuntimeError("Produtos experimentais incompletos: a saída anterior será preservada")
     output.parent.mkdir(parents=True, exist_ok=True)
     temp_out = output.with_suffix(".tmp")
     temp_out.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8")
     temp_out.replace(output)
-    print(f"CONCLUÍDO: {output} | 30 pontos meteograma, 9 horas de sondagem")
+    print(f"CONCLUÍDO: {output} | 30 pontos meteograma, 16 prazos de sondagem")
 
 
 def main():
