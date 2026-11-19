@@ -42,7 +42,7 @@ jobs:
           python-version: '3.12'
       - name: Instalar Pillow
         run: python -m pip install 'Pillow>=10,<13'
-      - name: Descarregar e validar 16 imagens ECMWF (+3 a +48 h)
+      - name: Descarregar e validar 16 imagens ECMWF (+9 a +54 h)
         shell: bash
         env:
           BASE_TIME: ${{ inputs.base_time }}
@@ -75,7 +75,7 @@ jobs:
           d=json.loads(Path('data/satellite_vis/manifest.json').read_text())
           frames=d['frames']
           assert len(frames)==16
-          assert [f['step_h'] for f in frames]==list(range(3,49,3))
+          assert [f['step_h'] for f in frames]==list(range(9,55,3))
           assert all(Path('data/satellite_vis',f['file']).is_file() for f in frames)
           PYVERIFY
           git config user.name "github-actions[bot]"
