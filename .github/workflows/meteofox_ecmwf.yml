@@ -103,8 +103,24 @@ jobs:
               source_file = Path(name)
               assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
               shutil.copy2(source_file, out / name)
+          # Manter igualmente o laboratório e o respetivo ciclo ECMWF 0p25
+          # em cada publicação automática dos 32 mapas 0p1.
+          import json
+          lab_page = Path("laboratorio.html")
+          lab_data = Path("produtos_experimentais/previsao_ecmwf.json")
+          assert lab_page.is_file() and lab_page.stat().st_size > 1000, "Falta laboratório"
+          assert lab_data.is_file() and lab_data.stat().st_size > 1000, "Faltam dados laboratório"
+          payload = json.loads(lab_data.read_text(encoding="utf-8"))
+          assert len(payload["meteogram_lisboa"]) == 30, "Meteograma incompleto"
+          assert [r["step_h"] for r in payload["meteogram_lisboa"]] == list(range(3, 91, 3)), "Prazos incorretos"
+          assert len(payload["soundings"]) == 9, "Sondagens incompletas"
+          assert all(set(r["cities"]) == {"Lisboa", "Porto", "Beja"} for r in payload["soundings"])
+          shutil.copy2(lab_page, out / "laboratorio.html")
+          (out / "produtos_experimentais").mkdir(exist_ok=True)
+          shutil.copy2(lab_data, out / "produtos_experimentais/previsao_ecmwf.json")
           assert all((out / name).is_file() for name in
-                     ("index.html", "mapa.html", "meteofox_satelite.js")), "Site incompleto"
+                     ("index.html", "mapa.html", "meteofox_satelite.js", "laboratorio.html",
+                      "produtos_experimentais/previsao_ecmwf.json")), "Site incompleto"
           (out / ".nojekyll").write_text("")
           print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
           PY
