@@ -20,7 +20,7 @@ FOLDER = "MeteoFox_48h_20261119_06UTC"
 def python_in(name):
     steps = [s for job in WORKFLOW["jobs"].values() for s in job["steps"]]
     step = next(s for s in steps if s.get("name") == name)
-    match = re.search(r"(?:python3|\.venv/bin/python) - <<'PY'\n(.*?)\n\s+PY(?:\n|$)", step["run"], re.S)
+    match = re.search(r"(?:python3|\.venv/bin/python) - <<'PY'\n(.*?)\n\s*PY(?:\n|$)", step["run"], re.S)
     if not match:
         raise AssertionError(f"Inline Python is missing from {name}")
     return textwrap.dedent(match.group(1))
