@@ -29,5 +29,15 @@ jobs:
             echo 'Horários sem alterações.'
           else
             git commit -m "Atualizar horários reais Meteosat"
-            git push
+            # Integra commits entretanto publicados por outros workflows.
+            for attempt in 1 2 3 4 5; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep "$((attempt * 2))"
+            done
+            echo 'Não foi possível publicar horários Meteosat após 5 tentativas.' >&2
+            exit 1
           fi
