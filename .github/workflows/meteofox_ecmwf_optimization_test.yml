@@ -1,6 +1,7 @@
 name: MeteoFox | Ensaio seguro de otimização ECMWF
 
 # Testa produção e conservação das 32 cartas, SEM publicar no Pages.
+# Segundo ensaio de cache: comparar com a execução inicial 44554032619.
 # Não modifica a versão pública nem os quatro cron ECMWF em produção.
 on:
   push:
