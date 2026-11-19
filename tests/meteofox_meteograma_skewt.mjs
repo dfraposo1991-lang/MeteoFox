@@ -1,0 +1,38 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:900}});
+ const errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('meteoPreview')?.disabled===false,{timeout:20000});
+ assert.equal(await page.locator('#meteoSmallSvg rect').count()>30,true,'SVG do meteograma deve estar preenchido');
+ assert.equal(await page.locator('#meteoSmallSvg text').count()>100,true);
+ assert.equal(await page.locator('#tempChart').count(),0,'O gráfico antigo foi removido');
+ assert.equal(await page.locator('#pressure').count(),0);
+ assert.equal(await page.locator('#dew').count(),0);
+ await page.locator('#meteoPreview').click();
+ assert.equal(await page.locator('#meteoDialog').getAttribute('aria-modal'),'true');
+ assert.equal(await page.locator('#meteoDialog').isVisible(),true);
+ await page.locator('#meteoNext').click();
+ assert.equal(await page.locator('#meteoTimeSlider').inputValue(),'1');
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.locator('#meteoTimeSlider').inputValue(),'2');
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#meteoDialog').isVisible(),false);
+ assert.equal(await page.locator('a#openSkewT').getAttribute('href'),'./laboratorio.html?tab=skewt');
+ await page.goto('http://127.0.0.1:8765/laboratorio.html?tab=skewt',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.getElementById('step')?.options.length===9,{timeout:20000});
+ assert.equal(await page.locator('#skew circle').count()>10,true);
+ await page.locator('#skewNext').click();
+ assert.equal(await page.locator('#skewSlider').inputValue(),'1');
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.locator('#skewSlider').inputValue(),'2');
+ await page.locator('#city').selectOption('Beja');
+ assert.match(await page.locator('#validSounding').innerText(),/Beja/);
+ await page.locator('#skewPrev').click();
+ assert.equal(await page.locator('#skewSlider').inputValue(),'1');
+ assert.deepEqual(errors,[],'Sem erros JavaScript inesperados');
+ console.log('MeteoFox: Meteograma compacto/ampliado, cronologia Skew-T, navegação e dados ECMWF OK');
+}finally{await browser.close();}
