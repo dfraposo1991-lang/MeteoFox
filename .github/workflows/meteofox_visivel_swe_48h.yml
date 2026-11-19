@@ -1,6 +1,12 @@
 name: MeteoFox | Satelite VIS SW Europe 48h
 
 on:
+  # Atualizações da configuração permitem verificar imediatamente o novo ciclo.
+  push:
+    branches: [main]
+    paths:
+      - 'gerar_visivel_swe_48h.py'
+      - '.github/workflows/meteofox_visivel_swe_48h.yml'
   workflow_dispatch:
     inputs:
       base_time:
