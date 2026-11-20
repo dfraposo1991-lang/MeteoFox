@@ -360,6 +360,25 @@ try{
   return {err,mixed};
  });
  assert.ok(blendQuality.err<.005,'Mistura deve conservar opacidade com máscara complementar: '+JSON.stringify(blendQuality));
+ const selective=await page.evaluate(()=>{
+  const M=window.MeteoFoxFogMask,coord={z:6,x:30,y:24};
+  const day=Date.parse('2026-11-20T12:00:00Z'),night=Date.parse('2026-11-20T22:00:00Z');
+  const orig=sat.satMode;sat.satMode='auto';
+  const result={day:M.tileLighting(day,coord),night:M.tileLighting(night,coord),
+   dayGeo:sat.createSatLayer(day).getTileUrl(coord),
+   dayFog:sat.createFogOverlay(day).getTileUrl(coord),
+   nightGeo:sat.createSatLayer(night).getTileUrl(coord),
+   nightFog:sat.createFogOverlay(night).getTileUrl(coord)};
+  sat.satMode=orig;
+  return result;
+ });
+ assert.equal(selective.day,'day','Mosaico português de dia');
+ assert.equal(selective.night,'night','Mosaico português à noite');
+ assert.ok(selective.dayGeo.includes('view.eumetsat.int'),'GeoColour deve ser pedido de dia');
+ assert.ok(selective.dayFog.startsWith('data:image/svg+xml'),'Fog desnecessário não deve pedir WMS de dia');
+ assert.ok(selective.nightGeo.startsWith('data:image/svg+xml'),'GeoColour oculto não deve pedir WMS à noite');
+ assert.ok(selective.nightFog.includes('view.eumetsat.int'),'Fog deve ser pedido à noite');
+
 
  const modes=await page.evaluate(async()=>{
   const initial=sat.satMode;
