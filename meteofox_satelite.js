@@ -137,6 +137,15 @@ class MeteoFoxSatellite{
   if(this.satOn&&this.timeline.length)this.select(this.index);
   else this.state('Produto selecionado: '+(requested==='geo'?'GeoColour':requested==='fog'?'Fog RGB':'VIS / FOG Auto'));
  }
+ fallbackToGeoColour(reason){
+  if(this.satMode==='geo')return;
+  this.stop();this.dropPrefetch();
+  this.satMode='geo';this.satRenderedMode=null;
+  this.modeButton.textContent='🛰 RGB: GeoColour';
+  this.modeButton.setAttribute('aria-label','Produto de satélite: GeoColour');
+  this.state('Fog RGB indisponível ('+reason+'). Reposição segura do GeoColour.');
+  if(this.satOn&&this.timeline.length)this.select(this.index);
+ }
  async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
   if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satRenderedMode=null;this.fogRenderedTime=null;if(this.fogLayer&&this.map.hasLayer(this.fogLayer))this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
   // A camada é criada com TIME explícito após obter horários publicados.
@@ -343,6 +352,8 @@ class MeteoFoxSatellite{
     if(!success){
      for(const x of pending){x.layer.off('load');x.layer.off('tileerror');if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);}
      this.state('Não foi possível carregar todas as imagens de '+fmt(time)+'. Mantidas as anteriores.');
+     // Se o produto experimental não devolver mosaicos, não imobilizar o mapa.
+     if(this.satMode!=='geo')this.fallbackToGeoColour('mosaicos ou sincronização');
      resolve(false);return;
     }
     // O problema do piscar vinha da soma de dois fades por mosaico.
