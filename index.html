@@ -108,21 +108,20 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .aviation-field input:focus,.aviation-field select:focus{outline:2px solid #60b9df;outline-offset:1px}
 #refreshAviation{padding:11px 15px}
 .aviation-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:13px}
-.aviation-results{display:grid;gap:15px;grid-template-columns:minmax(0,1fr)}
-.aviation-card{background:#fbfdff;border:1px solid #d7e7f1;border-radius:12px;padding:15px;min-width:0}
+.aviation-results{display:flex;flex-wrap:wrap;align-items:flex-start;gap:15px}
+.aviation-card{background:#fbfdff;border:1px solid #d7e7f1;border-radius:12px;padding:15px;min-width:0;max-width:100%;width:max-content;flex:0 1 auto}
 .aviation-card-head{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
 .aviation-card-head h3{font-size:16px;margin:0;color:#164463}
 .aviation-card-head small{font-size:11px;color:#698398}
-.aviation-bulletins{display:grid;gap:11px}
-.aviation-report{background:#fff;border:1px solid #dce8ef;border-radius:9px;padding:11px;min-width:0}
+.aviation-bulletins{display:grid;justify-items:start;gap:11px;min-width:0}
+.aviation-report{background:#fff;border:1px solid #dce8ef;border-radius:9px;padding:11px;min-width:0;max-width:100%;width:max-content}
 .aviation-report-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
 .aviation-report-head strong{font-size:12px;letter-spacing:.03em;color:#135a83}
 .aviation-report-head .taf-amd{color:#a64c1b}
 .aviation-report-meta{font-size:11px;color:#647e90}
 .aviation-report pre{color:#15374d;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-family:'DM Mono',Consolas,monospace;font-size:12px;line-height:1.65;margin:0}
-.aviation-report pre.taf-formatted{white-space:pre;overflow-x:auto;overflow-y:visible;overflow-wrap:normal;word-break:normal;width:100%;max-width:100%;padding:5px 1px 10px;tab-size:2;scrollbar-width:thin}
+.aviation-report pre.taf-formatted{white-space:pre;overflow-x:auto;overflow-y:hidden;overflow-wrap:normal;word-break:normal;max-width:100%;padding:5px 1px 10px;tab-size:2;scrollbar-width:thin}
 .aviation-report:has(pre.taf-formatted){min-width:0}
-.aviation-card{width:100%;min-width:0}
 .aviation-report-empty pre{color:#8a9dab}
 .aviation-age{display:inline-block;padding:3px 7px;border-radius:6px;font-size:10px;background:#e3f4f0;color:#146b53}
 .aviation-age.old{background:#fff0d8;color:#85510d}
@@ -130,7 +129,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .aviation-age.amended{background:#fff0de;color:#994800}
 .aviation-copy{font-size:11px;border:1px solid #ccdfeb;color:#235d7d;background:#f2f8fc;border-radius:6px;padding:5px 8px}
 .aviation-empty{padding:18px;color:var(--muted)}
-@media(max-width:970px){.aviation-results{grid-template-columns:1fr}}
+@media(max-width:970px){.aviation-results{gap:12px}}
 @media(max-width:650px){.aviation-field{max-width:none;min-width:100%}.aviation-card{padding:11px}}
 </style>
 <style id="meteofox-vis-sim-style">
