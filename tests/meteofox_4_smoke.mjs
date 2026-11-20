@@ -92,6 +92,31 @@ try{
  await page.keyboard.press('ArrowRight');
  assert.equal(await mapTimeline.inputValue(),'1','Mapa com radar/Meteosat deve navegar pelo teclado sem cursor focado');
 
+ // Regressão anti-piscar: a imagem antiga nunca perde opacidade
+ // durante o carregamento da nova; só sai após o fade do novo container.
+ await page.waitForTimeout(550);
+ const fadeCheck=await page.evaluate(async()=>{
+  const previous=sat.satLayer;
+  if(!previous||!sat.timeline.length)return {available:false};
+  const prior=previous.getContainer();
+  const next=sat.index===0?Math.min(1,sat.timeline.length-1):0;
+  const swap=sat.select(next);
+  const oldStillOpaque=prior.style.opacity!=='0'&&getComputedStyle(prior).opacity==='1';
+  const ok=await swap;
+  const current=sat.satLayer;
+  const newContainer=current?.getContainer();
+  const oldStillMounted=sat.map.hasLayer(previous);
+  await new Promise(resolve=>setTimeout(resolve,410));
+  return {available:true,ok,oldStillOpaque,oldStillMounted,
+   newOpaque:getComputedStyle(newContainer).opacity==='1',
+   oldRemoved:!sat.map.hasLayer(previous)};
+ });
+ assert.equal(fadeCheck.available,true,'Camada Meteosat indisponível para teste');
+ assert.equal(fadeCheck.ok,true,'Troca de fotograma falhou: '+JSON.stringify(fadeCheck));
+ assert.equal(fadeCheck.oldStillOpaque,true,'A imagem anterior não pode esbater durante a troca');
+ assert.equal(fadeCheck.oldStillMounted,true,'Não retirar a imagem antes de revelar a nova');
+ assert.equal(fadeCheck.newOpaque,true,'Imagem nova deve terminar totalmente opaca');
+ assert.equal(fadeCheck.oldRemoved,true,'Imagem antiga deve sair após a transição');
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
  console.log('PASS desktop: Produtos, 16 passos +9..+54 chuva+rajadas, independência VIS, METAR, mapa radar/Meteosat');
