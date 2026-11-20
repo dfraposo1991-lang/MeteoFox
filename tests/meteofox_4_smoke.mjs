@@ -363,17 +363,21 @@ try{
  const selective=await page.evaluate(()=>{
   const M=window.MeteoFoxFogMask,coord=L.point(30,24);coord.z=6;
   const day=Date.parse('2026-11-20T12:00:00Z'),night=Date.parse('2026-11-20T22:00:00Z');
-  const orig=sat.satMode;sat.satMode='auto';
-  // Camadas ainda não adicionadas precisam de referência ao mapa
-  // para projetar coordenadas WMS, mas não devem efetuar pedidos.
-  const tileUrl=(layer)=>{layer._map=sat.map;return layer.getTileUrl(coord)};
-  const result={day:M.tileLighting(day,coord),night:M.tileLighting(night,coord),
-   dayGeo:tileUrl(sat.createSatLayer(day)),
-   dayFog:tileUrl(sat.createFogOverlay(day)),
-   nightGeo:tileUrl(sat.createSatLayer(night)),
-   nightFog:tileUrl(sat.createFogOverlay(night))};
-  sat.satMode=orig;
-  return result;
+  const orig=sat.satMode, wmsMethod=L.TileLayer.WMS.prototype.getTileUrl;
+  // Espiar a chamada original evita adicionar camadas só para testar
+  // se a seleção por mosaico efetua ou evita uma consulta WMS.
+  L.TileLayer.WMS.prototype.getTileUrl=function(){return 'https://view.eumetsat.int/qa-wms-stub'};
+  sat.satMode='auto';
+  try{
+   return {day:M.tileLighting(day,coord),night:M.tileLighting(night,coord),
+    dayGeo:sat.createSatLayer(day).getTileUrl(coord),
+    dayFog:sat.createFogOverlay(day).getTileUrl(coord),
+    nightGeo:sat.createSatLayer(night).getTileUrl(coord),
+    nightFog:sat.createFogOverlay(night).getTileUrl(coord)};
+  }finally{
+   sat.satMode=orig;
+   L.TileLayer.WMS.prototype.getTileUrl=wmsMethod;
+  }
  });
  assert.equal(selective.day,'day','Mosaico português de dia');
  assert.equal(selective.night,'night','Mosaico português à noite');
