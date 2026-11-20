@@ -93,40 +93,34 @@ def main():
             # Require the same satellite generation as existing GeoColour for geo-registration;
             # never silently combine MSG+MTG, which have different sampling geometries.
             mtg=[x for x in candidates if x['is_mtg']]
-            fresh=[x for x in mtg if x['last_listed_utc'] and
-              abs((NOW-datetime.fromisoformat(x['last_listed_utc'].replace('Z','+00:00'))).total_seconds())<=45*60]
             reference=load_reference()
-            matching=None
-            selected=None
-            for c in fresh:
-                fog_time=datetime.fromisoformat(c['last_listed_utc'].replace('Z','+00:00'))
-                nearest=min(reference,key=lambda t:abs((t-fog_time).total_seconds())) if reference else None
-                if nearest and abs((nearest-fog_time).total_seconds())<=5*60:
-                    matching=nearest
-                    selected=c
-                    break
+            matching=reference[-1] if reference else None
+            selected=next((c for c in mtg if 'fog' in c['name'].lower()),None)
+            out['time_basis']='GeoColour reference time; Fog WMS tested with explicit TIME'
             if not mtg:
                 out['reason']='Fog found only on another satellite generation; not aligned with MTG GeoColour'
-            elif not fresh:
-                out['reason']='No MTG Fog layer with a confirmed fresh UTC time dimension'
             elif selected is None:
-                out['reason']='No Fog timestamp within five minutes of a confirmed MTG GeoColour frame'
+                out['reason']='No confirmed Fog RGB in the MTG family'
+            elif matching is None or abs((NOW-matching).total_seconds())>90*60:
+                out['reason']='GeoColour reference timestamps are absent or too old'
+            elif selected['last_listed_utc'] and abs((datetime.fromisoformat(selected['last_listed_utc'].replace('Z','+00:00'))-matching).total_seconds())>10*60:
+                out['reason']='MTG Fog time extent does not agree with GeoColour'
             else:
                 # Probe a single modest-sized tile; do not start a bulk download.
                 params=urlencode({
                   'service':'WMS','version':'1.1.1','request':'GetMap',
                   'layers':selected['name'],'styles':'','format':'image/png',
-                  'transparent':'true','srs':'EPSG:4326','bbox':'35,-11,45,4',
+                  'transparent':'true','srs':'EPSG:4326','bbox':'-11,35,4,45',
                   'width':'128','height':'128',
-                  'time':selected['last_listed_utc']})
+                  'time':matching.isoformat().replace('+00:00','Z')})
                 sample=fetch(WMS+'?'+params,limit=350_000,timeout=25)
-                if not sample.startswith(b'\x89PNG\r\n\x1a\n'):
+                if not sample.startswith(b'\x89PNG\r\n\x1a\n') or len(sample)<900:
                     out['reason']='WMS did not return a valid PNG for the selected UTC time'
                 else:
                     out['ready']=True
                     out['fog_layer']=selected['name']
                     out['matching_time_utc']=matching.isoformat().replace('+00:00','Z')
-                    out['reason']='Same-generation candidate, recent times and test tile verified'
+                    out['reason']='MTG Fog RGB discovered; explicit-time WMS sample returned PNG; frame-by-frame availability still to validate'
     except Exception as e:
         out['reason']='Fog WMS validation unavailable: '+str(e)[:250]
     OUTPUT.parent.mkdir(parents=True,exist_ok=True)
