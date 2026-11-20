@@ -161,7 +161,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 <header class="top">
  <a class="brand meteologo-link" href="./mapa.html" title="Abrir mapa meteorológico interativo em grande"><div class="logo">⛅</div><div><h1>MeteoFox</h1><small>PORTUGAL · CENTRO DE ANÁLISE METEOROLÓGICA</small></div></a>
  <div class="topright"><span class="pill">● DADOS ONLINE · DISPONIBILIDADE VARIÁVEL</span><select id="place" class="select" aria-label="Localidade">
- <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa" selected>Lisboa</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
+ <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa" selected>Lisboa</option><option value="Valência">Valência · Валенсия</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
 </header>
 <nav class="tabs">
  <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="precipGust">▤ Produtos</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
@@ -356,7 +356,7 @@ window.addEventListener('message',event=>{if(event.origin===location.origin&&eve
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const places={
-"Lisboa":[38.7223,-9.1393],"Porto":[41.1579,-8.6291],"Coimbra":[40.2033,-8.4103],"Faro":[37.0194,-7.9304],"Braga":[41.5454,-8.4265],"Santarém":[39.2362,-8.6850],"Setúbal":[38.5244,-8.8882],"Castelo Branco":[39.8222,-7.4909],"Évora":[38.5714,-7.9135],"Madeira":[32.6669,-16.9241],"Açores":[38.7300,-27.3200],"Viana do Castelo":[41.6932,-8.8329]
+"Lisboa":[38.7223,-9.1393],"Valência":[39.4699,-0.3763],"Porto":[41.1579,-8.6291],"Coimbra":[40.2033,-8.4103],"Faro":[37.0194,-7.9304],"Braga":[41.5454,-8.4265],"Santarém":[39.2362,-8.6850],"Setúbal":[38.5244,-8.8882],"Castelo Branco":[39.8222,-7.4909],"Évora":[38.5714,-7.9135],"Madeira":[32.6669,-16.9241],"Açores":[38.7300,-27.3200],"Viana do Castelo":[41.6932,-8.8329]
 };
 window.meteofoxOverviewToken=0;
 const REGIONS={
@@ -371,30 +371,71 @@ const fmt=(v,d=0)=>v==null||!Number.isFinite(Number(v))?"—":Number(v).toFixed(
 function chart(id,labels,datasets,type='line',opts={}){if(!window.Chart)return; if(charts[id])charts[id].destroy();charts[id]=new Chart($(id),{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#a9bdce',boxWidth:10,font:{size:10}}}},scales:{x:{ticks:{color:'#8098ad',maxTicksLimit:8},grid:{color:'#1b3043'}},y:{ticks:{color:'#8098ad'},grid:{color:'#1b3043'},...(opts.y||{})}},...opts.options}})}
 function timesLabels(times){return times.map(t=>new Date(t+'Z').toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'}))}
 function dailyLabels(times){return times.map(t=>new Date(t+'T12:00').toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit'}))}
-async function getForecast(lat,lon,model=null){const hourly='temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,dew_point_2m,cloud_cover,weather_code';const daily='temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,weather_code';let url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,dew_point_2m&hourly=${hourly}&daily=${daily}&forecast_days=7&timezone=GMT&wind_speed_unit=kn`;if(model)url+=`&models=${model}`;let r=await fetch(url);if(!r.ok)throw Error('API meteorológica indisponível ('+r.status+')');return r.json()}
+async function getForecast(lat,lon,model=null,windUnit='kn'){const hourly='temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,dew_point_2m,cloud_cover,weather_code';const daily='temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,weather_code';let url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,dew_point_2m&hourly=${hourly}&daily=${daily}&forecast_days=7&timezone=GMT&wind_speed_unit=${windUnit}`;if(model)url+=`&models=${model}`;let r=await fetch(url);if(!r.ok)throw Error('API meteorológica indisponível ('+r.status+')');return r.json()}
 function weatherIcon(code){if(code===0)return'☀️';if([1,2].includes(code))return'🌤️';if(code===3)return'☁️';if([45,48].includes(code))return'🌫️';if([51,53,55,56,57].includes(code))return'🌦️';if([61,63,65,66,67,80,81,82].includes(code))return'🌧️';if([71,73,75,77,85,86].includes(code))return'🌨️';if([95,96,99].includes(code))return'⛈️';return'🌡️'}
+function setOverviewLocale(ru){
+ const note=document.querySelector('#overview > p.note');
+ if(note)note.textContent=ru?'ОСНОВНАЯ МОДЕЛЬ · ECMWF IFS · Прогнозные данные, не инструментальные наблюдения. Ветер в км/ч.':'MODELO PRINCIPAL · ECMWF IFS · Dados de previsão, não observações instrumentais. Vento em kt.';
+ const labels=document.querySelectorAll('#overview .metrics .metric .k');
+ (ru?['Температура','Относительная влажность','Осадки','Ветер']:['Temperatura','Humidade relativa','Precipitação','Vento']).forEach((name,i)=>{if(labels[i])labels[i].textContent=name;});
+ const units=document.querySelectorAll('#overview .metrics .metric .u');
+ if(units[1])units[1].textContent=ru?'на высоте 2 м':'a 2 metros';
+ if(units[2])units[2].textContent=ru?'прогноз на текущий час':'valor previsto para a hora atual';
+ const titles=document.querySelectorAll('#overview .card h3');
+ if(titles[0])titles[0].textContent=ru?'Метеограмма':'Meteograma';
+ if(titles[1])titles[1].textContent=ru?'Прогноз на 7 дней':'Previsão diária · 7 dias';
+ if(titles[2])titles[2].textContent=ru?'Почасовой прогноз · ближайшие 12 часов':'Previsão horária · próximas 12 horas';
+ const hint=document.querySelector('#meteoPreview .meteo-preview-hint');
+ if(hint)hint.textContent=ru?'⛶ Увеличить':'⛶ Ampliar';
+ $('meteoPreview').setAttribute('aria-label',ru?'Увеличить метеограмму ECMWF':'Ampliar meteograma ECMWF da localidade selecionada');
+ $('meteoClose').textContent=ru?'✕ Закрыть':'✕ Fechar';
+ $('meteoClose').setAttribute('aria-label',ru?'Закрыть метеограмму':'Fechar meteograma ampliado');
+ $('meteoPrevious').setAttribute('aria-label',ru?'Предыдущий срок прогноза':'Prazo anterior');
+ $('meteoNext').setAttribute('aria-label',ru?'Следующий срок прогноза':'Prazo seguinte');
+ $('meteoTimeSlider').setAttribute('aria-label',ru?'Выбрать срок прогноза':'Selecionar prazo do meteograma');
+ $('meteoSmallSvg').setAttribute('aria-label',ru?'Облачность, осадки, температура и ветер':'Nuvens, precipitação, temperatura e vento ao longo do tempo');
+ $('meteoLargeSvg').setAttribute('aria-label',ru?'Подробная метеограмма для Валенсии':'Meteograma ampliado da localidade selecionada');
+}
 async function loadOverview(){
- const name=$('place').value;
- const island=REGIONS[name];
+ const name=$('place').value,ru=name==='Valência',island=REGIONS[name];
+ setOverviewLocale(ru);
  if(island){
-   const token=++regionToken, selected=activeIsland[name]||0;
-   $('islandForecasts').style.display='grid';
-   $('islandForecasts').innerHTML=island.map((p,i)=>`<div class="card"><h3>${p.name} · ${p.icao} ${i===selected?'· Selecionado':''}</h3><div id="islandData${i}" class="note">A consultar ECMWF…</div><button class="action ${i===selected?'active':''}" data-island="${i}" style="margin-top:10px">Ver previsão detalhada</button></div>`).join('');
-   $('islandForecasts').querySelectorAll('[data-island]').forEach(b=>b.onclick=()=>{activeIsland[name]=Number(b.dataset.island);loadOverview();modelData={};if($('models').classList.contains('active'))loadModels()});
-   Promise.all(island.map(async(p,i)=>{try{const d=await getForecast(p.lat,p.lon,'ecmwf_ifs025');if(token!==regionToken||$('place').value!==name)return;const c=d.current; $('islandData'+i).textContent=`${fmt(c.temperature_2m,1)} °C · Vento ${fmt(c.wind_speed_10m)} kt · Rajada ${fmt(c.wind_gusts_10m)} kt · Precipitação ${fmt(c.precipitation,1)} mm`; }catch(e){if(token===regionToken)$('islandData'+i).textContent='Previsão indisponível';}}));
+  const token=++regionToken,selected=activeIsland[name]||0;
+  $('islandForecasts').style.display='grid';
+  $('islandForecasts').innerHTML=island.map((p,i)=>`<div class="card"><h3>${p.name} · ${p.icao} ${i===selected?'· Selecionado':''}</h3><div id="islandData${i}" class="note">A consultar ECMWF…</div><button class="action ${i===selected?'active':''}" data-island="${i}" style="margin-top:10px">Ver previsão detalhada</button></div>`).join('');
+  $('islandForecasts').querySelectorAll('[data-island]').forEach(b=>b.onclick=()=>{activeIsland[name]=Number(b.dataset.island);loadOverview();modelData={};if($('models').classList.contains('active'))loadModels()});
+  Promise.all(island.map(async(p,i)=>{try{const d=await getForecast(p.lat,p.lon,'ecmwf_ifs025');if(token!==regionToken||$('place').value!==name)return;const c=d.current;$('islandData'+i).textContent=`${fmt(c.temperature_2m,1)} °C · Vento ${fmt(c.wind_speed_10m)} kt · Rajada ${fmt(c.wind_gusts_10m)} kt · Precipitação ${fmt(c.precipitation,1)} mm`;}catch(e){if(token===regionToken)$('islandData'+i).textContent='Previsão indisponível';}}));
  }else{regionToken++;$('islandForecasts').style.display='none';$('islandForecasts').innerHTML='';}
- const [lat,lon]=island?[island[activeIsland[name]||0].lat,island[activeIsland[name]||0].lon]:places[name];current=[lat,lon];
- const selectedLocation=island?island[activeIsland[name]||0].name:name;
- const overviewToken=++window.meteofoxOverviewToken;
- window.MeteoFoxMeteogram?.loading(selectedLocation);$('placeTitle').textContent='Previsão ECMWF IFS — '+(island?name+' / '+island[activeIsland[name]||0].name:name);$('coords').textContent=lat.toFixed(2)+'°N · '+Math.abs(lon).toFixed(2)+'°W';
- try{const d=await getForecast(lat,lon,'ecmwf_ifs025');if(overviewToken!==window.meteofoxOverviewToken)return;const c=d.current,h=d.hourly,day=d.daily;
- window.MeteoFoxMeteogram?.setForecast(selectedLocation,d);$('temp').textContent=fmt(c.temperature_2m,1)+' °C';$('feels').textContent='Sensação '+fmt(c.apparent_temperature,1)+' °C';$('humidity').textContent=fmt(c.relative_humidity_2m)+' %';$('rain').textContent=fmt(c.precipitation,1)+' mm';$('wind').textContent=fmt(c.wind_speed_10m)+' kt';$('gust').textContent='Rajada '+fmt(c.wind_gusts_10m)+' kt';
-
- $('daily').innerHTML=day.time.map((t,i)=>`<div class="day"><b>${dailyLabels([t])[0]}</b><div class="symbol">${weatherIcon(day.weather_code?.[i])}</div><strong>${fmt(day.temperature_2m_max[i])}°</strong><small>${fmt(day.temperature_2m_min[i])}° min</small><small>☔ ${fmt(day.precipitation_sum[i],1)} mm</small></div>`).join('');
- const idx=Math.max(0,h.time.findIndex(t=>t>=c.time));
- $('hours').innerHTML=h.time.slice(idx,idx+12).map((t,i)=>{let j=idx+i;return `<div class="hour"><span>${new Date(t+'Z').toLocaleTimeString('pt-PT',{hour:'2-digit',timeZone:'UTC'})}h</span><b>${fmt(h.temperature_2m[j],0)}°</b><span>☔ ${fmt(h.precipitation_probability[j])}%</span><em>${fmt(h.wind_speed_10m[j])} kt</em></div>`}).join('');
- const p=day.precipitation_sum.reduce((a,b)=>a+(b||0),0);$('summary').textContent=`Temperatura atual ${fmt(c.temperature_2m,1)} °C · vento ${fmt(c.wind_speed_10m)} kt · precipitação prevista nos próximos 7 dias: ${fmt(p,1)} mm.`;$('updated').textContent='Consulta '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
- }catch(e){if(overviewToken!==window.meteofoxOverviewToken)return;window.MeteoFoxMeteogram?.error(selectedLocation,e);$('summary').textContent='Previsão temporariamente indisponível: '+e.message;$('updated').textContent='Falha na atualização'}
+ const [lat,lon]=island?[island[activeIsland[name]||0].lat,island[activeIsland[name]||0].lon]:places[name];
+ current=[lat,lon];const selected=ru?'Валенсия':island?island[activeIsland[name]||0].name:name;
+ const token=++window.meteofoxOverviewToken;
+ window.MeteoFoxMeteogram?.loading(selected);
+ $('placeTitle').textContent=(ru?'Прогноз ECMWF IFS — ':'Previsão ECMWF IFS — ')+(island?name+' / '+island[activeIsland[name]||0].name:selected);
+ $('coords').textContent=lat.toFixed(2)+'°N · '+Math.abs(lon).toFixed(2)+(lon>=0?'°E':'°W');
+ try{
+  const d=await getForecast(lat,lon,'ecmwf_ifs025',ru?'kmh':'kn');
+  if(token!==window.meteofoxOverviewToken)return;
+  const c=d.current,h=d.hourly,day=d.daily,unit=ru?'км/ч':'kt',dateLang=ru?'ru-RU':'pt-PT';
+  window.MeteoFoxMeteogram?.setForecast(selected,d);
+  $('temp').textContent=fmt(c.temperature_2m,1)+' °C';
+  $('feels').textContent=(ru?'Ощущается как ':'Sensação ')+fmt(c.apparent_temperature,1)+' °C';
+  $('humidity').textContent=fmt(c.relative_humidity_2m)+' %';
+  $('rain').textContent=fmt(c.precipitation,1)+(ru?' мм':' mm');
+  $('wind').textContent=fmt(c.wind_speed_10m)+' '+unit;
+  $('gust').textContent=(ru?'Порывы ':'Rajada ')+fmt(c.wind_gusts_10m)+' '+unit;
+  $('daily').innerHTML=day.time.map((t,i)=>`<div class="day"><b>${new Date(t+'T12:00').toLocaleDateString(dateLang,{weekday:'short',day:'2-digit'})}</b><div class="symbol">${weatherIcon(day.weather_code?.[i])}</div><strong>${fmt(day.temperature_2m_max[i])}°</strong><small>${fmt(day.temperature_2m_min[i])}° ${ru?'мин.':'min'}</small><small>☔ ${fmt(day.precipitation_sum[i],1)} ${ru?'мм':'mm'}</small></div>`).join('');
+  const idx=Math.max(0,h.time.findIndex(t=>t>=c.time));
+  $('hours').innerHTML=h.time.slice(idx,idx+12).map((t,i)=>{const j=idx+i;return `<div class="hour"><span>${new Date(t+'Z').toLocaleTimeString(dateLang,{hour:'2-digit',timeZone:'UTC'})}</span><b>${fmt(h.temperature_2m[j],0)}°</b><span>☔ ${fmt(h.precipitation_probability[j])}%</span><em>${fmt(h.wind_speed_10m[j])} ${unit}</em></div>`}).join('');
+  const p=day.precipitation_sum.reduce((a,b)=>a+(b||0),0);
+  $('summary').textContent=ru?`Текущая температура ${fmt(c.temperature_2m,1)} °C · ветер ${fmt(c.wind_speed_10m)} км/ч · прогноз осадков на следующие 7 дней: ${fmt(p,1)} мм.`:
+   `Temperatura atual ${fmt(c.temperature_2m,1)} °C · vento ${fmt(c.wind_speed_10m)} kt · precipitação prevista nos próximos 7 dias: ${fmt(p,1)} mm.`;
+  $('updated').textContent=(ru?'Обновлено ':'Consulta ')+new Date().toLocaleTimeString(dateLang,{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
+ }catch(e){
+  if(token!==window.meteofoxOverviewToken)return;
+  window.MeteoFoxMeteogram?.error(selected,e);
+  $('summary').textContent=(ru?'Прогноз временно недоступен: ':'Previsão temporariamente indisponível: ')+e.message;
+  $('updated').textContent=ru?'Ошибка обновления':'Falha na atualização';
+ }
 }
 const MODELS=[{key:'ecmwf_ifs025',name:'ECMWF IFS',color:'#51d6e7'},{key:'gfs_seamless',name:'NOAA GFS',color:'#ffca72'},{key:'icon_seamless',name:'DWD ICON',color:'#65d6a4'},{key:'ecmwf_aifs025',name:'ECMWF AIFS',color:'#ba9cff'}];
 async function loadModels(){const [lat,lon]=current,token=lat+','+lon;$('modelStatus').textContent='A consultar quatro modelos…';
@@ -408,7 +449,7 @@ async function loadModels(){const [lat,lon]=current,token=lat+','+lon;$('modelSt
  $('modelTable').innerHTML=ok.flatMap(m=>m.d.daily.time.slice(0,3).map((t,i)=>`<tr><td>${m.name}</td><td>${t}</td><td>${fmt(m.d.daily.temperature_2m_max?.[i],1)}</td><td>${fmt(m.d.daily.temperature_2m_min?.[i],1)}</td><td>${fmt(m.d.daily.precipitation_sum?.[i],1)}</td></tr>`)).join('');
  $('modelStatus').textContent=`${ok.length}/4 modelos disponíveis${bad.length?' · '+bad.map(m=>m.name).join(', ')+' sem dados':''}`;
 }
-const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR'],Faro:['LPFR']};
+const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR'],Faro:['LPFR'],'Valência':['LEVC']};
 function formatTAF(raw){
  // Quebras apenas nos indicadores de mudança; preserva todos os grupos originais.
  return String(raw||'Indisponível').replace(/\s+(?=(?:TEMPO|BECMG|FM\d{6}|PROB(?:30|40))(?:\s|$))/g,(spaces,offset,whole)=>{const before=whole.slice(0,offset);return /PROB(?:30|40)\s*$/.test(before)?' ':'\n';});
