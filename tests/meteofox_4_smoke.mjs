@@ -83,7 +83,7 @@ try{
  assert.equal(await controlPanel.isHidden(),true,'Painel deve recolher sem esconder botão');
  assert.equal(await togglePanel.isVisible(),true);
  assert.equal((await togglePanel.innerText()).trim(),'+','Quadrado deve mostrar apenas o símbolo +');
- assert.equal(await page.locator('#mapMiniTimeline').isVisible(),true,'Setas flutuantes disponíveis com painel recolhido');
+ assert.equal(await page.locator('#mapMiniTimeline').isHidden(),true,'No computador as setas flutuantes ficam ocultas');
  await togglePanel.click();
  assert.equal(await controlPanel.isVisible(),true,'Painel deve abrir novamente');
  const opacityButton=page.getByRole('button',{name:/Opacidade/});
@@ -124,18 +124,15 @@ try{
  // caso contrário refreshTimeline pode repor o último prazo durante o teste.
  await page.waitForFunction(()=>sat.satKnown && sat.radarFrames.length>0 && !sat.transition,{timeout:15000});
  await page.waitForTimeout(400);
- // Avançar e recuar em modo minimizado, mantendo a sequência Meteosat/radar.
+ // Desktop: navegar com setas do teclado, sem mostrar controlos flutuantes.
  await togglePanel.click();
- await page.waitForFunction(()=>!document.querySelector('#mapMiniForward').disabled);
+ assert.equal(await page.locator('#mapMiniTimeline').isHidden(),true);
  const miniStarting=await page.evaluate(()=>sat.index);
- await page.locator('#mapMiniBack').click();
- const miniBackIndex=await page.evaluate(()=>sat.index);
- assert.equal(miniBackIndex,Math.max(0,miniStarting-1),'Seta flutuante anterior deve recuar');
- await page.locator('#mapMiniForward').click();
- assert.equal(await page.evaluate(()=>sat.index),miniStarting,'Seta flutuante seguinte deve avançar');
  await togglePanel.focus();
  await page.keyboard.press('ArrowLeft');
- assert.equal(await page.evaluate(()=>sat.index),Math.max(0,miniStarting-1),'Seta do teclado deve funcionar recolhido');
+ assert.equal(await page.evaluate(()=>sat.index),Math.max(0,miniStarting-1),'Teclado deve recuar com painel recolhido');
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await page.evaluate(()=>sat.index),miniStarting,'Teclado deve avançar com painel recolhido');
  await togglePanel.click();
  const mapTimeline=page.locator('#satTools input[aria-label="Navegação temporal UTC"]');
  await mapTimeline.fill('0');
@@ -208,7 +205,18 @@ try{
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
  console.log('PASS desktop: Produtos, 16 passos +9..+54 chuva+rajadas, independência VIS, METAR, mapa radar/Meteosat');
+ // Telemóvel: setas visíveis só quando o painel estiver recolhido.
  await page.setViewportSize({width:390,height:844});
+ await togglePanel.click();
+ assert.equal(await page.locator('#mapMiniTimeline').isVisible(),true,'Setas visíveis em telemóvel');
+ await page.waitForFunction(()=>!document.querySelector('#mapMiniForward').disabled);
+ const mobileStart=await page.evaluate(()=>sat.index);
+ await page.locator('#mapMiniBack').click();
+ assert.equal(await page.evaluate(()=>sat.index),Math.max(0,mobileStart-1));
+ await page.locator('#mapMiniForward').click();
+ assert.equal(await page.evaluate(()=>sat.index),mobileStart);
+ await togglePanel.click();
+ assert.equal(await page.locator('#mapMiniTimeline').isHidden(),true,'Setas desaparecem ao expandir painel');
  await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
  const mobile=await page.evaluate(()=>({viewport:document.documentElement.clientWidth,pageWidth:document.documentElement.scrollWidth}));
  assert.ok(mobile.pageWidth<=mobile.viewport+3,'Overflow horizontal na página principal: '+JSON.stringify(mobile));
