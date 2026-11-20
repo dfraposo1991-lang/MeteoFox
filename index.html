@@ -23,10 +23,15 @@
 .obs-tools .action[aria-pressed="true"]{background:#215476;border-color:#67c6ee;color:#fff}
 .obs-legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;color:var(--muted);font-size:11px}
 .obs-dot{display:inline-block;width:12px;height:12px;border:1px solid #8aa7bd;border-radius:50%;vertical-align:-2px;margin-right:5px}
-.obs-popup{font:12px Inter,system-ui,sans-serif;max-width:340px;color:#172d43}
+.obs-popup{font:12px Inter,system-ui,sans-serif;width:max-content;max-width:min(890px,calc(100vw - 84px));color:#172d43}
+.leaflet-popup:has(.obs-popup) .leaflet-popup-content{width:max-content!important;max-width:min(890px,calc(100vw - 84px));margin:13px 16px}
+.leaflet-popup:has(.obs-popup) .leaflet-popup-content-wrapper{max-width:calc(100vw - 36px)}
+.obs-popup .obs-report{width:max-content;max-width:100%;margin-top:12px}
+.obs-popup .obs-report>p{margin:0 0 5px}
+.obs-popup .obs-report pre{width:max-content;max-width:100%;white-space:pre;overflow-x:auto;overflow-y:visible;overflow-wrap:normal;word-break:normal;max-height:none;margin:0}
 .obs-popup h4{margin:0 0 8px;color:#163c59;font-size:15px}
 .obs-popup .cat{display:inline-block;background:#eaf2f8;padding:5px 8px;border-radius:7px;margin:4px 3px 7px 0;font-weight:700}
-.obs-popup pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#eef4fa;color:#203f53;padding:9px;border-radius:7px;line-height:1.5;font:11px Consolas,monospace;max-height:175px;overflow:auto}
+.obs-popup pre{background:#eef4fa;color:#203f53;padding:9px;border-radius:7px;line-height:1.5;font:11px Consolas,monospace}
 .obs-popup p{margin:4px 0}
 .obs-notice{color:var(--muted);font-size:11px;line-height:1.5}
 @media(max-width:650px){.obs-map{height:390px}}
@@ -953,7 +958,8 @@ function obsClasses(item){
 }
 function obsAviationPopup(a,d){
  const id=a.id,m=d?.metar?.[id],t=d?.taf?.[id],sp=d?.speci?.[id],cat=obsClasses(m);
- const rawReport=(name,v)=>v?.raw?.trim()?'<p><strong>'+name+'</strong></p><pre>'+safe(v.raw)+'</pre>':'';
+ const rawReport=(name,v)=>v?.raw?.trim()?'<section class="obs-report"><p><strong>'+name+
+  '</strong></p><pre>'+safe(name.startsWith('TAF')?formatTAF(v.raw):v.raw)+'</pre></section>':'';
  const p=cat.parsed;
  return '<div class="obs-popup"><h4>'+safe(id)+' · '+safe(a.name)+'</h4>'+
   '<span class="cat" style="border-left:5px solid '+cat.color+'">Cor: '+safe(cat.code)+'</span>'+
@@ -976,7 +982,7 @@ function renderAviationMap(){
   const category=obsClasses(aviationData?.metar?.[a.id]);
   const marker=obsCircle(pos,category.color).addTo(obsAviationLayer);
   marker.bindTooltip(a.id+' · '+category.code+' · '+category.flight);
-  marker.bindPopup(()=>obsAviationPopup(a,aviationData),{maxWidth:370});
+  marker.bindPopup(()=>obsAviationPopup(a,aviationData),{minWidth:150,maxWidth:930,autoPan:true});
   points.push(pos);
  }
  if(points.length){
