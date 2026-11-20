@@ -1,6 +1,16 @@
 name: MeteoFox | ECMWF 48h
 
 on:
+  # Gerar imediatamente novo conjunto quando a configuração dos prazos é alterada.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/meteofox_ecmwf.yml'
+      - 'descarregar_meteofox_48h.py'
+      - 'gerar_meteofox_48h.py'
+      - 'verificar_ecmwf_48h.py'
+      - 'mapa_chuva_meteofox_v15_16W_6W_run.py'
+      - 'mapa_rajadas_meteofox_v4.py'
   workflow_dispatch:
     inputs:
       cycle:
