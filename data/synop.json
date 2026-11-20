@@ -4,7 +4,7 @@
     {
       "station": "08532",
       "name": "Sintra / BA1",
-      "latest_utc": "2026-11-19T12:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "6": {
           "mm": 5.0,
@@ -17,7 +17,7 @@
     {
       "station": "08509",
       "name": "Lajes / BA4",
-      "latest_utc": "2026-11-20T06:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 2.0,
@@ -40,7 +40,7 @@
     {
       "station": "08540",
       "name": "Monte Real / BA5",
-      "latest_utc": "2026-11-20T06:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 2.0,
@@ -59,7 +59,7 @@
     {
       "station": "08534",
       "name": "Montijo / BA6",
-      "latest_utc": "2026-11-20T06:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
@@ -78,20 +78,20 @@
     {
       "station": "08562",
       "name": "Beja / BA11",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-20T08:00:00Z"
+          "utc": "2026-11-20T09:00:00Z"
         }
       }
     },
     {
       "station": "08544",
       "name": "Ovar / AM1",
-      "latest_utc": "2026-11-20T06:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 4.0,
@@ -118,7 +118,7 @@
     {
       "station": "08537",
       "name": "Alverca",
-      "latest_utc": "2026-11-19T12:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "6": {
           "mm": 3.0,
@@ -131,7 +131,7 @@
     {
       "station": "08506",
       "name": "Horta",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.1,
@@ -170,20 +170,20 @@
     {
       "station": "08521",
       "name": "MADEIRA / LPMA",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.3,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-20T08:00:00Z"
+          "utc": "2026-11-20T09:00:00Z"
         }
       }
     },
     {
       "station": "08524",
       "name": "Porto Santo",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.2,
@@ -200,13 +200,13 @@
     {
       "station": "08535",
       "name": "Lisboa / Geofísico",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-20T08:00:00Z"
+          "utc": "2026-11-20T09:00:00Z"
         }
       }
     },
@@ -234,29 +234,29 @@
     {
       "station": "08545",
       "name": "Porto / Pedras Rubras",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
-          "mm": 11.0,
+          "mm": 7.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-20T08:00:00Z"
+          "utc": "2026-11-20T09:00:00Z"
         }
       }
     },
     {
       "station": "08554",
       "name": "FARO / LPFR",
-      "latest_utc": "2026-11-20T08:00:00Z",
+      "latest_utc": "2026-11-20T09:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-20T08:00:00Z"
+          "utc": "2026-11-20T09:00:00Z"
         }
       }
     }
   ],
-  "checked_utc": "2026-11-20T09:12:16.230274Z"
+  "checked_utc": "2026-11-20T10:17:40.765971Z"
 }
