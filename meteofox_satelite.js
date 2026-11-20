@@ -7,6 +7,8 @@
 const WMS='https://view.eumetsat.int/geoserver/wms';
 const SAT_MANIFEST='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_times.json';
 const LAYER='mtg_fd:rgb_geocolour';
+const FOG_LAYER='mtg_fd:rgb_fog';
+const FOG_STATUS='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_fog_status.json';
 const RADAR_API='https://api.rainviewer.com/public/weather-maps.json';
 const RADAR_MAX_DIFF=8*60*1000;
 const SAT_MAX_DIFF=8*60*1000;
@@ -54,9 +56,11 @@ async function actualSatelliteTimes(){
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=.8;this.radarOpacity=.66;
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=.8;this.radarOpacity=.66;this.satMode='geo';this.satRenderedMode=null;this.fogLayer=null;this.fogRenderedTime=null;this.fogStatus=null;
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
+  this.modeButton=add('button',host,'🛰 RGB: GeoColour',{'type':'button','title':'Escolher GeoColour, Fog RGB ou VIS/FOG Auto','aria-label':'Produto de satélite: GeoColour'});
+  this.modeButton.onclick=()=>this.cycleSatMode();
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
   this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
   this.opacityButton=add('button',host,'◐ Opacidade',{'type':'button','aria-expanded':'true','title':'Mostrar ou ocultar opções de opacidade'});
@@ -77,7 +81,7 @@ class MeteoFoxSatellite{
     text.textContent=name+' '+value+'%';
     if(key==='sat'){
      this.satOpacity=value/100;
-     for(const layer of [this.satLayer,this.prefetchSat?.layer,...(this.transition?.layers||[]).filter(x=>x.wmsParams)])
+     for(const layer of [this.satLayer,this.fogLayer,this.prefetchSat?.layer,...(this.transition?.layers||[]).filter(x=>x.wmsParams)])
       if(layer)layer.setOpacity(this.satOpacity);
     }else{
      this.radarOpacity=value/100;
@@ -95,7 +99,7 @@ class MeteoFoxSatellite{
   this.end=add('span',host,'—',{'class':'sat-clock'});
   this.forward=add('button',host,'▶',{'type':'button','title':'Imagem seguinte'});this.forward.disabled=true;
   this.status=add('span',host,'Ativa o radar e/ou o satélite. As horas apresentadas são UTC verificadas.',{'class':'sat-status','aria-live':'polite'});
-  this.attr=add('span',host,'Fonte: Meteosat MTG GeoColour RGB © EUMETSAT/NASA · Radar © RainViewer · dados de observação. ',{'class':'sat-attribution'});
+  this.attr=add('span',host,'Fonte: Meteosat MTG GeoColour / Fog RGB © EUMETSAT/NASA · Radar © RainViewer · dados de observação. ',{'class':'sat-attribution'});
   const a=add('a',this.attr,'EUMETView',{href:'https://view.eumetsat.int/',target:'_blank',rel:'noopener noreferrer'});a.style.color='#07518b';
   this.sat.onclick=()=>this.setSatellite(!this.satOn);this.radar.onclick=()=>this.setRadar(!this.radarOn);
   this.play.onclick=()=>this.togglePlay();this.speedButton.onclick=()=>this.cycleSpeed();this.back.onclick=()=>this.select(this.index-1);this.forward.onclick=()=>this.select(this.index+1);
@@ -104,8 +108,37 @@ class MeteoFoxSatellite{
   map.on('zoomstart movestart',()=>this.dropPrefetch());
  }
  state(s){this.status.textContent=s;}
+ async readFogStatus(){
+  const r=await fetch(FOG_STATUS+'?v='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('Diagnóstico Fog HTTP '+r.status);
+  const d=await r.json();
+  const timestamp=DATE(d.checked_utc);
+  if(!d.ready||d.geo_layer!==LAYER||d.fog_layer!==FOG_LAYER||
+     timestamp===null||Math.abs(Date.now()-timestamp)>2*3600000)
+   throw Error('Fog MTG sem validação recente de imagens e horário UTC');
+  this.fogStatus=d;return d;
+ }
+ async cycleSatMode(){
+  const values=['geo','fog','auto'];
+  const requested=values[(values.indexOf(this.satMode)+1)%values.length];
+  if(requested!=='geo'){
+   try{await this.readFogStatus();}
+   catch(error){this.state('VIS / FOG Auto: '+error.message+'. Mantido GeoColour.');return;}
+   if(requested==='auto'&&!window.MeteoFoxFogMask){
+    this.state('A máscara solar ainda não está disponível. Mantido GeoColour.');return;
+   }
+  }
+  if(requested===this.satMode)return;
+  this.stop();this.dropPrefetch();
+  this.satMode=requested;
+  this.modeButton.textContent=requested==='geo'?'🛰 RGB: GeoColour':requested==='fog'?'🌙 RGB: Fog':'🌗 RGB: VIS / FOG Auto';
+  this.modeButton.setAttribute('aria-label','Produto de satélite: '+(requested==='geo'?'GeoColour':requested==='fog'?'Fog RGB':'VIS / FOG Auto'));
+  this.satRenderedMode=null;
+  if(this.satOn&&this.timeline.length)this.select(this.index);
+  else this.state('Produto selecionado: '+(requested==='geo'?'GeoColour':requested==='fog'?'Fog RGB':'VIS / FOG Auto'));
+ }
  async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
-  if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
+  if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satRenderedMode=null;this.fogRenderedTime=null;if(this.fogLayer&&this.map.hasLayer(this.fogLayer))this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
   // A camada é criada com TIME explícito após obter horários publicados.
   // Opacidade configurável nos controlos, com valores iniciais 80% e 66%.
   this.ensureRadarAbove();
@@ -145,6 +178,7 @@ class MeteoFoxSatellite{
   else{
    if(this.radarOn)this.clearRadar();
    if(this.satOn&&this.satLayer&&this.map.hasLayer(this.satLayer)){this.map.removeLayer(this.satLayer);this.satLayer=null;this.satRenderedTime=null;}
+   if(this.fogLayer&&this.map.hasLayer(this.fogLayer)){this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.fogRenderedTime=null;}
    this.state(this.satOn&&this.radarOn?'Sem imagens radar/Meteosat com horários UTC compatíveis. Desliga uma camada para a consultar isoladamente.':this.satOn?'Meteosat sem horários recentes confirmados. A imagem fica oculta para não apresentar uma hora errada.':'Ativa uma camada com imagens temporais disponíveis.');
   }
  }
@@ -160,10 +194,26 @@ class MeteoFoxSatellite{
  // a sequência inteira. A camada fica invisível enquanto recebe os mosaicos.
  createSatLayer(time){
   return L.tileLayer.wms(WMS,{
-   layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
+   layers:this.satMode==='fog'?FOG_LAYER:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
    time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:300,maxZoom:16,
    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
+ }
+ createFogOverlay(time){
+  const layer=L.tileLayer.wms(WMS,{
+   layers:FOG_LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
+   time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:325,maxZoom:16,
+   keepBuffer:0,updateWhenIdle:true,attribution:'Fog RGB © EUMETSAT'
+  });
+  layer.on('tileload',e=>{
+   const url=window.MeteoFoxFogMask?.tileMask(time,e.coords);
+   if(url&&e.tile){
+    e.tile.style.webkitMaskImage='url("'+url+'")';
+    e.tile.style.maskImage='url("'+url+'")';
+    e.tile.style.webkitMaskSize='100% 100%';e.tile.style.maskSize='100% 100%';
+   }
+  });
+  return layer;
  }
  dropPrefetch(keep=null){
   if(this.prefetchTimer){clearTimeout(this.prefetchTimer);this.prefetchTimer=null;}
@@ -175,13 +225,13 @@ class MeteoFoxSatellite{
   const next=this.timeline[(this.index+1)%this.timeline.length];
   const satTime=this.nearestSat(next);
   if(satTime===null||satTime===this.satRenderedTime)return;
-  if(this.prefetchSat?.time===satTime)return;
+  if(this.prefetchSat?.time===satTime&&this.prefetchSat?.mode===this.satMode)return;
   this.dropPrefetch();
   this.prefetchTimer=setTimeout(()=>{
    this.prefetchTimer=null;
    if(!this.satOn||document.hidden||this.nearestSat(this.timeline[(this.index+1)%this.timeline.length])!==satTime)return;
    const layer=this.createSatLayer(satTime);
-   const item={time:satTime,layer,ready:false,error:false};
+   const item={time:satTime,mode:this.satMode,layer,ready:false,error:false};
    this.prefetchSat=item;
    layer.on('tileerror',()=>{item.error=true;});
    layer.on('load',()=>{item.ready=!item.error;});
@@ -204,7 +254,7 @@ class MeteoFoxSatellite{
   if(this.fadeTimer){clearTimeout(this.fadeTimer);this.fadeTimer=null;}
   // Se o utilizador mudar de imagem durante o fade, terminar a anterior
   // primeiro. Caso contrário a remoção da imagem antiga expõe o mapa vazio.
-  for(const layer of [this.satLayer,this.radarLayer]){
+  for(const layer of [this.satLayer,this.fogLayer,this.radarLayer]){
    const container=layer?.getContainer?.();
    if(container){container.style.transition='none';container.style.opacity='1';}
   }
@@ -254,9 +304,9 @@ class MeteoFoxSatellite{
   this.state('A preparar imagens · '+info.join(' · '));
   const jobs=[];
   if(this.satOn){
-   if(this.satLayer&&this.satRenderedTime===satTime&&this.map.hasLayer(this.satLayer))jobs.push({kind:'sat',layer:this.satLayer,reuse:true});
+   if(this.satLayer&&this.satRenderedTime===satTime&&this.satRenderedMode===this.satMode&&this.map.hasLayer(this.satLayer))jobs.push({kind:'sat',layer:this.satLayer,reuse:true});
    else {
-    const cached=this.prefetchSat?.time===satTime?this.prefetchSat:null;
+    const cached=this.prefetchSat?.time===satTime&&this.prefetchSat?.mode===this.satMode?this.prefetchSat:null;
     if(cached)this.dropPrefetch(cached.layer);
     else this.dropPrefetch();
     if(cached&&!cached.error)jobs.push({kind:'sat',layer:cached.layer,preloaded:cached});
@@ -265,6 +315,11 @@ class MeteoFoxSatellite{
      jobs.push({kind:'sat',layer:this.createSatLayer(satTime)});
     }
    }
+  }
+  if(this.satOn&&this.satMode==='auto'){
+   if(this.fogLayer&&this.fogRenderedTime===satTime&&this.map.hasLayer(this.fogLayer))
+    jobs.push({kind:'fog',layer:this.fogLayer,reuse:true});
+   else jobs.push({kind:'fog',layer:this.createFogOverlay(satTime)});
   }
   if(this.radarOn){
    const url=this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png';
@@ -298,18 +353,22 @@ class MeteoFoxSatellite{
       for(const x of pending)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);
       resolve(false);return;
      }
-     const oldSat=this.satLayer,oldRadar=this.radarLayer;
+     const oldSat=this.satLayer,oldFog=this.fogLayer,oldRadar=this.radarLayer;
      const previous=[];
      for(const x of jobs){
       if(x.kind==='sat'){
-       x.layer.setZIndex(300);this.satLayer=x.layer;this.satRenderedTime=satTime;
+       x.layer.setZIndex(300);this.satLayer=x.layer;this.satRenderedTime=satTime;this.satRenderedMode=this.satMode;
+      }
+      if(x.kind==='fog'){
+       x.layer.setZIndex(325);this.fogLayer=x.layer;this.fogRenderedTime=satTime;
       }
       if(x.kind==='radar'){
        x.layer.setZIndex(350);this.radarLayer=x.layer;this.radarLayers.add(x.layer);
       }
      }
-     for(const old of [oldSat,oldRadar]){
-      if(old&&old!==this.satLayer&&old!==this.radarLayer&&this.map.hasLayer(old))
+     if(!jobs.some(x=>x.kind==='fog')){this.fogLayer=null;this.fogRenderedTime=null;}
+     for(const old of [oldSat,oldFog,oldRadar]){
+      if(old&&old!==this.satLayer&&old!==this.fogLayer&&old!==this.radarLayer&&this.map.hasLayer(old))
        previous.push(old);
      }
      this.fadeOutLayers=previous;
