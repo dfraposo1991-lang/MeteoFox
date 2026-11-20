@@ -28,8 +28,15 @@ try{
  const satValueBefore=await page.locator('#visSimSlider').inputValue();
  await page.locator('#ecmwfNext').click();
  const r=await page.locator('#ecmwfRain').getAttribute('src'),w=await page.locator('#ecmwfGust').getAttribute('src');
- assert.equal(first,'./chuva_003.png');assert.equal(r,'./chuva_012.png');assert.equal(w,'./rajadas_012.png');
+ assert.equal(first,'./chuva_009.png');assert.equal(r,'./chuva_012.png');assert.equal(w,'./rajadas_012.png');
  assert.equal(await page.locator('#visSimSlider').inputValue(),satValueBefore);
+ // Testar os dezasseis prazos atuais (+9 a +54 h).
+ for(let i=0;i<16;i++){
+  await page.locator('#ecmwfSlider').fill(String(i));
+  const step=String(9+i*3).padStart(3,'0');
+  assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_'+step+'.png');
+  assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_'+step+'.png');
+ }
  await page.locator('#ecmwfSlider').fill('15');
  assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_054.png');
  assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_054.png');
@@ -79,6 +86,11 @@ try{
 
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
- console.log('PASS: Produtos, 16 passos chuva+rajadas, independência VIS, tabelas METAR, mapa radar/Meteosat sincronizado');
+ console.log('PASS desktop: Produtos, 16 passos +9..+54 chuva+rajadas, independência VIS, METAR, mapa radar/Meteosat');
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
+ const mobile=await page.evaluate(()=>({viewport:document.documentElement.clientWidth,pageWidth:document.documentElement.scrollWidth}));
+ assert.ok(mobile.pageWidth<=mobile.viewport+3,'Overflow horizontal na página principal: '+JSON.stringify(mobile));
+ console.log('PASS mobile 390px: página sem overflow horizontal');
  assert.deepEqual(errors,[],'Erros JavaScript inesperados');
 }finally{await browser.close();}
