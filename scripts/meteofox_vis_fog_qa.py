@@ -87,14 +87,20 @@ def preview(geo, fog, mask):
     fog_layer=fog.copy()
     fog_layer.putalpha(ImageChops.multiply(fog_alpha,mix))
     shown=Image.alpha_composite(shown,fog_layer)
-    # Comparator: physically intuitive crossfade before a common opacity.
+    # Corrected VIS/FOG: Geo alpha a*(1-w)/(1-a*w) and Fog alpha a*w.
+    # Equivalent to exact colour blending at common alpha a for opaque RGB.
+    correct_geo=geo.copy()
+    geo_alpha_mask=mask.point(lambda q:round(255*SAT_OPACITY*(1-q/255)/max(1e-8,1-SAT_OPACITY*q/255)))
+    correct_geo.putalpha(ImageChops.multiply(geo.getchannel("A"),geo_alpha_mask))
+    corrected=Image.alpha_composite(backdrop,correct_geo)
+    corrected=Image.alpha_composite(corrected,fog_layer)
     ideal=Image.composite(fog,geo,mask)
     ideal.putalpha(Image.eval(ideal.getchannel("A"),lambda a:round(a*SAT_OPACITY)))
     ideal=Image.alpha_composite(backdrop,ideal)
-    # Measure RGB difference of the two approaches.
     import PIL.ImageChops as Chops
-    diff=ImageStat.Stat(Chops.difference(shown.convert("RGB"),ideal.convert("RGB")))
-    return shown.convert("RGB"),ideal.convert("RGB"),sum(diff.mean)/3
+    old_diff=ImageStat.Stat(Chops.difference(shown.convert("RGB"),ideal.convert("RGB")))
+    new_diff=ImageStat.Stat(Chops.difference(corrected.convert("RGB"),ideal.convert("RGB")))
+    return shown.convert("RGB"),corrected.convert("RGB"),ideal.convert("RGB"),sum(old_diff.mean)/3,sum(new_diff.mean)/3
 
 def label_panel(im,label,weight):
     panel=Image.new("RGB",(W,H+32),(17,35,52))
@@ -117,7 +123,7 @@ def main():
         "wms_bbox":BBOX, "size":[W,H],
         "alpha":SAT_OPACITY,
         "samples":[], "limitations":[
-            "Hybrid/browser screenshot is approximated over a uniform dark backdrop, not a live map capture",
+            "The hybrid is approximated over a uniform dark backdrop; this is not a live-browser capture",
             "WMS RGB imagery may differ from acquisition-second time; UTC WMS TIME is identical",
             "Reported ideal hybrid is a reference comparator, not the current browser renderer"
         ]
@@ -133,16 +139,18 @@ def main():
             geo=fetch_image("mtg_fd:rgb_geocolour",item["requested_utc"])
             fog=fetch_image("mtg_fd:rgb_fog",item["requested_utc"])
             mask=build_mask(dt)
-            hybrid,ideal,diff=preview(geo,fog,mask)
+            old_hybrid,hybrid,ideal,old_diff,diff=preview(geo,fog,mask)
             mask_avg=ImageStat.Stat(mask).mean[0]/255
             item.update(ok=True,mean_fog_weight=round(mask_avg,3),
-                mean_rgb_difference_actual_vs_ideal=round(diff,2),
+                mean_rgb_difference_previous_vs_ideal=round(old_diff,2),
+                mean_rgb_difference_corrected_vs_ideal=round(diff,2),
                 geo_alpha_mean=round(ImageStat.Stat(geo.getchannel("A")).mean[0]/255,3),
                 fog_alpha_mean=round(ImageStat.Stat(fog.getchannel("A")).mean[0]/255,3))
-            row=Image.new("RGB",(W*4,H+32),(17,35,52))
+            row=Image.new("RGB",(W*5,H+32),(17,35,52))
             for i,(name,im) in enumerate([
                 ("GeoColour",geo),("Fog RGB",fog),
-                ("VIS / FOG Auto - atual",hybrid),("Mistura ideal - referência",ideal)]):
+                ("Auto - versão anterior",old_hybrid),
+                ("Auto - corrigido",hybrid),("Mistura ideal - referência",ideal)]):
                 row.paste(label_panel(im,name,mask_avg),(i*W,0))
             sheets.append((hour,row))
         except Exception as err:
@@ -150,7 +158,7 @@ def main():
         report["samples"].append(item)
         print(json.dumps(item,ensure_ascii=False),flush=True)
     if sheets:
-        board=Image.new("RGB",(W*4,(H+32)*len(sheets)),(17,35,52))
+        board=Image.new("RGB",(W*5,(H+32)*len(sheets)),(17,35,52))
         for i,(_,row) in enumerate(sheets):board.paste(row,(0,(H+32)*i))
         board.save(OUT/"comparacao_vis_fog.png",optimize=True)
     (OUT/"avaliacao.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
