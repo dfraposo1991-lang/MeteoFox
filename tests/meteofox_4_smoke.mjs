@@ -7,10 +7,12 @@ const errors=[];
 page.on('pageerror',e=>errors.push(String(e)));
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lQAAAABJRU5ErkJggg==','base64');
 const respondPNG=r=>r.fulfill({status:200,contentType:'image/png',body:png,headers:{'access-control-allow-origin':'*'}});
+let mockCycleUTC='2026-11-20T06:00:00Z';
+const expectedUrl=(kind,step)=>'./'+kind+'_'+step+'.png?run='+encodeURIComponent(mockCycleUTC);
 const current=Math.floor(Date.now()/600000)*600000;
 const frames=Array.from({length:5},(_,i)=>current-(4-i)*600000);
 await page.route(/\/(chuva|rajadas)_\d{3}\.png(?:\?.*)?$/,respondPNG);
-await page.route('**/meteofox_ecmwf_manifest.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cycle_utc:new Date().toISOString(),images:Object.fromEntries(Array.from({length:16},(_,i)=>'chuva_'+String(9+i*3).padStart(3,'0')+'.png').map(k=>[k,'ok']))})}));
+await page.route('**/meteofox_ecmwf_manifest.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cycle_utc:mockCycleUTC,images:Object.fromEntries(Array.from({length:16},(_,i)=>'chuva_'+String(9+i*3).padStart(3,'0')+'.png').map(k=>[k,'ok']))})}));
 await page.route('**/api.rainviewer.com/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({host:'https://tilecache.rainviewer.com',radar:{past:frames.map((t,i)=>({time:Math.floor(t/1000),path:'/mock'+i}))}})}));
 await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString())})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
@@ -28,18 +30,24 @@ try{
  const satValueBefore=await page.locator('#visSimSlider').inputValue();
  await page.locator('#ecmwfNext').click();
  const r=await page.locator('#ecmwfRain').getAttribute('src'),w=await page.locator('#ecmwfGust').getAttribute('src');
- assert.equal(first,'./chuva_009.png');assert.equal(r,'./chuva_012.png');assert.equal(w,'./rajadas_012.png');
+ assert.equal(first,expectedUrl('chuva','009'));assert.equal(r,expectedUrl('chuva','012'));assert.equal(w,expectedUrl('rajadas','012'));
  assert.equal(await page.locator('#visSimSlider').inputValue(),satValueBefore);
  // Testar os dezasseis prazos atuais (+9 a +54 h).
  for(let i=0;i<16;i++){
   await page.locator('#ecmwfSlider').fill(String(i));
   const step=String(9+i*3).padStart(3,'0');
-  assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_'+step+'.png');
-  assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_'+step+'.png');
+  assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),expectedUrl('chuva',step));
+  assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),expectedUrl('rajadas',step));
  }
  await page.locator('#ecmwfSlider').fill('15');
- assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),'./chuva_054.png');
- assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),'./rajadas_054.png');
+ assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),expectedUrl('chuva','054'));
+ assert.equal(await page.locator('#ecmwfGust').getAttribute('src'),expectedUrl('rajadas','054'));
+ // Regressão de cache: a mesma carta de um novo run deve usar URL diferente.
+ const priorURL=await page.locator('#ecmwfRain').getAttribute('src');
+ mockCycleUTC='2026-11-20T12:00:00Z';
+ await page.evaluate(()=>ecmwfLoadCycle());
+ assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),expectedUrl('chuva','054'));
+ assert.notEqual(await page.locator('#ecmwfRain').getAttribute('src'),priorURL,'Novo run não pode reutilizar URL anterior');
  await page.locator('[data-tab="aerodromes"]').click();
  assert.equal(await page.locator('#aerodromes .metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
