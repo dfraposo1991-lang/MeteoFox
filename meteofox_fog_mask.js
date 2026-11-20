@@ -31,6 +31,27 @@ function fogWeight(alt){
  const t=Math.max(0,Math.min(1,(3-alt)/9));
  return t*t*(3-2*t);
 }
+// Classifica cada mosaico sem descarregar imagens. Margem de 0,5°
+// evita remover um produto demasiado perto do terminador.
+function tileLighting(time,coords){
+ const z=coords?.z,x=coords?.x,y=coords?.y;
+ if(!Number.isInteger(z)||!Number.isInteger(x)||!Number.isInteger(y)||
+    z<0||z>19||!Number.isFinite(time))return 'mixed';
+ const solar=sun(time);if(!solar)return 'mixed';
+ let minAlt=Infinity,maxAlt=-Infinity;
+ const zoom=2**z;
+ for(let j=0;j<=16;j++){
+  const lat=Math.atan(Math.sinh(PI*(1-2*(y+j/16)/zoom)))/RAD;
+  for(let i=0;i<=16;i++){
+   const lon=(x+i/16)/zoom*360-180;
+   const alt=elevation(lat,lon,solar);
+   minAlt=Math.min(minAlt,alt);maxAlt=Math.max(maxAlt,alt);
+  }
+ }
+ if(minAlt>3.5)return 'day';
+ if(maxAlt< -6.5)return 'night';
+ return 'mixed';
+}
 function tileMask(time,coords,dimension=64,kind='fog',opacity=0.8){
  const z=coords?.z,x=coords?.x,y=coords?.y;
  if(!Number.isInteger(z)||!Number.isInteger(x)||!Number.isInteger(y)||
@@ -66,5 +87,5 @@ function tileMask(time,coords,dimension=64,kind='fog',opacity=0.8){
  return url;
 }
 function clear(){cache.clear();}
-window.MeteoFoxFogMask={tileMask,clear,fogWeight,elevation,sun};
+window.MeteoFoxFogMask={tileMask,tileLighting,clear,fogWeight,elevation,sun};
 })();
