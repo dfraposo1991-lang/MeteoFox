@@ -26,7 +26,7 @@ function choose(){
  }
  const skew=document.getElementById('skewSlider');
  if(visible(skew))return skew;
- const map=document.querySelector('#satTools input[type="range"]');
+ const map=document.querySelector('#satTools input[aria-label="Navegação temporal UTC"]');
  if(visible(map))return map;
  return null;
 }
