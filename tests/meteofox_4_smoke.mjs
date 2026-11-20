@@ -395,18 +395,24 @@ try{
   const geo=sat.satLayer,fog=sat.fogLayer;
   const maskedGeo=geo?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
   const maskedFog=fog?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
-  const before=Object.values(geo?._tiles||{}).find(x=>x.loaded)?.el?.style.maskImage;
+  let refreshCount=0;
+  const origRefresh=sat.refreshAutoMasks;
+  sat.refreshAutoMasks=function(){refreshCount++;return origRefresh.call(this);};
+  const time=Date.parse('2026-11-20T17:00:00Z'),coord={z:6,x:30,y:24};
+  const before=window.MeteoFoxFogMask.tileMask(time,coord,64,'geo',.8);
   sat.satOpacitySlider.value='50';
   sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
-  const after=Object.values(geo?._tiles||{}).find(x=>x.loaded)?.el?.style.maskImage;
+  const after=window.MeteoFoxFogMask.tileMask(time,coord,64,'geo',.5);
   sat.satOpacitySlider.value='80';
   sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
+  sat.refreshAutoMasks=origRefresh;
   await sat.cycleSatMode(); // Auto -> Geo
-  return {ok,maskedGeo,maskedFog,changed:before!==after};
+  return {ok,maskedGeo,maskedFog,refreshCount,changed:before!==after};
  });
  assert.equal(dualMasks.ok,true,'Nova seleção Auto deve carregar');
  assert.ok(dualMasks.maskedGeo>0&&dualMasks.maskedFog>0,'Geo e Fog devem ter máscaras complementares: '+JSON.stringify(dualMasks));
- assert.equal(dualMasks.changed,true,'A máscara Geo acompanha a opacidade');
+ assert.ok(dualMasks.refreshCount>=2,'Mudança de opacidade deve recalcular máscaras');
+ assert.equal(dualMasks.changed,true,'Máscara Geo no crepúsculo deve depender da opacidade');
 
  assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','Voltar a GeoColour sem apagar fallback');
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
