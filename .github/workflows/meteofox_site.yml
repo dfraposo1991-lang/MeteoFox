@@ -20,6 +20,7 @@ on:
       - 'meteofox_meteograma.css'
       - 'mapa.html'
       - 'meteofox_satelite.js'
+      - 'meteofox_fog_mask.js'
       - 'meteofox_ru_aviation.js'
       - 'data/aviation_valencia.json'
       - 'laboratorio.html'
@@ -57,7 +58,7 @@ jobs:
           public.mkdir(exist_ok=True)
 
           # Publicar todas as paginas e o JavaScript do mapa grande.
-          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js', 'meteofox_ru_aviation.js', 'laboratorio.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
+          for name in ('index.html', 'mapa.html', 'meteofox_satelite.js', 'meteofox_fog_mask.js', 'meteofox_ru_aviation.js', 'laboratorio.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
               source = Path(name)
               assert source.is_file() and source.stat().st_size > 0, f'{name} nao encontrado ou vazio'
               if name.endswith('.html'):
