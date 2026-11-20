@@ -39,6 +39,13 @@
 .ecmwf-field{min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:10px;overflow:hidden}
 .ecmwf-field h4{font-size:12px;color:var(--txt);padding:11px 13px;margin:0;border-bottom:1px solid var(--line)}
 .ecmwf-field img{display:block;width:100%;height:auto;background:#e7edf4}
+/* Run e validade em texto discreto, sem fundo nem sombreado. */
+.mf-image-times{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:8px 6px;background:transparent!important;box-shadow:none!important;border:0!important;color:var(--muted);font:400 11px/1.5 Inter,system-ui,sans-serif;letter-spacing:0}
+.mf-image-times span{min-width:0;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+.mf-image-times span:first-child{text-align:left}
+.mf-image-times span:last-child{text-align:right;margin-left:auto}
+@media(max-width:550px){.mf-image-times{font-size:10px;gap:6px;flex-wrap:wrap}.mf-image-times span:last-child{margin-left:auto}}
+
 @media(max-width:750px){.ecmwf-fields{grid-template-columns:1fr}.ecmwf-controls strong{width:100%}}
 </style>
 <style id="meteofox-v1-brand"> 
@@ -206,8 +213,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
       <strong id="ecmwfStep" aria-live="polite">+09 h · 1 / 16</strong>
     </div>
     <div class="ecmwf-fields">
-      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"></div>
-      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"></div>
+      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de precipitação"><span id="ecmwfRainRun">run —</span><span id="ecmwfRainValid">válido —</span></div></div>
+      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de rajadas"><span id="ecmwfGustRun">run —</span><span id="ecmwfGustValid">válido —</span></div></div>
     </div>
     <p id="ecmwfMessage" class="note" aria-live="polite">16 passos · +9 a +54 h · imagens atualizadas pelo GitHub Pages.</p>
   </div>
@@ -220,9 +227,10 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
    <div class="maptools" style="align-items:center">
     <button class="action" id="visSimPrev" type="button">◀ Anterior</button><button class="action" id="visSimPlay" type="button">▶ Animar</button><button class="action" id="visSimNext" type="button">Seguinte ▶</button><button class="action" id="visSimRefresh" type="button">↻ Atualizar</button>
    </div>
-   <div id="visSimMeta" class="vis-meta" aria-live="polite">Aguardando dados ECMWF…</div>
+   <div id="visSimMeta" class="note" aria-live="polite">Aguardando dados ECMWF…</div>
    <input id="visSimSlider" aria-label="Prazo de previsão" type="range" min="0" max="15" step="1" value="0" disabled style="width:100%;margin:12px 0"/>
    <div class="vis-figure"><img id="visSimImage" alt="Imagem de satélite visível simulada ECMWF" style="display:none"/></div>
+    <div class="mf-image-times" aria-label="Run e validade do satélite simulado"><span id="visSimRun">run —</span><span id="visSimValid">válido —</span></div>
    <div id="visSimMessage" class="note">As imagens serão apresentadas quando o workflow de 48 horas publicar o conjunto completo.</div>
    <p class="note">Fonte: ECMWF OpenCharts · imagens visíveis simuladas (não são imagens observadas nem Cloud RGB). © ECMWF · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. A disponibilidade depende da API do ECMWF.</p>
   </div>
@@ -677,6 +685,11 @@ $('radarPlay').onclick=()=>{if(radarTimer){clearInterval(radarTimer);radarTimer=
 /* Os 16 passos das duas cartas usam o mesmo índice; radar/Meteosat não é alterado. */
 const ECMWF_STEPS=Array.from({length:16},(_,i)=>(i+3)*3);
 let ecmwfCycleUTC=null,ecmwfImagesReady=false;
+function mfDateUTC(value){
+ const date=new Date(value);
+ if(!Number.isFinite(date.getTime()))return '—';
+ return new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date)+' UTC';
+}
 function ecmwfValidUTC(cycle,step){
  if(!cycle||!Number.isFinite(Date.parse(cycle)))return 'validade UTC a confirmar';
  const valid=new Date(Date.parse(cycle)+step*3600000);
@@ -709,7 +722,13 @@ function ecmwfRender(i){
  $('ecmwfRain').src='./chuva_'+step+'.png';
  $('ecmwfGust').src='./rajadas_'+step+'.png';
  $('ecmwfSlider').value=String(ecmwfAt);
- $('ecmwfStep').textContent='+'+String(ECMWF_STEPS[ecmwfAt]).padStart(2,'0')+' h · '+ecmwfValidUTC(ecmwfCycleUTC,ECMWF_STEPS[ecmwfAt])+' · '+(ecmwfAt+1)+' / 16';
+ $('ecmwfStep').textContent='+'+String(ECMWF_STEPS[ecmwfAt]).padStart(2,'0')+' h · '+(ecmwfAt+1)+' / 16';
+ const runText='run ECMWF '+mfDateUTC(ecmwfCycleUTC);
+ const validText='válido '+(ecmwfCycleUTC?mfDateUTC(Date.parse(ecmwfCycleUTC)+ECMWF_STEPS[ecmwfAt]*3600000):'—');
+ for(const name of ['ecmwfRain','ecmwfGust']){
+  $(name+'Run').textContent=runText;
+  $(name+'Valid').textContent=validText;
+ }
 }
 function ecmwfStop(){if(ecmwfTimer){clearInterval(ecmwfTimer);ecmwfTimer=null}$('ecmwfPlay').textContent='▶ Animar'}
 function ecmwfInit(){
@@ -731,10 +750,9 @@ function visShow(i){
  if(!visData||!visData.frames.length)return;
  visAt=(i+visData.frames.length)%visData.frames.length;
  const f=visData.frames[visAt];
- $('visSimMeta').replaceChildren();
- for(const t of ['Run: '+visUTC(f.run_utc),'Validade: '+visUTC(f.valid_utc),'+'+f.step_h+' h · '+visUTC(f.valid_utc)]){
-  const s=document.createElement('span');s.textContent=t;$('visSimMeta').append(s);
- }
+ $('visSimMeta').textContent='+'+f.step_h+' h · '+(visAt+1)+' / '+visData.frames.length;
+ $('visSimRun').textContent='run ECMWF '+mfDateUTC(f.run_utc);
+ $('visSimValid').textContent='válido '+mfDateUTC(f.valid_utc);
  $('visSimSlider').value=String(visAt);
  $('visSimImage').style.display='block';
  $('visSimImage').src=VIS_RAW+encodeURIComponent(f.file)+'?v='+encodeURIComponent(visData.generated_utc||visData.run_utc);
