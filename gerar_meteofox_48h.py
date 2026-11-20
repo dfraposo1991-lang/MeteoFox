@@ -121,7 +121,9 @@ main{padding:15px 20px 25px}.controls{display:flex;align-items:center;gap:13px;f
 button{border:1px solid #547389;background:#27465d;color:white;padding:9px 16px;border-radius:7px;cursor:pointer}
 button:hover{background:#3b6481}input[type=range]{flex:1;min-width:140px;accent-color:#4aafd6}
 .panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.times{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#9cb6ca;font:400 11px/1.5 Inter,Arial,sans-serif;padding-top:7px;background:transparent;border:0;box-shadow:none}
+.image-wrap{position:relative;isolation:isolate}
+.times{position:absolute;z-index:2;top:4.2%;left:2.5%;right:2.5%;display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0;padding:0;color:#52677a;font:400 11px/1.5 Inter,Arial,sans-serif;background:none;border:0;box-shadow:none;pointer-events:none}
+.times span{padding:0;background:none;border:0;box-shadow:none;text-shadow:none}
 .times span:last-child{text-align:right}
 .panel{background:#fff;border-radius:6px;overflow:hidden}.panel h2{background:#213a50;color:white;margin:0;padding:8px 12px;font-size:15px}
 .panel img{display:block;width:100%;height:auto}.foot{padding:14px 0;color:#91adc0;font-size:12px}
@@ -131,8 +133,8 @@ button:hover{background:#3b6481}input[type=range]{flex:1;min-width:140px;accent-
 <p>ECMWF IFS Open Data (CC BY 4.0)</p></header>
 <main><div class="controls"><button id="play">▶ Reproduzir</button>
 <button id="previous">◀</button><button id="next">▶</button><input id="position" type="range" min="0" value="0"></div>
-<div class="panels"><div class="panel"><h2>Precipitação em 3 horas · mm</h2><img id="rain" alt="Precipitação ECMWF"><div class="times"><span class="run"></span><span class="valid"></span></div></div>
-<div class="panel"><h2>Rajadas máximas · kt</h2><img id="wind" alt="Rajadas ECMWF"><div class="times"><span class="run"></span><span class="valid"></span></div></div></div>
+<div class="panels"><div class="panel"><h2>Precipitação em 3 horas · mm</h2><div class="image-wrap"><img id="rain" alt="Precipitação ECMWF"><div class="times"><span class="run"></span><span class="valid"></span></div></div></div>
+<div class="panel"><h2>Rajadas máximas · kt</h2><div class="image-wrap"><img id="wind" alt="Rajadas ECMWF"><div class="times"><span class="run"></span><span class="valid"></span></div></div></div></div>
 <div class="foot">Use a linha temporal para consultar cada passo. Os vetores mostram a direção do vento a 10 m, não a direção das rajadas.</div></main>
 <script>
 const files = FILES_PLACEHOLDER, hours = HOURS_PLACEHOLDER;
