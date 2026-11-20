@@ -27,7 +27,8 @@ function choose(){
  const skew=document.getElementById('skewSlider');
  if(visible(skew))return skew;
  const map=document.querySelector('#satTools input[aria-label="Navegação temporal UTC"]');
- if(visible(map))return map;
+ // O cursor temporal continua utilizável com o painel minimizado.
+ if(visible(map)||(map&&!map.disabled&&document.getElementById('mapControlsPanel')?.hidden))return map;
  return null;
 }
 document.addEventListener('keydown',function(e){
@@ -36,7 +37,8 @@ document.addEventListener('keydown',function(e){
  if(focus?.isContentEditable||focus?.matches?.('textarea,select,input:not([type="range"])'))return;
  if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(e.key))return;
  const el=choose();
- if(!visible(el))return;
+ const collapsedTimeline=el?.getAttribute('aria-label')==='Navegação temporal UTC'&&document.getElementById('mapControlsPanel')?.hidden;
+ if(!visible(el)&&!collapsedTimeline)return;
  const min=Number(el.min||0),max=Number(el.max||100);
  let step=Number(el.step||1);
  if(!Number.isFinite(step)||step<=0)step=1;
