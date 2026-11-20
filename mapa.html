@@ -226,8 +226,8 @@ async function refresh(){
 }
 function initialize(){
  if(!window.L){$('count').textContent='Biblioteca cartográfica indisponível';return;}
- appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true,zoomControl:false,zoomAnimation:true,wheelDebounceTime:120,wheelPxPerZoomLevel:180}).setView([37.5,-14.8],5);L.control.zoom({position:'bottomright'}).addTo(appMap);
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,keepBuffer:2,updateWhenZooming:false,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
+ appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true,zoomControl:false}).setView([37.5,-14.8],5);L.control.zoom({position:'bottomright'}).addTo(appMap);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
  markers=L.layerGroup().addTo(appMap);
  if(window.MeteoFoxSatellite){sat=new MeteoFoxSatellite(appMap,$('satTools'));}
  else{$('satTools').textContent='Os controlos de satélite estão indisponíveis: confirma se meteofox_satelite.js foi publicado.';}
