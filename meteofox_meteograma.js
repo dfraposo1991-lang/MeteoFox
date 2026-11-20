@@ -7,7 +7,9 @@ function node(tag,attrs,value){var el=document.createElementNS(svgNS,tag);Object
 function add(parent,tag,attrs,value){var el=node(tag,attrs,value);parent.appendChild(el);return el;}
 function txt(svg,value,x,y,size,color,weight,anchor){return add(svg,'text',{x:x,y:y,'font-family':'Inter,system-ui,sans-serif','font-size':size||13,fill:color||'#26374b','font-weight':weight||500,'text-anchor':anchor||'start'},value);}
 function dateOf(row){return new Date(row.valid_utc);}
-function dayName(d){return d.toLocaleDateString('pt-PT',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'});}
+function isRussian(){return region==='Валенсия';}
+function windUnit(){return isRussian()?'км/ч':'kt';}
+function dayName(d){return d.toLocaleDateString(isRussian()?'ru-RU':'pt-PT',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'});}
 function hour(d){return d.toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',hourCycle:'h23'}).slice(0,2)+'h';}
 function cloudIcon(cover,rain){if(rain>=0.3&&cover>=45)return '🌧';if(cover>=85)return '☁';if(cover>=55)return '☁';if(cover>=25)return '⛅';return '☀';}
 function draw(target,compact){
@@ -20,14 +22,14 @@ function draw(target,compact){
  var boundaries=[0,33,70,127,275,315,350,385,419];
  boundaries.forEach(function(y){add(svg,'line',{x1:0,x2:width,y1:y,y2:y,stroke:'#d9e2ea','stroke-width':1});});
  for(var i=0;i<=rows.length;i++)add(svg,'line',{x1:left+i*col,x2:left+i*col,y1:33,y2:419,stroke:'#e2e8f0','stroke-width':0.8});
- txt(svg,'Hora UTC',12,56,13,'#475569');
- txt(svg,'Nuvens',12,107,16,'#243447',600);
- txt(svg,'Precipitação',12,193,15,'#243447',600);
+ txt(svg,isRussian()?'Время UTC':'Hora UTC',12,56,13,'#475569');
+ txt(svg,isRussian()?'Облачность':'Nuvens',12,107,16,'#243447',600);
+ txt(svg,isRussian()?'Осадки':'Precipitação',12,193,15,'#243447',600);
  txt(svg,'(mm/3 h)',12,212,12,'#667788');
- txt(svg,'Temperatura (°C)',12,303,14,'#26374b',600);
- txt(svg,'Direção do vento',12,338,13,'#26374b',600);
- txt(svg,'Vento médio (kt)',12,373,13,'#26374b',600);
- txt(svg,'Rajadas (kt)',12,408,14,'#26374b',600);
+ txt(svg,isRussian()?'Температура (°C)':'Temperatura (°C)',12,303,14,'#26374b',600);
+ txt(svg,isRussian()?'Направление ветра':'Direção do vento',12,338,13,'#26374b',600);
+ txt(svg,isRussian()?'Ветер (км/ч)':'Vento médio (kt)',12,373,13,'#26374b',600);
+ txt(svg,isRussian()?'Порывы (км/ч)':'Rajadas (kt)',12,408,14,'#26374b',600);
  var groups=[],key='';
  rows.forEach(function(r,i){var d=dateOf(r),k=r.valid_utc.slice(0,10);if(k!==key){groups.push({start:i,n:1,date:d});key=k;}else groups[groups.length-1].n++;});
  groups.forEach(function(g,j){
@@ -59,7 +61,10 @@ function draw(target,compact){
  });
 }
 function select(i){active=Math.max(0,Math.min(rows.length-1,i));draw('meteoLargeSvg',false);if(!$('meteoDetails'))return;var r=rows[active],d=dateOf(r);
- $('meteoDetails').textContent=region+' · '+dayName(d)+' '+hour(d)+' UTC · Chuva '+Number(r.rain_3h_mm).toFixed(2)+' mm/3h · Temperatura '+Number(r.temp_c).toFixed(1)+' °C · Vento '+Number(r.wind_kt).toFixed(0)+' kt · Rajadas '+Number(r.gust_kt).toFixed(0)+' kt · Nuvens '+Math.round(r.cloud_percent)+'%';$('meteoTimeSlider').value=String(active);
+ $('meteoDetails').textContent=isRussian()?
+  region+' · '+dayName(d)+' '+hour(d)+' UTC · Осадки '+Number(r.rain_3h_mm).toFixed(2)+' мм/3 ч · Температура '+Number(r.temp_c).toFixed(1)+' °C · Ветер '+Number(r.wind_kt).toFixed(0)+' км/ч · Порывы '+Number(r.gust_kt).toFixed(0)+' км/ч · Облачность '+Math.round(r.cloud_percent)+'%':
+  region+' · '+dayName(d)+' '+hour(d)+' UTC · Chuva '+Number(r.rain_3h_mm).toFixed(2)+' mm/3h · Temperatura '+Number(r.temp_c).toFixed(1)+' °C · Vento '+Number(r.wind_kt).toFixed(0)+' kt · Rajadas '+Number(r.gust_kt).toFixed(0)+' kt · Nuvens '+Math.round(r.cloud_percent)+'%';
+ $('meteoTimeSlider').value=String(active);
 }
 function open(){if(!rows.length)return;expanded=true;previousFocus=document.activeElement;$('meteoDialog').hidden=false;document.body.classList.add('meteo-dialog-open');select(active);$('meteoClose').focus();}
 function close(){if(!expanded)return;expanded=false;$('meteoDialog').hidden=true;document.body.classList.remove('meteo-dialog-open');if(previousFocus)previousFocus.focus();}
@@ -95,13 +100,13 @@ function fromHourly(data){
  return output;
 }
 function reset(){rows=[];$('meteoPreview').disabled=true;$('meteoSmallSvg').replaceChildren();$('meteoLargeSvg').replaceChildren();}
-function loading(name){region=name;reset();$('meteoInfo').textContent=name+' · A consultar previsão ECMWF…';$('meteoModalTitle').textContent='Meteograma · '+name;}
-function error(name,exception){if(name!==region)return;reset();$('meteoInfo').textContent=name+' · Meteograma indisponível: '+exception.message;}
+function loading(name){region=name;reset();$('meteoInfo').textContent=isRussian()?name+' · Загрузка прогноза ECMWF…':name+' · A consultar previsão ECMWF…';$('meteoModalTitle').textContent=(isRussian()?'Метеограмма · ':'Meteograma · ')+name;}
+function error(name,exception){if(name!==region)return;reset();$('meteoInfo').textContent=name+(isRussian()?' · Метеограмма недоступна: ':' · Meteograma indisponível: ')+exception.message;}
 function setForecast(name,data){
  region=name;rows=fromHourly(data);active=0;
- $('meteoModalTitle').textContent='Meteograma · '+name;
+ $('meteoModalTitle').textContent=(isRussian()?'Метеограмма · ':'Meteograma · ')+name;
  draw('meteoSmallSvg',true);select(0);
- $('meteoInfo').textContent=name+' · ECMWF IFS 0,25° via Open-Meteo · horas UTC · clicar para ampliar';
+ $('meteoInfo').textContent=isRussian()?name+' · ECMWF IFS 0,25° / Open-Meteo · время UTC · нажмите для увеличения':name+' · ECMWF IFS 0,25° via Open-Meteo · horas UTC · clicar para ampliar';
  $('meteoPreview').disabled=false;
 }
 window.MeteoFoxMeteogram={loading:loading,error:error,setForecast:setForecast};
