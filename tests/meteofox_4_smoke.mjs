@@ -348,11 +348,20 @@ try{
   const fog=sat.satMode;
   await sat.cycleSatMode();
   const auto=sat.satMode;
+  const ready=await sat.select(sat.index);
+  const fogLayer=sat.fogLayer;
+  const fogRendered=!!fogLayer&&sat.map.hasLayer(fogLayer);
+  const fogWms=fogLayer?.wmsParams?.layers;
+  const tileMasks=fogLayer?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
   await sat.cycleSatMode();
   const restored=sat.satMode;
-  return {initial,fog,auto,restored,geoLayer:sat.satLayer?.wmsParams?.layers};
+  return {initial,fog,auto,ready,fogRendered,fogWms,tileMasks,restored,geoLayer:sat.satLayer?.wmsParams?.layers};
  });
  assert.deepEqual([modes.initial,modes.fog,modes.auto,modes.restored],['geo','fog','auto','geo'],'Sequência de modos deve preservar fallback');
+ assert.equal(modes.ready,true,'Fotograma experimental VIS/FOG Auto deve ficar preparado');
+ assert.equal(modes.fogRendered,true,'Modo híbrido deve montar camada MTG Fog');
+ assert.equal(modes.fogWms,'mtg_fd:rgb_fog','Camada Fog verificada em WMS');
+ assert.ok(modes.tileMasks>=1,'Máscara solar aplicada pelo menos a um mosaico Fog');
  assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','Voltar a GeoColour sem apagar fallback');
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
  const beforeZoom=await page.evaluate(()=>appMap.getZoom());
