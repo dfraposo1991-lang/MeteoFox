@@ -352,15 +352,22 @@ try{
   const fogLayer=sat.fogLayer;
   const fogRendered=!!fogLayer&&sat.map.hasLayer(fogLayer);
   const fogWms=fogLayer?.wmsParams?.layers;
+  const geoUTC=sat.satLayer?.wmsParams?.time;
+  const fogUTC=fogLayer?.wmsParams?.time;
+  const maskUTC=sat.fogRenderedTime;
+  const geoBaseUTC=sat.satRenderedTime;
   const tileMasks=fogLayer?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
   await sat.cycleSatMode();
   const restored=sat.satMode;
-  return {initial,fog,auto,ready,fogRendered,fogWms,tileMasks,restored,geoLayer:sat.satLayer?.wmsParams?.layers};
+  return {initial,fog,auto,ready,fogRendered,fogWms,tileMasks,geoUTC,fogUTC,maskUTC,geoBaseUTC,restored,geoLayer:sat.satLayer?.wmsParams?.layers};
  });
  assert.deepEqual([modes.initial,modes.fog,modes.auto,modes.restored],['geo','fog','auto','geo'],'Sequência de modos deve preservar fallback');
  assert.equal(modes.ready,true,'Fotograma experimental VIS/FOG Auto deve ficar preparado');
  assert.equal(modes.fogRendered,true,'Modo híbrido deve montar camada MTG Fog');
  assert.equal(modes.fogWms,'mtg_fd:rgb_fog','Camada Fog verificada em WMS');
+ assert.equal(modes.geoUTC,modes.fogUTC,'GeoColour e Fog têm de pedir o MESMO instante UTC ao WMS');
+ assert.equal(Date.parse(modes.geoUTC),modes.geoBaseUTC,'Hora UTC pedida deve coincidir com a referência GeoColour');
+ assert.equal(modes.maskUTC,modes.geoBaseUTC,'Máscara solar tem de usar o mesmo instante UTC');
  assert.ok(modes.tileMasks>=1,'Máscara solar aplicada pelo menos a um mosaico Fog');
  assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','Voltar a GeoColour sem apagar fallback');
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
