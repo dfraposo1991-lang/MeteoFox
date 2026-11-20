@@ -22,7 +22,7 @@ OUT = ROOT / "relatorios" / "vis_fog"
 BBOX = (-18.0, 32.0, 8.0, 49.0)  # lonmin, latmin, lonmax, latmax
 W, H = 480, 320
 SAT_OPACITY = 0.8
-SAMPLES = ("12:00", "17:00", "19:00")
+SAMPLES = ("12:10", "17:00", "19:00")
 URL_HEADERS = {"User-Agent": "MeteoFox-visual-QA/1.0"}
 
 def fetch_image(layer, utc):
@@ -33,8 +33,11 @@ def fetch_image(layer, utc):
         "bbox": ",".join(map(str, BBOX)), "width": W, "height": H,
         "time": utc,
     })
-    with urlopen(Request(WMS + "?" + params, headers=URL_HEADERS), timeout=55) as res:
-        raw = res.read(2_000_001)
+    try:
+        with urlopen(Request(WMS + "?" + params, headers=URL_HEADERS), timeout=55) as res:
+            raw = res.read(2_000_001)
+    except Exception as err:
+        raise RuntimeError(f"{layer} TIME={utc}: {err}") from err
     if not raw.startswith(b"\x89PNG\r\n\x1a\n") or len(raw) < 5000:
         raise ValueError(f"Camada {layer} devolveu conteúdo inválido")
     image = Image.open(BytesIO(raw)).convert("RGBA")
