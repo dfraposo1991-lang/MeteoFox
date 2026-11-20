@@ -1,0 +1,37 @@
+name: MeteoFox | Auditoria independente de qualidade
+on:
+  schedule:
+    - cron: '25 5,12,17,23 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/meteofox_quality.py'
+      - 'tests/test_meteofox_quality.py'
+      - '.github/workflows/meteofox_quality.yml'
+
+# Auditoria apenas de leitura: não altera geração ECMWF, Pages ou dados publicados.
+permissions:
+  contents: read
+jobs:
+  auditar:
+    name: Validar previsões e datas publicadas
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Testes do auditor sem rede
+        run: python -m unittest discover -s tests -p 'test_meteofox_quality.py' -v
+      - name: Analisar produtos publicados sem os modificar
+        run: python scripts/meteofox_quality.py
+      - name: Guardar relatório de qualidade
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteofox-relatorio-qualidade
+          path: relatorios/qualidade_meteofox.json
+          retention-days: 21
+          if-no-files-found: warn
