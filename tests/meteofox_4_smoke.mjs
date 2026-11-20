@@ -342,6 +342,25 @@ try{
  assert.equal(solarMask.daytime,0,'Fog completamente oculto durante o dia');
  assert.equal(solarMask.nighttime,1,'Fog totalmente visível durante a noite');
  assert.equal(solarMask.png,true,'Máscara por mosaico renderizada');
+ const blendQuality=await page.evaluate(async()=>{
+  const M=window.MeteoFoxFogMask,a=.8,t=Date.parse('2026-11-20T17:00:00Z'),coords={z:6,x:30,y:24};
+  const read=async kind=>{
+   const im=new Image();im.src=M.tileMask(t,coords,64,kind,a);await im.decode();
+   const c=document.createElement('canvas');c.width=c.height=64;
+   const ctx=c.getContext('2d');ctx.drawImage(im,0,0);
+   return ctx.getImageData(0,0,64,64).data;
+  };
+  const f=await read('fog'),g=await read('geo');
+  let err=0,mixed=0;
+  for(let i=3;i<f.length;i+=4){
+   const x=f[i]/255,y=g[i]/255;
+   err=Math.max(err,Math.abs(a*x+a*y*(1-a*x)-a));
+   if(x>.01&&x<.99)mixed++;
+  }
+  return {err,mixed};
+ });
+ assert.ok(blendQuality.err<.005,'Mistura deve conservar opacidade com máscara complementar: '+JSON.stringify(blendQuality));
+
  const modes=await page.evaluate(async()=>{
   const initial=sat.satMode;
   await sat.cycleSatMode();
@@ -369,6 +388,26 @@ try{
  assert.equal(Date.parse(modes.geoUTC),modes.geoBaseUTC,'Hora UTC pedida deve coincidir com a referência GeoColour');
  assert.equal(modes.maskUTC,modes.geoBaseUTC,'Máscara solar tem de usar o mesmo instante UTC');
  assert.ok(modes.tileMasks>=1,'Máscara solar aplicada pelo menos a um mosaico Fog');
+ const dualMasks=await page.evaluate(async()=>{
+  await sat.cycleSatMode(); // Geo -> Fog
+  await sat.cycleSatMode(); // Fog -> Auto
+  const ok=await sat.select(sat.index);
+  const geo=sat.satLayer,fog=sat.fogLayer;
+  const maskedGeo=geo?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
+  const maskedFog=fog?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
+  const before=Object.values(geo?._tiles||{}).find(x=>x.loaded)?.el?.style.maskImage;
+  sat.satOpacitySlider.value='50';
+  sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
+  const after=Object.values(geo?._tiles||{}).find(x=>x.loaded)?.el?.style.maskImage;
+  sat.satOpacitySlider.value='80';
+  sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
+  await sat.cycleSatMode(); // Auto -> Geo
+  return {ok,maskedGeo,maskedFog,changed:before!==after};
+ });
+ assert.equal(dualMasks.ok,true,'Nova seleção Auto deve carregar');
+ assert.ok(dualMasks.maskedGeo>0&&dualMasks.maskedFog>0,'Geo e Fog devem ter máscaras complementares: '+JSON.stringify(dualMasks));
+ assert.equal(dualMasks.changed,true,'A máscara Geo acompanha a opacidade');
+
  assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','Voltar a GeoColour sem apagar fallback');
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
  const beforeZoom=await page.evaluate(()=>appMap.getZoom());
