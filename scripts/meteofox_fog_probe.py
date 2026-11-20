@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 import json
+import hashlib
 import re
 import xml.etree.ElementTree as ET
 
@@ -69,6 +70,14 @@ def main():
     try:
         params=urlencode({'service':'WMS','version':'1.1.1','request':'GetCapabilities'})
         root=ET.fromstring(fetch(WMS+'?'+params,timeout=35))
+        # GeoServer may declare Time on an ancestor Layer rather than each
+        # named product. Gather each explicit time dimension where it occurs.
+        for layer in descendants(root,'Layer'):
+            nm=direct_text(layer,'Name')
+            if nm in ('mtg_fd:rgb_geocolour','mtg_fd:rgb_fog'):
+                dims=[{'name':x.get('name'), 'raw_preview':(x.text or '')[:400]}
+                     for x in layer if local(x.tag) in ('Dimension','Extent')]
+                out.setdefault('wms_dimensions',{})[nm]=dims[:5]
         candidates=[]
         for node in descendants(root,'Layer'):
             name=direct_text(node,'Name')
@@ -113,7 +122,7 @@ def main():
                   'transparent':'true','srs':'EPSG:4326','bbox':'-11,35,4,45',
                   'width':'128','height':'128',
                   'time':matching.isoformat().replace('+00:00','Z')})
-                sample=fetch(WMS+'?'+params,limit=350_000,timeout=25)
+                sample=fetch(WMS+'?'+params,limit=650_000,timeout=25)
                 if not sample.startswith(b'\x89PNG\r\n\x1a\n') or len(sample)<900:
                     out['reason']='WMS did not return a valid PNG for the selected UTC time'
                 else:
@@ -121,6 +130,29 @@ def main():
                     out['fog_layer']=selected['name']
                     out['matching_time_utc']=matching.isoformat().replace('+00:00','Z')
                     out['reason']='MTG Fog RGB discovered; explicit-time WMS sample returned PNG; frame-by-frame availability still to validate'
+                    out['sample_test']={'time_utc':out['matching_time_utc'],
+                      'bytes':len(sample),'sha256':hashlib.sha256(sample).hexdigest()}
+                    # Compare actual image bytes for two requested UTC instants.
+                    # Distinct hashes show that Fog WMS responds to TIME;
+                    # identical hashes remain inconclusive (e.g. slow evolution).
+                    previous=reference[-2] if len(reference)>1 else None
+                    if previous is not None and (matching-previous).total_seconds()<=20*60:
+                        p2=dict(params)
+                        p2['time']=previous.isoformat().replace('+00:00','Z')
+                        other=fetch(WMS+'?'+urlencode(p2),limit=650_000,timeout=25)
+                        valid=other.startswith(b'\x89PNG\r\n\x1a\n') and len(other)>900
+                        out['time_pair_test']={'earlier_utc':p2['time'],
+                          'later_utc':out['matching_time_utc'],
+                          'earlier_is_png':valid,'earlier_bytes':len(other),
+                          'different_pixels':valid and hashlib.sha256(sample).digest()!=hashlib.sha256(other).digest(),
+                          'later_is_png':True}
+                        if not valid:
+                            out['ready']=False
+                            out['reason']='Fog WMS did not return an earlier valid paired frame'
+                        elif out['time_pair_test']['different_pixels']:
+                            out['reason']='Fog WMS returned differing PNGs for two GeoColour UTC times; exact source acquisition stamps remain unproven'
+                        else:
+                            out['reason']='Fog WMS returned the same PNG for adjacent GeoColour UTC times; time alignment remains unproven'
     except Exception as e:
         out['reason']='Fog WMS validation unavailable: '+str(e)[:250]
     OUTPUT.parent.mkdir(parents=True,exist_ok=True)
