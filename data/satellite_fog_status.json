@@ -1,11 +1,11 @@
 {
-  "checked_utc": "2026-11-20T19:54:37.911038Z",
-  "ready": false,
+  "checked_utc": "2026-11-20T19:55:47.482103Z",
+  "ready": true,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
-  "fog_layer": null,
-  "matching_time_utc": null,
-  "reason": "No MTG Fog layer with a confirmed fresh UTC time dimension",
+  "fog_layer": "mtg_fd:rgb_fog",
+  "matching_time_utc": "2026-11-20T18:40:00Z",
+  "reason": "MTG Fog RGB discovered; explicit-time WMS sample returned PNG; frame-by-frame availability still to validate",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
@@ -23,5 +23,6 @@
   "request_budget": {
     "capabilities": 1,
     "sample_tiles": 1
-  }
+  },
+  "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME"
 }
