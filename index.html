@@ -129,8 +129,10 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 @media(max-width:650px){.aviation-field{max-width:none;min-width:100%}.aviation-card{padding:11px}}
 </style>
 <style id="meteofox-vis-sim-style">
-.vis-sim-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px}
-.vis-sim-controls #visSimSlider{flex:1 1 200px;min-width:120px;width:auto;margin:0;accent-color:var(--cyan)}
+.vis-sim-controls{display:flex;align-items:center;gap:9px;flex-wrap:nowrap;margin:0 0 14px}
+.vis-sim-controls .action{white-space:nowrap;flex-shrink:0}
+.vis-sim-controls #visSimSlider{flex:1 1 200px;min-width:80px;width:auto;margin:0;accent-color:var(--cyan)}
+@media(max-width:540px){.vis-sim-controls{flex-wrap:wrap}.vis-sim-controls #visSimSlider{flex-basis:100%}}
 .vis-figure{border-radius:9px;overflow:hidden;background:#e4eef6;min-height:100px}
 .vis-figure img{display:block;width:100%;height:auto;object-fit:contain}
 #visSimMessage:empty{display:none}
@@ -744,7 +746,7 @@ function ecmwfInit(){
 }
 /* ECMWF VIS simulado: manifesto e imagens servidos de forma independente do deploy GitHub Pages. */
 const VIS_RAW='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_vis/';
-let visData=null,visAt=0,visTimer=null,visLoading=null,visRunNotice='';
+let visData=null,visAt=0,visTimer=null,visLoading=null;
 function visStop(){if(visTimer){clearInterval(visTimer);visTimer=null;}$('visSimPlay').textContent='▶ Animar'}
 function visShow(i){
  if(!visData||!visData.frames.length)return;
@@ -756,24 +758,8 @@ function visShow(i){
  $('visSimSlider').title='válido '+mfDateUTC(frame.valid_utc);
  $('visSimImage').style.display='block';
  $('visSimImage').onerror=()=>{$('visSimMessage').hidden=false;$('visSimMessage').textContent='Não foi possível carregar esta imagem.'};
- $('visSimImage').onload=()=>{$('visSimMessage').hidden=!visRunNotice;$('visSimMessage').textContent=visRunNotice};
+ $('visSimImage').onload=()=>{$('visSimMessage').hidden=true;$('visSimMessage').textContent=''};
  $('visSimImage').src=VIS_RAW+encodeURIComponent(frame.file)+'?v='+encodeURIComponent(visData.generated_utc||visData.run_utc);
-}
-async function visCheckRun(vis){
- // Só mostrar um aviso quando os runs forem diferentes. Quando coincidem,
- // run e validade permanecem as únicas legendas visíveis.
- visRunNotice='';
- const satellite=Date.parse(vis.run_utc);
- if(!Number.isFinite(satellite))return;
- try{
-  const response=await fetch('./meteofox_ecmwf_manifest.json?t='+Date.now(),{cache:'no-store'});
-  if(!response.ok)return;
-  const main=await response.json();
-  const maps=Date.parse(main.cycle_utc);
-  if(!Number.isFinite(maps))return;
-  if(satellite<maps)visRunNotice='Aviso: o satélite simulado utiliza um run anterior ao das cartas ECMWF.';
-  else if(satellite>maps)visRunNotice='Aviso: o satélite simulado utiliza um run mais recente do que as cartas ECMWF.';
- }catch(error){ /* Comparação facultativa; não exibir metadados adicionais. */ }
 }
 async function visLoad(force=false){
  if(visData&&!force)return;
@@ -787,7 +773,7 @@ async function visLoad(force=false){
    if(!Array.isArray(d.frames)||d.frames.length!==16||d.projection!=='opencharts_south_west_europe')throw Error('Manifesto incompleto ou região incorreta.');
    const steps=Array.from({length:16},(_,i)=>(i+3)*3);
    if(!d.frames.every((f,i)=>f.step_h===steps[i]&&/^VIS_\d{3}\.png$/.test(f.file)&&f.run_utc&&f.valid_utc))throw Error('Dados dos prazos de previsão inválidos.');
-   visData=d;visAt=0;await visCheckRun(d);$('visSimSlider').disabled=false;visShow(0);
+   visData=d;visAt=0;$('visSimSlider').disabled=false;visShow(0);
   }catch(e){visData=null;$('visSimImage').style.display='none';$('visSimSlider').disabled=true;$('visSimMessage').hidden=false;$('visSimMessage').textContent=e.message}
   finally{visLoading=null}
  })();
