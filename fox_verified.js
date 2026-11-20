@@ -5,6 +5,7 @@
 const $=id=>document.getElementById(id);
 const sites={
  'Lisboa':{lat:38.7223,lon:-9.1393,icao:'LPPT',wmo:'08536',label:'Lisboa / Portela'},
+ 'Valência':{lat:39.4699,lon:-0.3763,icao:'LEVC',wmo:'08284',label:'Валенсия / Манисес'},
  'Porto':{lat:41.1579,lon:-8.6291,icao:'LPPR',wmo:'08545',label:'Porto / Pedras Rubras'},
  'Beja':{lat:38.0151,lon:-7.8632,icao:'LPBJ',wmo:'08562',label:'Beja / BA11'}
 };
@@ -44,25 +45,26 @@ async function verify(){
  const place=$('place')?.value;
  const info=sites[place],panel=$('foxVerifiedPanel'),button=$('foxVerifiedButton');
  if(!info||!panel)return;
- const id=++request;
+ const id=++request,ru=place==='Valência';
  focusBefore=document.activeElement;
  button.disabled=true;panel.hidden=false;
- showFox(panel,'<div class="fox-panel-head"><div><strong>Fox Verified · '+esc(place)+'</strong><span>ECMWF IFS × observações instrumentais</span></div><button type="button" class="action" data-fox-close>✕ Fechar</button></div><div class="fox-wait" role="status">A consultar previsões ECMWF e observações METAR/SYNOP…</div>');
+ showFox(panel,'<div class="fox-panel-head"><div><strong>Fox Verified · '+(ru?'Валенсия':esc(place))+'</strong><span>'+(ru?'ECMWF IFS × инструментальные наблюдения':'ECMWF IFS × observações instrumentais')+'</span></div><button type="button" class="action" data-fox-close>'+(ru?'✕ Закрыть':'✕ Fechar')+'</button></div><div class="fox-wait" role="status">'+(ru?'Загрузка прогноза и наблюдений METAR/SYNOP…':'A consultar previsões ECMWF e observações METAR/SYNOP…')+'</div>');
  panel.showModal();
  button.setAttribute('aria-expanded','true');
  panel.querySelector('[data-fox-close]')?.focus();
  try{
   const url='https://api.open-meteo.com/v1/forecast?latitude='+info.lat+'&longitude='+info.lon+
    '&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation'+
-   '&models=ecmwf_ifs025&past_days=3&forecast_days=1&timezone=GMT&wind_speed_unit=kn';
+   '&models=ecmwf_ifs025&past_days=3&forecast_days=1&timezone=GMT&wind_speed_unit='+(ru?'kmh':'kn');
   const [weather,aviation,synop]=await Promise.all([
    fetch(url,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('ECMWF/Open-Meteo indisponível ('+r.status+')');return r.json()}),
-   fetch('./data/aviation.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('METAR indisponível');return r.json()}),
+   fetch(ru?'./data/aviation_valencia.json':'./data/aviation.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('METAR indisponível');return r.json()}),
    fetch('./data/synop.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('SYNOP indisponível');return r.json()})
   ]);
   if(id!==request||$('place').value!==place)return;
   const h=weather.hourly||{},metar=aviation.metar?.[info.icao];
   const mm=parseMetar(metar?.raw),mTime=metar?.utc;
+  if(ru){if(mm.wind!=null)mm.wind*=1.852;if(mm.gust!=null)mm.gust*=1.852;}
   const mi=near(h.time,mTime);
   const metarOK=fresh(mTime,6)&&mi>=0&&!/\bNIL\b/.test(metar?.raw||'');
   const st=synop.stations?.find(s=>String(s.station)===info.wmo);
@@ -78,21 +80,21 @@ async function verify(){
    if(inds.length===hours&&inds.every(x=>Number.isFinite(Number(h.precipitation[x.i]))))
     predicted=inds.reduce((a,x)=>a+Number(h.precipitation[x.i]),0);
   }
-  const metarNote=metarOK?info.icao+' · '+utc(mTime):'METAR recente indisponível';
-  const rainNote=p?info.wmo+' · '+hours+' h até '+utc(p.utc):'Acumulado SYNOP recente indisponível';
-  const content='<div class="fox-panel-head"><div><strong>Fox Verified · '+esc(place)+'</strong><span>ECMWF IFS × observações instrumentais</span></div><button type="button" class="action" data-fox-close>✕ Fechar</button></div>'+
-   '<div class="tablewrap"><table class="fox-table"><thead><tr><th>Elemento</th><th>Modelo</th><th>Observado</th><th>Diferença</th><th>Unid.</th><th>Referência</th></tr></thead><tbody>'+
-   row('Temperatura',metarOK&&mi>=0?Number(h.temperature_2m?.[mi]):null,metarOK?mm.temp:null,'°C',metarNote)+
-   row('Vento médio',metarOK&&mi>=0?Number(h.wind_speed_10m?.[mi]):null,metarOK?mm.wind:null,'kt',metarNote)+
-   row('Rajada',metarOK&&mi>=0&&mm.gust!=null?Number(h.wind_gusts_10m?.[mi]):null,metarOK?mm.gust:null,'kt',mm.gust==null?'Rajada não reportada no METAR · não equivale a 0 kt':metarNote)+
-   row('Precipitação '+(hours?hours+' h':''),predicted,p&&Number.isFinite(Number(p.mm))?Number(p.mm):null,'mm',rainNote)+
+  const metarNote=metarOK?info.icao+' · '+utc(mTime):(ru?'Нет актуального METAR':'METAR recente indisponível');
+  const rainNote=p?info.wmo+' · '+hours+(ru?' ч до ':' h até ')+utc(p.utc):(ru?'Нет сопоставимых данных SYNOP':'Acumulado SYNOP recente indisponível');
+  const content='<div class="fox-panel-head"><div><strong>Fox Verified · '+(ru?'Валенсия':esc(place))+'</strong><span>'+(ru?'ECMWF IFS × инструментальные наблюдения':'ECMWF IFS × observações instrumentais')+'</span></div><button type="button" class="action" data-fox-close>'+(ru?'✕ Закрыть':'✕ Fechar')+'</button></div>'+
+   '<div class="tablewrap"><table class="fox-table"><thead><tr><th>'+(ru?'Параметр':'Elemento')+'</th><th>'+(ru?'Модель':'Modelo')+'</th><th>'+(ru?'Наблюдение':'Observado')+'</th><th>'+(ru?'Разница':'Diferença')+'</th><th>'+(ru?'Ед.':'Unid.')+'</th><th>'+(ru?'Источник':'Referência')+'</th></tr></thead><tbody>'+
+   row(ru?'Температура':'Temperatura',metarOK&&mi>=0?Number(h.temperature_2m?.[mi]):null,metarOK?mm.temp:null,'°C',metarNote)+
+   row(ru?'Средний ветер':'Vento médio',metarOK&&mi>=0?Number(h.wind_speed_10m?.[mi]):null,metarOK?mm.wind:null,ru?'км/ч':'kt',metarNote)+
+   row(ru?'Порывы':'Rajada',metarOK&&mi>=0&&mm.gust!=null?Number(h.wind_gusts_10m?.[mi]):null,metarOK?mm.gust:null,ru?'км/ч':'kt',mm.gust==null?(ru?'Порывы не указаны в METAR; это не означает нулевую скорость':'Rajada não reportada no METAR · não equivale a 0 kt'):metarNote)+
+   row(ru?'Осадки':'Precipitação '+(hours?hours+' h':''),predicted,p&&Number.isFinite(Number(p.mm))?Number(p.mm):null,ru?'мм':'mm',rainNote)+
    '</tbody></table></div>'+
-   '<p class="note">Diferença = modelo − observado. As horas e intervalos são aproximados à resolução horária do modelo. A rajada METAR é uma observação reportada e pode não ser diretamente equivalente à rajada horária prevista. A precipitação é comparada apenas em intervalos de igual duração.</p>'+
-   '<p class="note"><strong>Nota metodológica:</strong> comparação indicativa com previsões consultadas no momento, que podem já incorporar observações recentes; não constitui verificação histórica de um ciclo ECMWF arquivado. Dados em falta ou desatualizados ficam assinalados como «—».</p>';
+   '<p class="note">'+(ru?'Разница = модель минус наблюдение. Сравниваются ближайшие сроки по UTC. Порывы в METAR могут отличаться по определению от часовых порывов модели. Осадки сравниваются только за одинаковые интервалы.':'Diferença = modelo − observado. As horas e intervalos são aproximados à resolução horária do modelo. A rajada METAR é uma observação reportada e pode não ser diretamente equivalente à rajada horária prevista. A precipitação é comparada apenas em intervalos de igual duração.')+'</p>'+
+   '<p class="note">'+(ru?'Методология: ориентировочное сопоставление с текущим прогнозом, не архивная проверка отдельного цикла ECMWF. Пропущенные или устаревшие данные показаны знаком «—».':'Nota metodológica: comparação indicativa com previsões consultadas no momento, que podem já incorporar observações recentes; não constitui verificação histórica de um ciclo ECMWF arquivado. Dados em falta ou desatualizados ficam assinalados como «—».')+'</p>';
   showFox(panel,content);
  }catch(e){
   if(id!==request)return;
-  showFox(panel,'<div class="fox-panel-head"><strong>Fox Verified · '+esc(place)+'</strong><button type="button" class="action" data-fox-close>✕ Fechar</button></div><div role="status" class="fox-fail">Não foi possível obter a comparação: '+esc(e.message)+'.</div>');
+  showFox(panel,'<div class="fox-panel-head"><strong>Fox Verified · '+(ru?'Валенсия':esc(place))+'</strong><button type="button" class="action" data-fox-close>'+(ru?'✕ Закрыть':'✕ Fechar')+'</button></div><div role="status" class="fox-fail">'+(ru?'Не удалось выполнить сравнение: ':'Não foi possível obter a comparação: ')+esc(e.message)+'.</div>');
  }finally{if(id===request)button.disabled=false;}
 }
 function init(){
