@@ -116,13 +116,13 @@ def main():
                 out['reason']='MTG Fog time extent does not agree with GeoColour'
             else:
                 # Probe a single modest-sized tile; do not start a bulk download.
-                params=urlencode({
+                params={
                   'service':'WMS','version':'1.1.1','request':'GetMap',
                   'layers':selected['name'],'styles':'','format':'image/png',
                   'transparent':'true','srs':'EPSG:4326','bbox':'-11,35,4,45',
                   'width':'128','height':'128',
-                  'time':matching.isoformat().replace('+00:00','Z')})
-                sample=fetch(WMS+'?'+params,limit=650_000,timeout=25)
+                  'time':matching.isoformat().replace('+00:00','Z')}
+                sample=fetch(WMS+'?'+urlencode(params),limit=650_000,timeout=25)
                 if not sample.startswith(b'\x89PNG\r\n\x1a\n') or len(sample)<900:
                     out['reason']='WMS did not return a valid PNG for the selected UTC time'
                 else:
@@ -154,6 +154,7 @@ def main():
                         else:
                             out['reason']='Fog WMS returned the same PNG for adjacent GeoColour UTC times; time alignment remains unproven'
     except Exception as e:
+        out['ready']=False
         out['reason']='Fog WMS validation unavailable: '+str(e)[:250]
     OUTPUT.parent.mkdir(parents=True,exist_ok=True)
     OUTPUT.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
