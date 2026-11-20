@@ -81,6 +81,15 @@ def main():
     temp=OUT.with_suffix('.tmp')
     temp.write_bytes(gzip.compress(blob,compresslevel=9,mtime=0))
     temp.replace(OUT)
+    # Dados dedicados à LEVC no mapa interativo: pequeno JSON, sem descarregar
+    # o arquivo mundial completo em cada visita ao mapa.
+    levc={'checked_utc':result['checked_utc'],'source':result['source'],'metar':{},'speci':{},'taf':{}}
+    for kind in ('metar','speci','taf'):
+        if 'LEVC' in result[kind]:
+            levc[kind]['LEVC']=result[kind]['LEVC']
+    target=OUT.parent/'aviation_valencia.json'
+    target.write_text(json.dumps(levc,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    print('Valência LEVC:',{k:bool(levc[k].get('LEVC')) for k in ('metar','speci','taf')})
     print('Mundo:',{k:len(result[k]) for k in ('metar','speci','taf')},'tamanho gzip:',OUT.stat().st_size)
 
 if __name__=='__main__':main()
