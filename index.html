@@ -108,7 +108,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .aviation-field input:focus,.aviation-field select:focus{outline:2px solid #60b9df;outline-offset:1px}
 #refreshAviation{padding:11px 15px}
 .aviation-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:13px}
-.aviation-results{display:grid;gap:15px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.aviation-results{display:grid;gap:15px;grid-template-columns:minmax(0,1fr)}
 .aviation-card{background:#fbfdff;border:1px solid #d7e7f1;border-radius:12px;padding:15px;min-width:0}
 .aviation-card-head{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
 .aviation-card-head h3{font-size:16px;margin:0;color:#164463}
@@ -120,6 +120,9 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 .aviation-report-head .taf-amd{color:#a64c1b}
 .aviation-report-meta{font-size:11px;color:#647e90}
 .aviation-report pre{color:#15374d;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-family:'DM Mono',Consolas,monospace;font-size:12px;line-height:1.65;margin:0}
+.aviation-report pre.taf-formatted{white-space:pre;overflow-x:auto;overflow-y:visible;overflow-wrap:normal;word-break:normal;width:100%;max-width:100%;padding:5px 1px 10px;tab-size:2;scrollbar-width:thin}
+.aviation-report:has(pre.taf-formatted){min-width:0}
+.aviation-card{width:100%;min-width:0}
 .aviation-report-empty pre{color:#8a9dab}
 .aviation-age{display:inline-block;padding:3px 7px;border-radius:6px;font-size:10px;background:#e3f4f0;color:#146b53}
 .aviation-age.old{background:#fff0d8;color:#85510d}
@@ -451,8 +454,20 @@ async function loadModels(){const [lat,lon]=current,token=lat+','+lon;$('modelSt
 }
 const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR'],Faro:['LPFR'],'Valência':['LEVC']};
 function formatTAF(raw){
- // Quebras apenas nos indicadores de mudança; preserva todos os grupos originais.
- return String(raw||'Indisponível').replace(/\s+(?=(?:TEMPO|BECMG|FM\d{6}|PROB(?:30|40))(?:\s|$))/g,(spaces,offset,whole)=>{const before=whole.slice(0,offset);return /PROB(?:30|40)\s*$/.test(before)?' ':'\n';});
+ // Cada grupo de evolução começa na sua própria linha. Não criar nova
+ // linha depois de PROB30/PROB40 quando é seguido por TEMPO.
+ // Nunca inserir quebras dentro de grupos ou de valores dos boletins.
+ const tokens=String(raw||'Indisponível').trim().replace(/\s+/g,' ').split(' ');
+ const lines=[];let line=[];
+ for(let i=0;i<tokens.length;i++){
+  const token=tokens[i];
+  const group=/^(?:BECMG|TEMPO|FM\d{6}|PROB(?:30|40))$/.test(token);
+  const probabilityTempo=token==='TEMPO'&&/^(?:PROB30|PROB40)$/.test(line[0]||'');
+  if(group&&!probabilityTempo&&line.length){lines.push(line.join(' '));line=[];}
+  line.push(token);
+ }
+ if(line.length)lines.push(line.join(' '));
+ return lines.join('\n');
 }
 function synopZone(st){
  const id=String(st.station), name=String(st.name||'').toLowerCase();
@@ -562,7 +577,7 @@ function aviationReport(kind,item,source,isAmd=false){
     ${empty?'':`<button type="button" class="aviation-copy" data-copy-kind="${kind}">Copiar</button>`}
    </div>
    <div class="aviation-report-meta" style="margin-bottom:6px">${empty?'':safe(aviationDateUTC(item.utc))}</div>
-   <pre>${empty?'Indisponível':highlightConvection(kind==='TAF'?formatTAF(raw):raw)}</pre>
+   <pre class="${kind==='TAF'?'taf-formatted':''}">${empty?'Indisponível':highlightConvection(kind==='TAF'?formatTAF(raw):raw)}</pre>
  </div>`;
 }
 function worldAirportCodes(){
