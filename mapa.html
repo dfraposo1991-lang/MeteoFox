@@ -256,7 +256,7 @@ function paintMarkers(){
     return '<div class="popup" lang="ru"><h3>LEVC · Аэропорт Валенсии</h3>'+
      '<div><span class="cat" style="border-left:5px solid '+c.color+'">'+safe(c.code)+'</span> <span class="cat">'+safe(c.flight)+'</span></div>'+
      russianReportBlock('METAR',m)+russianReportBlock('SPECI',s)+
-     russianReportBlock(/\\bAMD\\b/.test(t?.raw||'')?'TAF AMD':'TAF',t)+
+     russianReportBlock(/\bAMD\b/.test(t?.raw||'')?'TAF AMD':'TAF',t)+
      '<p class="ru-disclaimer">Автоматическая расшифровка на русском языке. Для полётов используйте официальные сообщения.</p></div>';
    }
    return '<div class="popup"><h3>'+safe(a.id)+' · '+safe(a.name)+'</h3>'+
