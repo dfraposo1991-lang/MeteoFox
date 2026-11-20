@@ -64,7 +64,8 @@ header{flex:none;position:relative;z-index:1100}
 /* O botão permanece no mapa mesmo quando o painel translúcido está oculto. */
 #toggleMapControls{position:absolute;top:14px;left:14px;z-index:1050;
  background:rgba(19,55,84,.55);color:#fff;border:1px solid rgba(255,255,255,.48);
- border-radius:10px;padding:8px 12px;font:650 12px Inter,system-ui,sans-serif;
+ width:34px;height:34px;display:grid;place-items:center;
+ border-radius:8px;padding:0;font:700 17px Inter,system-ui,sans-serif;
  cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
  box-shadow:0 2px 12px rgba(4,26,46,.16)}
 #toggleMapControls:hover,#toggleMapControls:focus-visible{background:rgba(7,81,139,.85)}
@@ -75,7 +76,7 @@ header{flex:none;position:relative;z-index:1100}
 #satTools .mf-opacity-item{display:flex;gap:7px;align-items:center;white-space:nowrap;color:#fff;font-size:11px}
 #satTools .mf-opacity-item input{width:105px;max-width:28vw;min-width:65px}
 #satTools .mf-opacity-label{min-width:80px;font-weight:650}
-@media(max-width:650px){#toggleMapControls{top:7px;left:7px;padding:7px 9px}
+@media(max-width:650px){#toggleMapControls{top:7px;left:7px;width:32px;height:32px}
 .map-overlays{top:45px;max-height:50%}
 #satTools .mf-opacity-controls{gap:5px 10px}
 #satTools .mf-opacity-item input{width:83px}
@@ -86,7 +87,7 @@ header{flex:none;position:relative;z-index:1100}
 </nav></header>
 <main id="mapMain">
 <div id="largeMap" aria-label="Mapa interativo de aeródromos e imagens de satélite"></div>
-<button id="toggleMapControls" type="button" aria-expanded="true" aria-controls="mapControlsPanel" title="Ocultar controlos do mapa">◧ Ocultar controlos</button>
+<button id="toggleMapControls" type="button" aria-expanded="true" aria-controls="mapControlsPanel" aria-label="Recolher painel do mapa" title="Recolher painel do mapa">−</button>
 <div class="map-overlays" id="mapControlsPanel"><div id="satTools" aria-label="Controlos Meteosat e radar"></div></div>
 <div class="map-visually-hidden" aria-live="polite"><span id="count">A carregar mapa…</span><span id="source">METAR/SPECI OGIMET · TAF NOAA, recolhidos pelo MeteoFox</span></div>
 <aside id="mapLegends" class="map-legends-panel" hidden aria-label="Tabelas de cores METAR e categorias de voo">
@@ -273,8 +274,10 @@ toggleMapControls.addEventListener('click',()=>{
  const expanded=toggleMapControls.getAttribute('aria-expanded')==='true';
  mapControlsPanel.hidden=expanded;
  toggleMapControls.setAttribute('aria-expanded',String(!expanded));
- toggleMapControls.textContent=expanded?'◧ Mostrar controlos':'◧ Ocultar controlos';
- toggleMapControls.title=expanded?'Mostrar controlos do mapa':'Ocultar controlos do mapa';
+ toggleMapControls.textContent=expanded?'+':'−';
+ const label=expanded?'Expandir painel do mapa':'Recolher painel do mapa';
+ toggleMapControls.title=label;
+ toggleMapControls.setAttribute('aria-label',label);
 });
 
 initialize();
