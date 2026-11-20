@@ -77,6 +77,10 @@ try{
  await page.getByRole('button',{name:/Satélite: desligado/}).click();
  await page.getByRole('button',{name:/Radar: desligado/}).click();
  await page.waitForFunction(()=>{const slider=document.querySelector('#satTools input[type="range"]');return slider&&!slider.disabled&&Number(slider.max)>=1;},{timeout:15000});
+ // Esperar a conclusão de ambas as consultas e da transição inicial;
+ // caso contrário refreshTimeline pode repor o último prazo durante o teste.
+ await page.waitForFunction(()=>sat.satKnown && sat.radarFrames.length>0 && !sat.transition,{timeout:15000});
+ await page.waitForTimeout(400);
  const mapTimeline=page.locator('#satTools input[type="range"]');
  await mapTimeline.fill('0');
  await page.locator('#showLegends').focus();
