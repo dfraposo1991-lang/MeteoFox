@@ -54,7 +54,7 @@ async function actualSatelliteTimes(){
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
@@ -125,7 +125,15 @@ class MeteoFoxSatellite{
  }
  // A transição só revela novas imagens quando TODOS os mosaicos das camadas ativas
  // estiverem prontos. As imagens anteriores mantêm-se visíveis até esse instante.
+ clearFades(){
+  if(this.fadeTimer){clearTimeout(this.fadeTimer);this.fadeTimer=null;}
+  for(const layer of this.fadeOutLayers){
+   if(this.map.hasLayer(layer))this.map.removeLayer(layer);
+  }
+  this.fadeOutLayers=[];
+ }
  cancelTransition(){
+  this.clearFades();
   this.transitionSeq++;
   const job=this.transition;this.transition=null;
   if(!job)return;
@@ -196,16 +204,41 @@ class MeteoFoxSatellite{
      this.state('Não foi possível carregar todas as imagens de '+fmt(time)+'. Mantidas as anteriores.');
      resolve(false);return;
     }
-    // As duas camadas são reveladas numa única atualização gráfica.
+    // Crossfade apenas depois de TODOS os mosaicos estarem prontos.
+    // Conserva a imagem anterior durante 260 ms: evita a troca fragmentada
+    // sem inventar fotogramas nem alterar a hora UTC das duas camadas.
     requestAnimationFrame(()=>{
      if(seq!==this.transitionSeq){for(const x of pending)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);resolve(false);return;}
      const oldSat=this.satLayer,oldRadar=this.radarLayer;
+     const fading=[];
      for(const x of jobs){
-      if(x.kind==='sat'){x.layer.setOpacity(.8);x.layer.setZIndex(300);this.satLayer=x.layer;this.satRenderedTime=satTime;}
-      if(x.kind==='radar'){x.layer.setOpacity(.66);x.layer.setZIndex(350);this.radarLayer=x.layer;this.radarLayers.add(x.layer);}
+      if(x.kind==='sat'){
+       x.layer.setZIndex(300);this.satLayer=x.layer;this.satRenderedTime=satTime;
+       if(!x.reuse){const c=x.layer.getContainer();if(c)c.style.transition='opacity 260ms ease-in-out';}
+      }
+      if(x.kind==='radar'){
+       x.layer.setZIndex(350);this.radarLayer=x.layer;this.radarLayers.add(x.layer);
+       if(!x.reuse){const c=x.layer.getContainer();if(c)c.style.transition='opacity 260ms ease-in-out';}
+      }
      }
-     if(oldSat&&oldSat!==this.satLayer&&this.map.hasLayer(oldSat))this.map.removeLayer(oldSat);
-     if(oldRadar&&oldRadar!==this.radarLayer){if(this.map.hasLayer(oldRadar))this.map.removeLayer(oldRadar);this.radarLayers.delete(oldRadar);}
+     for(const old of [oldSat,oldRadar]){
+      if(old&&old!==this.satLayer&&old!==this.radarLayer&&this.map.hasLayer(old)){
+       const c=old.getContainer();if(c)c.style.transition='opacity 260ms ease-in-out';
+       fading.push(old);
+      }
+     }
+     this.fadeOutLayers=fading;
+     // Frame extra para o navegador pintar a opacidade inicial (0) dos novos
+     // mosaicos antes de executar a animação.
+     requestAnimationFrame(()=>{
+      if(seq!==this.transitionSeq)return;
+      for(const x of jobs){
+       if(x.kind==='sat')x.layer.setOpacity(.8);
+       if(x.kind==='radar')x.layer.setOpacity(.66);
+      }
+      for(const layer of fading)layer.setOpacity(0);
+      this.fadeTimer=setTimeout(()=>this.clearFades(),300);
+     });
      this.state(info.join(' · '));
      resolve(true);
     });
