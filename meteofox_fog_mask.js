@@ -1,0 +1,63 @@
+/* MeteoFox VIS / FOG Auto — máscara geográfica dia/noite.
+ * Gera apenas uma máscara PNG pequena por mosaico; não lê pixels WMS,
+ * não precisa de CORS e não descarrega nenhuma imagem adicional.
+ * Convenção: máscara do Fog 0% de dia, 100% de noite e progressiva
+ * entre elevação solar +3° e -6°.
+ */
+(function(){
+'use strict';
+const PI=Math.PI,RAD=PI/180;
+const cache=new Map(),MAX_CACHE=60;
+function sun(time){
+ const date=new Date(time);
+ if(!Number.isFinite(date.getTime()))return null;
+ const day=(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate())-
+  Date.UTC(date.getUTCFullYear(),0,0))/86400000;
+ const hour=date.getUTCHours()+date.getUTCMinutes()/60+date.getUTCSeconds()/3600;
+ const gamma=2*PI/365*(day-1+(hour-12)/24);
+ const eq=229.18*(0.000075+0.001868*Math.cos(gamma)-0.032077*Math.sin(gamma)-
+  0.014615*Math.cos(2*gamma)-0.040849*Math.sin(2*gamma));
+ const dec=0.006918-0.399912*Math.cos(gamma)+0.070257*Math.sin(gamma)-
+  0.006758*Math.cos(2*gamma)+0.000907*Math.sin(2*gamma)-
+  0.002697*Math.cos(3*gamma)+0.00148*Math.sin(3*gamma);
+ return {minutes:hour*60+eq,dec};
+}
+function elevation(lat,lon,solar){
+ const l=lat*RAD,ha=(solar.minutes+4*lon)/4-180;
+ const dot=Math.sin(l)*Math.sin(solar.dec)+Math.cos(l)*Math.cos(solar.dec)*Math.cos(ha*RAD);
+ return Math.asin(Math.max(-1,Math.min(1,dot)))/RAD;
+}
+function fogWeight(alt){
+ const t=Math.max(0,Math.min(1,(3-alt)/9));
+ return t*t*(3-2*t);
+}
+function tileMask(time,coords,dimension=64){
+ const z=coords?.z,x=coords?.x,y=coords?.y;
+ if(!Number.isInteger(z)||!Number.isInteger(x)||!Number.isInteger(y)||
+    z<0||z>19||!Number.isFinite(time))return '';
+ const key=[time,z,x,y,dimension].join(':');
+ if(cache.has(key))return cache.get(key);
+ const solar=sun(time);if(!solar)return '';
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=dimension;
+ const ctx=canvas.getContext('2d');if(!ctx)return '';
+ const im=ctx.createImageData(dimension,dimension);
+ const zoom=2**z;
+ for(let j=0;j<dimension;j++){
+  const wy=(y+(j+.5)/dimension)/zoom;
+  const latitude=Math.atan(Math.sinh(PI*(1-2*wy)))/RAD;
+  for(let i=0;i<dimension;i++){
+   const longitude=(x+(i+.5)/dimension)/zoom*360-180;
+   const k=4*(j*dimension+i);
+   im.data[k]=im.data[k+1]=im.data[k+2]=0;
+   im.data[k+3]=Math.round(255*fogWeight(elevation(latitude,longitude,solar)));
+  }
+ }
+ ctx.putImageData(im,0,0);
+ const url=canvas.toDataURL('image/png');
+ cache.set(key,url);
+ if(cache.size>MAX_CACHE)cache.delete(cache.keys().next().value);
+ return url;
+}
+function clear(){cache.clear();}
+window.MeteoFoxFogMask={tileMask,clear,fogWeight,elevation,sun};
+})();
