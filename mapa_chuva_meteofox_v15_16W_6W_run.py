@@ -96,6 +96,14 @@ def ler_grib(caminho):
 
 
 
+_DIAS_PT = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
+
+
+def legenda_utc(data):
+    """Data da validade e do run, em UTC e sem ano."""
+    return f"{_DIAS_PT[data.weekday()]}, {data:%d/%m}, {data:%H:%M} UTC"
+
+
 def criar_mapa():
     if not FICHEIRO_GRIB.exists():
         raise FileNotFoundError(
@@ -201,15 +209,16 @@ def criar_mapa():
         0.47, 0.975, "Precipitação acumulada [mm] | ECMWF IFS",
         ha="center", va="top", fontsize=15, color="#222222"
     )
+    # Legendas integradas no próprio PNG: somente letras, sem caixa, sombra ou ano.
     fig.text(
-        0.028, 0.944,
-        f"Run: {ciclo:%d/%m/%Y %H} UTC  |  +{passo:02d} h",
-        ha="left", va="top", fontsize=10
+        0.028, 0.944, "run ECMWF " + legenda_utc(ciclo),
+        ha="left", va="top", fontsize=9, fontweight="normal",
+        color="#52677a", fontfamily="sans-serif"
     )
     fig.text(
-        0.96, 0.944,
-        f"Válido: {validade:%d/%m/%Y %H} UTC",
-        ha="right", va="top", fontsize=10
+        0.96, 0.944, "válido " + legenda_utc(validade),
+        ha="right", va="top", fontsize=9, fontweight="normal",
+        color="#52677a", fontfamily="sans-serif"
     )
     fig.savefig(SAIDA, dpi=165, facecolor="white", pad_inches=0.01)
     plt.close(fig)
