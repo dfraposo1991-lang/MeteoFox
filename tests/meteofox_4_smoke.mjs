@@ -210,7 +210,9 @@ try{
  await togglePanel.click();
  assert.equal(await page.locator('#mapMiniTimeline').isVisible(),true,'Setas visíveis em telemóvel');
  await page.waitForFunction(()=>!document.querySelector('#mapMiniForward').disabled);
+ await page.evaluate(()=>sat.select(1));
  const mobileStart=await page.evaluate(()=>sat.index);
+ assert.equal(mobileStart,1,'Teste móvel deve partir de fotograma com anterior e seguinte');
  await page.locator('#mapMiniBack').click();
  assert.equal(await page.evaluate(()=>sat.index),Math.max(0,mobileStart-1));
  await page.locator('#mapMiniForward').click();
