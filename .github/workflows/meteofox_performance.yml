@@ -1,0 +1,33 @@
+name: MeteoFox | Medir desempenho do site publicado
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/meteofox_performance.mjs'
+      - '.github/workflows/meteofox_performance.yml'
+permissions:
+  contents: read
+jobs:
+  medir:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Chromium e Playwright
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install chromium
+      - name: Medir site público desktop e mobile
+        run: node tests/meteofox_performance.mjs
+      - name: Guardar relatório JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteofox-performance
+          path: relatorios/meteofox_performance.json
+          retention-days: 14
+          if-no-files-found: warn
