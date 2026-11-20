@@ -10,6 +10,8 @@ on:
       - 'meteofox_meteograma.css'
       - 'mapa.html'
       - 'meteofox_satelite.js'
+      - 'meteofox_ru_aviation.js'
+      - 'fox_verified.js'
       - 'laboratorio.html'
       - '.github/workflows/meteofox_site.yml'
       - '.github/workflows/meteofox_ecmwf.yml'
@@ -48,6 +50,8 @@ jobs:
                   import subprocess
                   subprocess.run(['node','--check',str(p)],check=True)
           subprocess.run(['node','--check','meteofox_satelite.js'],check=True)
+          subprocess.run(['node','--check','meteofox_ru_aviation.js'],check=True)
+          subprocess.run(['node','--check','fox_verified.js'],check=True)
           print('Sintaxe dos scripts: OK')
           PY
       - name: Instalar Playwright e Chromium
