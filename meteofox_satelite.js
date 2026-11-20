@@ -59,7 +59,15 @@ class MeteoFoxSatellite{
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
   this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
+  this.opacityButton=add('button',host,'◐ Opacidade',{'type':'button','aria-expanded':'true','title':'Mostrar ou ocultar opções de opacidade'});
   const opacityControls=add('div',host,null,{'class':'mf-opacity-controls','role':'group','aria-label':'Opacidade das camadas'});
+  this.opacityButton.onclick=()=>{
+   const hide=!opacityControls.hidden;
+   opacityControls.hidden=hide;
+   this.opacityButton.setAttribute('aria-expanded',String(!hide));
+   this.opacityButton.textContent=hide?'◐ Opacidade':'◐ Opacidade ▴';
+   if(!hide)opacityControls.scrollIntoView({block:'nearest',behavior:'auto'});
+  };
   const makeOpacity=(name,initial,key)=>{
    const label=add('label',opacityControls,null,{'class':'mf-opacity-item'});
    const text=add('span',label,name+' '+initial+'%',{'class':'mf-opacity-label'});
@@ -99,7 +107,7 @@ class MeteoFoxSatellite{
  async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
   if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
   // A camada é criada com TIME explícito após obter horários publicados.
-  // Opacidade fixa a 80%; sem controlos adicionais.
+  // Opacidade configurável nos controlos, com valores iniciais 80% e 66%.
   this.ensureRadarAbove();
   this.state('Satélite ligado. A verificar os horários UTC da EUMETSAT…');
   try{const confirmed=await actualSatelliteTimes();if(this.satRequest!==satRequest)return;this.satTimes=confirmed;this.satKnown=true;this.state('Horários Meteosat confirmados: '+this.satTimes.length+' imagens.');}
