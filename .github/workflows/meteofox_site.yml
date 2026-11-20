@@ -2,6 +2,11 @@ name: MeteoFox | Publicar site sem gerar mapas
 
 on:
   workflow_dispatch:
+  # O GITHUB_TOKEN usado no refresh das sondagens não desencadeia um novo push workflow.
+  # workflow_run publica o JSON atualizado assim que a geração termina com sucesso.
+  workflow_run:
+    workflows: ["MeteoFox Labs | Atualizar meteograma e sondagens"]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -30,6 +35,7 @@ concurrency:
 
 jobs:
   preparar:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     name: Preparar site e conservar mapas existentes
     runs-on: ubuntu-24.04
     timeout-minutes: 15
