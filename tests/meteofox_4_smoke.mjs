@@ -134,6 +134,37 @@ try{
  assert.ok(pairLayout.contents[1].includes('\nBECMG ')&&pairLayout.contents[1].includes('\nTEMPO '),'TAF preserva cabeçalhos de grupos');
 
 
+ // Regressão: popup do MAPA embutido em Aeródromos (não o mapa geral).
+ const embeddedPopup=await page.evaluate(()=>{
+  const a=AVIATION_AIRPORTS.find(a=>a.id==='LPPR');
+  const metar='METAR LPPR 201900Z 14009KT 8000 -RA FEW018CB SCT020 BKN030 14/13 Q1018 RERA=';
+  const taf='TAF LPPR 201700Z 2018/2118 15008KT 9999 SCT015 PROB40 TEMPO 2018/2022 4000 SHRA BKN013 FEW020CB BECMG 2022/2024 17015KT SCT006 BKN012 TEMPO 2100/2116 17018G30KT 3000 RADZ BR SCT002 BKN004 BECMG 2116/2118 27015KT SCT020';
+  const html=obsAviationPopup(a,{metar:{LPPR:{raw:metar,utc:new Date().toISOString()}},taf:{LPPR:{raw:taf,utc:new Date().toISOString()}},speci:{}});
+  const probe=document.createElement('div');probe.className='obs-popup';
+  probe.style.cssText='position:absolute;left:-4000px;top:0';
+  const root=document.createElement('div');root.className='leaflet-popup';
+  const wrapper=document.createElement('div');wrapper.className='leaflet-popup-content-wrapper';
+  const content=document.createElement('div');content.className='leaflet-popup-content';
+  probe.innerHTML=html.replace(/^<div class="obs-popup">/,'').replace(/<\/div>$/,'');
+  content.append(probe);wrapper.append(content);root.append(wrapper);document.body.append(root);
+  const sections=[...probe.querySelectorAll('.obs-report')];
+  const result={taf:sections[1].querySelector('pre').innerText,
+   widths:sections.map(x=>Math.round(x.getBoundingClientRect().width)),
+   popupWidth:Math.round(probe.getBoundingClientRect().width),
+   whiteSpace:getComputedStyle(sections[1].querySelector('pre')).whiteSpace,
+   maxHeight:getComputedStyle(sections[1].querySelector('pre')).maxHeight,
+   scrollWidth:sections[1].querySelector('pre').scrollWidth,
+   clientWidth:sections[1].querySelector('pre').clientWidth};
+  root.remove();return result;
+ });
+ console.log('POPUP EMBUTIDO AERODROMOS',JSON.stringify(embeddedPopup));
+ assert.ok(embeddedPopup.taf.includes('\nBECMG '),'Popup embutido inicia BECMG em linha nova');
+ assert.ok(embeddedPopup.taf.includes('\nPROB40 TEMPO '),'PROB40 TEMPO no mesmo grupo');
+ assert.ok(embeddedPopup.taf.includes('\nTEMPO '),'TEMPO autónomo em linha nova');
+ assert.equal(embeddedPopup.whiteSpace,'pre','TAF popup não deve quebrar linhas');
+ assert.equal(embeddedPopup.maxHeight,'none','TAF popup deve crescer em altura');
+ assert.ok(embeddedPopup.widths[0]!==embeddedPopup.widths[1],'METAR e TAF devem ter caixas independentes');
+ assert.ok(embeddedPopup.popupWidth>340,'Largura do popup não limitada a 340px');
  assert.equal(await page.locator('#aerodromes .metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
  await page.goto('http://127.0.0.1:8765/mapa.html',{waitUntil:'domcontentloaded',timeout:45000});
