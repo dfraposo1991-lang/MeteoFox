@@ -136,8 +136,8 @@ try{
  assert.ok(afterZoom.zoom>=beforeZoom,'Zoom após scroll deve responder');
  assert.equal(afterZoom.satOn,true);
  assert.equal(afterZoom.radarOn,true);
- assert.equal(afterZoom.buffer,2,'Guardar mosaicos vizinhos para reduzir piscar');
- assert.equal(afterZoom.zoomUpdate,false,'Evitar pedidos por cada passo intermédio do zoom');
+ assert.equal(afterZoom.buffer,0,'Preservar configuração anterior de mosaicos');
+ assert.equal(afterZoom.zoomUpdate,true,'Atualizar imagens durante o zoom');
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
  console.log('PASS desktop: Produtos, 16 passos +9..+54 chuva+rajadas, independência VIS, METAR, mapa radar/Meteosat');
