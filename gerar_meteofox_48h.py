@@ -106,7 +106,6 @@ def ler_passo(path):
 
 
 def criar_html(run, steps, output):
-    run_h = html.escape(run)
     run_iso = datetime.strptime(run, '%d/%m/%Y %H:%M').replace(tzinfo=timezone.utc).isoformat().replace('+00:00','Z')
     names = json.dumps([f"{v:03d}" for v in steps])
     values = json.dumps([int(s) for s in steps])
@@ -114,32 +113,36 @@ def criar_html(run, steps, output):
 <html lang="pt"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MeteoFox | Chuva e Rajadas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#111f2c;color:#edf4fb;font-family:Arial,Helvetica,sans-serif}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#111f2c;color:#edf4fb;font-family:Inter,Arial,Helvetica,sans-serif}
 header{padding:17px 22px 5px}h1{font-size:23px;margin:0 0 6px}p{margin:0;color:#9cb6ca;font-size:13px}
 main{padding:15px 20px 25px}.controls{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:14px 0}
 button{border:1px solid #547389;background:#27465d;color:white;padding:9px 16px;border-radius:7px;cursor:pointer}
 button:hover{background:#3b6481}input[type=range]{flex:1;min-width:140px;accent-color:#4aafd6}
-.time{font-weight:700;color:#fff;min-width:130px}.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.times{display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:#9cb6ca;font:400 11px/1.5 Inter,Arial,sans-serif;padding-top:7px;background:transparent;border:0;box-shadow:none}
+.times span:last-child{text-align:right}
 .panel{background:#fff;border-radius:6px;overflow:hidden}.panel h2{background:#213a50;color:white;margin:0;padding:8px 12px;font-size:15px}
 .panel img{display:block;width:100%;height:auto}.foot{padding:14px 0;color:#91adc0;font-size:12px}
 @media(max-width:850px){.panels{grid-template-columns:1fr}main{padding:10px}}
 </style></head><body>
 <header><h1>MeteoFox · ECMWF IFS · Chuva e Rajadas</h1>
-<p>Run: RUN_PLACEHOLDER UTC · previsões de 3 em 3 h até +54 h · ECMWF IFS Open Data (CC BY 4.0)</p></header>
+<p>ECMWF IFS Open Data (CC BY 4.0)</p></header>
 <main><div class="controls"><button id="play">▶ Reproduzir</button>
-<button id="previous">◀</button><input id="position" type="range" min="0" value="0"><button id="next">▶</button>
-<span id="time" class="time">+09 h</span></div>
-<div class="panels"><div class="panel"><h2>Precipitação em 3 horas · mm</h2><img id="rain" alt="Precipitação ECMWF"></div>
-<div class="panel"><h2>Rajadas máximas · kt</h2><img id="wind" alt="Rajadas ECMWF"></div></div>
+<button id="previous">◀</button><button id="next">▶</button><input id="position" type="range" min="0" value="0"></div>
+<div class="panels"><div class="panel"><h2>Precipitação em 3 horas · mm</h2><img id="rain" alt="Precipitação ECMWF"><div class="times"><span class="run"></span><span class="valid"></span></div></div>
+<div class="panel"><h2>Rajadas máximas · kt</h2><img id="wind" alt="Rajadas ECMWF"><div class="times"><span class="run"></span><span class="valid"></span></div></div></div>
 <div class="foot">Use a linha temporal para consultar cada passo. Os vetores mostram a direção do vento a 10 m, não a direção das rajadas.</div></main>
 <script>
 const files = FILES_PLACEHOLDER, hours = HOURS_PLACEHOLDER;
 const rain=document.getElementById('rain'),wind=document.getElementById('wind');
-const slider=document.getElementById('position'),time=document.getElementById('time'),play=document.getElementById('play');
+const slider=document.getElementById('position'),play=document.getElementById('play');
+const cycle=Date.parse(RUN_ISO_PLACEHOLDER);
+const formatUTC=value=>new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(value))+' UTC';
 let n=0,timer=null;slider.max=hours.length-1;
 function render(){let s=files[n];rain.src='chuva_'+s+'.png';wind.src='rajadas_'+s+'.png';
-slider.value=n;const valid=new Date(Date.parse(RUN_ISO_PLACEHOLDER)+hours[n]*3600000);const when=new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(valid);time.textContent='+'+String(hours[n]).padStart(2,'0')+' h · '+when+' UTC';}
+slider.value=n;document.querySelectorAll('.times').forEach(el=>{el.querySelector('.run').textContent='run ECMWF '+formatUTC(cycle);el.querySelector('.valid').textContent='válido '+formatUTC(cycle+hours[n]*3600000);});}
 function stop(){if(timer){clearInterval(timer);timer=null;}play.textContent='▶ Reproduzir';}
 function step(dir){n=(n+dir+hours.length)%hours.length;render();}
 play.addEventListener('click',()=>{if(timer){stop();return;}play.textContent='⏸ Pausar';
@@ -149,8 +152,7 @@ document.getElementById('previous').addEventListener('click',()=>step(-1));
 document.getElementById('next').addEventListener('click',()=>step(1));
 render();
 </script></body></html>'''
-    content = (content.replace("RUN_PLACEHOLDER", run_h)
-                     .replace("FILES_PLACEHOLDER", names)
+    content = (content.replace("FILES_PLACEHOLDER", names)
                      .replace("HOURS_PLACEHOLDER", values)
                      .replace("RUN_ISO_PLACEHOLDER", json.dumps(run_iso)))
     (output / "MeteoFox_animacao_48h.html").write_text(content, encoding="utf-8")
