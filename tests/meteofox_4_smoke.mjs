@@ -128,7 +128,9 @@ try{
   sandbox.remove();return out;
  });
  console.log('TAF/METAR REALISTIC WIDTHS',JSON.stringify(pairLayout));
- assert.ok(pairLayout.widths[0]+50<pairLayout.widths[1],'METAR deve ocupar caixa visivelmente menor do que TAF');
+ assert.ok(pairLayout.widths[0]>pairLayout.widths[1],'A caixa METAR deve seguir a linha mais longa, mesmo que o TAF tenha mais texto: '+JSON.stringify(pairLayout.widths));
+ assert.ok(pairLayout.widths[0]!==pairLayout.widths[1],'METAR e TAF não podem ser obrigados a ter largura idêntica');
+ assert.ok(pairLayout.cardWidth>=Math.max(...pairLayout.widths),'Cartão exterior tem de comportar o boletim mais largo');
  assert.ok(pairLayout.contents[1].includes('\nBECMG ')&&pairLayout.contents[1].includes('\nTEMPO '),'TAF preserva cabeçalhos de grupos');
 
 
