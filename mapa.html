@@ -11,7 +11,7 @@ main{padding:14px;max-width:1900px;margin:auto}.toolbar{display:flex;gap:8px;ali
 #satTools button[aria-pressed=true]{background:#07518b;color:white}#satTools button:disabled{opacity:.5;cursor:not-allowed}
 #satTools label{font-size:12px}#satTools input{accent-color:#07518b}#satTools .sat-status,#satTools .sat-attribution{font-size:11px;color:#607e90}#satTools .sat-status{flex-basis:100%}
 #satTools .sat-attribution{flex-basis:100%}#satTools .sat-clock{font-weight:700;color:#13527c;font-size:12px;white-space:nowrap}#count,#source{color:#59778b;font-size:12px}
-.popup{font:12px Inter,system-ui,sans-serif;color:#183c54;width:680px;max-width:calc(100vw - 64px)}.popup h3{margin:4px 0 9px}.popup pre{white-space:pre;overflow-x:auto;overflow-y:auto;max-height:210px;background:#edf4fa;padding:9px;border-radius:8px;font:11px Consolas,monospace}.cat{padding:4px 6px;background:#eef4f8;border-radius:6px;font-weight:700;display:inline-block}
+.popup{font:12px Inter,system-ui,sans-serif;color:#183c54;width:max-content;max-width:calc(100vw - 74px)}.popup h3{margin:4px 0 9px}.popup .aviation-map-report{width:max-content;max-width:100%;margin-top:9px}.popup .aviation-map-report p{margin:0 0 4px}.popup pre{white-space:pre;overflow-x:auto;overflow-y:auto;overflow-wrap:normal;word-break:normal;max-width:100%;max-height:none;width:max-content;background:#edf4fa;padding:9px;border-radius:8px;font:11px Consolas,monospace}.cat{padding:4px 6px;background:#eef4f8;border-radius:6px;font-weight:700;display:inline-block}
 .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11px;color:#496a81;margin:8px 0}.legend i{display:inline-block;border-radius:50%;width:10px;height:10px;margin-right:4px}
 @media(max-width:600px){header{padding:11px}header strong{font-size:18px}main{padding:8px}#largeMap{height:calc(100dvh - 315px);min-height:350px}}
 .leaflet-popup-content-wrapper{max-width:calc(100vw - 24px)}.leaflet-popup-content{max-width:calc(100vw - 64px)}
@@ -229,12 +229,23 @@ function obsClasses(item){
 
 let appMap=null, markers=null, data=null, sat=null;
 function formatOriginalTAF(raw){
- // Apenas os grupos de mudança iniciam linhas; nenhum grupo é partido a meio.
- return String(raw||'').replace(/\s+(?=(?:BECMG|TEMPO|FM\d{6}|PROB(?:30|40))(?:\s|$))/g,'\n');
+ // Partir apenas ANTES de cada grupo de mudança; PROB30/40 TEMPO
+ // constitui um único cabeçalho e deve ficar na mesma linha.
+ const tokens=String(raw||'').trim().replace(/\s+/g,' ').split(' ');
+ const lines=[];let line=[];
+ for(const token of tokens){
+  const isChange=/^(?:BECMG|TEMPO|FM\d{6}|PROB(?:30|40))$/.test(token);
+  const isProbTempo=token==='TEMPO'&&/^(?:PROB30|PROB40)$/.test(line[0]||'');
+  if(isChange&&!isProbTempo&&line.length){lines.push(line.join(' '));line=[];}
+  line.push(token);
+ }
+ if(line.length)lines.push(line.join(' '));
+ return lines.join('\n');
 }
-function reportBlock(label,item){if(!item?.raw?.trim())return '';
- const pre=document.createElement('pre');pre.textContent=item.raw;
- return '<p><b>'+label+'</b> · '+safe(aviationDateUTC(item.utc))+'</p><pre>'+safe(label.startsWith('TAF')?formatOriginalTAF(item.raw):item.raw)+'</pre>';
+function reportBlock(label,item){
+ if(!item?.raw?.trim())return '';
+ return '<section class="aviation-map-report"><p><b>'+safe(label)+'</b> · '+safe(aviationDateUTC(item.utc))+
+  '</p><pre>'+safe(label.startsWith('TAF')?formatOriginalTAF(item.raw):item.raw)+'</pre></section>';
 }
 function russianReportBlock(kind,item){
  if(!item?.raw?.trim())return '<p lang="ru">'+(kind.startsWith('TAF')?'Прогноз TAF недоступен.':'Сводка '+kind+' недоступна.')+'</p>';
@@ -264,7 +275,7 @@ function paintMarkers(){
      (!m?.raw?'<p>Sem METAR disponível</p>':'')+
      reportBlock('METAR',m)+(s?.raw?reportBlock('SPECI',s):'')+reportBlock(/\bAMD\b/.test(t?.raw||'')?'TAF AMD':'TAF',t)+
      (!m?.raw&&!t?.raw?'<p>Sem boletins disponíveis.</p>':'')+'</div>';
-  },{maxWidth:720});n++;
+  },{maxWidth:960});n++;
  }
  $('count').textContent=n+' aeródromos no mapa · '+(data?'boletins consultados':'a aguardar boletins');
 }
