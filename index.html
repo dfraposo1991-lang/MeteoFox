@@ -723,8 +723,10 @@ let ecmwfAt=0,ecmwfTimer=null,ecmwfReady=false;
 function ecmwfRender(i){
  ecmwfAt=(i+ECMWF_STEPS.length)%ECMWF_STEPS.length;
  const step=String(ECMWF_STEPS[ecmwfAt]).padStart(3,'0');
- $('ecmwfRain').src='./chuva_'+step+'.png';
- $('ecmwfGust').src='./rajadas_'+step+'.png';
+ // Cada ciclo tem endereços distintos: o navegador nunca reutiliza imagens do run anterior.
+ const runVersion=ecmwfCycleUTC?'?run='+encodeURIComponent(ecmwfCycleUTC):'';
+ $('ecmwfRain').src='./chuva_'+step+'.png'+runVersion;
+ $('ecmwfGust').src='./rajadas_'+step+'.png'+runVersion;
  $('ecmwfSlider').value=String(ecmwfAt);
  
  const runText='run ECMWF '+mfDateUTC(ecmwfCycleUTC);
