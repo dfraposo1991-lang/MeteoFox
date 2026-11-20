@@ -1,11 +1,11 @@
 {
-  "checked_utc": "2026-11-20T20:27:54.178982Z",
+  "checked_utc": "2026-11-20T20:28:49.711208Z",
   "ready": true,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
   "fog_layer": "mtg_fd:rgb_fog",
   "matching_time_utc": "2026-11-20T19:40:00Z",
-  "reason": "Fog WMS validation unavailable: dictionary update sequence element #0 has length 1; 2 is required",
+  "reason": "Fog WMS returned differing PNGs for two GeoColour UTC times; exact source acquisition stamps remain unproven",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
@@ -51,5 +51,13 @@
     "time_utc": "2026-11-20T19:40:00Z",
     "bytes": 37685,
     "sha256": "3008d4f9911e9e67ca30173c8795fc8ddc3a303c70b7ef8a1f8c692136c001aa"
+  },
+  "time_pair_test": {
+    "earlier_utc": "2026-11-20T19:30:00Z",
+    "later_utc": "2026-11-20T19:40:00Z",
+    "earlier_is_png": true,
+    "earlier_bytes": 37576,
+    "different_pixels": true,
+    "later_is_png": true
   }
 }
