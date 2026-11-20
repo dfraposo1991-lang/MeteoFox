@@ -54,7 +54,7 @@ async function actualSatelliteTimes(){
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.sliderDebounce=null;
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
@@ -68,17 +68,7 @@ class MeteoFoxSatellite{
   const a=add('a',this.attr,'EUMETView',{href:'https://view.eumetsat.int/',target:'_blank',rel:'noopener noreferrer'});a.style.color='#07518b';
   this.sat.onclick=()=>this.setSatellite(!this.satOn);this.radar.onclick=()=>this.setRadar(!this.radarOn);
   this.play.onclick=()=>this.togglePlay();this.back.onclick=()=>this.select(this.index-1);this.forward.onclick=()=>this.select(this.index+1);
-  this.slider.oninput=()=>{
-   this.stop();
-   // Arrastar rapidamente o cursor não deve lançar dezenas de conjuntos WMS.
-   // Mantém a imagem anterior até o utilizador estabilizar o prazo escolhido.
-   if(this.sliderDebounce)clearTimeout(this.sliderDebounce);
-   const requested=+this.slider.value;
-   this.sliderDebounce=setTimeout(()=>{
-    this.sliderDebounce=null;
-    this.select(requested);
-   },100);
-  };
+  this.slider.oninput=()=>{this.stop();this.select(+this.slider.value)};
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.stop();});
  }
  state(s){this.status.textContent=s;}
@@ -104,7 +94,6 @@ class MeteoFoxSatellite{
   if(!this.radarOn)return;this.refreshTimeline();
  }
  refreshTimeline(){
-  if(this.sliderDebounce){clearTimeout(this.sliderDebounce);this.sliderDebounce=null;}
   this.cancelTransition();
   const sat=this.satOn&&this.satKnown?this.satTimes:[];
   const rad=this.radarOn?this.radarFrames.map(x=>x.time*1000):[];
@@ -194,7 +183,7 @@ class MeteoFoxSatellite{
    else jobs.push({kind:'sat',layer:L.tileLayer.wms(WMS,{
     layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
     time:new Date(satTime).toISOString(),opacity:.8,zIndex:300,maxZoom:16,
-    keepBuffer:2,updateWhenIdle:true,updateWhenZooming:false,attribution:'© EUMETSAT / NASA'
+    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
    })});
   }
   if(this.radarOn){
@@ -202,7 +191,7 @@ class MeteoFoxSatellite{
    if(this.radarLayer?.meteofoxUrl===url&&this.map.hasLayer(this.radarLayer))jobs.push({kind:'radar',layer:this.radarLayer,reuse:true});
    else {const layer=L.tileLayer(url,{
     opacity:.66,zIndex:350,maxNativeZoom:10,maxZoom:18,
-    attribution:'Radar © RainViewer',keepBuffer:2,updateWhenIdle:true,updateWhenZooming:false
+    attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true
    });layer.meteofoxUrl=url;jobs.push({kind:'radar',layer});}
   }
   const pending=jobs.filter(x=>!x.reuse);
