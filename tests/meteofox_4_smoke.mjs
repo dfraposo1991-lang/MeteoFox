@@ -82,8 +82,16 @@ try{
  assert.equal(await togglePanel.getAttribute('aria-expanded'),'false');
  assert.equal(await controlPanel.isHidden(),true,'Painel deve recolher sem esconder botão');
  assert.equal(await togglePanel.isVisible(),true);
+ assert.equal((await togglePanel.innerText()).trim(),'+','Quadrado deve mostrar apenas o símbolo +');
+ assert.equal(await page.locator('#mapMiniTimeline').isVisible(),true,'Setas flutuantes disponíveis com painel recolhido');
  await togglePanel.click();
  assert.equal(await controlPanel.isVisible(),true,'Painel deve abrir novamente');
+ const opacityButton=page.getByRole('button',{name:/Opacidade/});
+ assert.equal(await opacityButton.count(),1,'Botão Opacidade claramente acessível');
+ await opacityButton.click();
+ assert.equal(await page.locator('.mf-opacity-controls').isHidden(),true);
+ await opacityButton.click();
+ assert.equal(await page.locator('.mf-opacity-controls').isVisible(),true);
  const satOpacity=page.getByRole('slider',{name:'Opacidade satélite'});
  const radarOpacity=page.getByRole('slider',{name:'Opacidade radar'});
  assert.equal(await satOpacity.count(),1);
@@ -116,6 +124,19 @@ try{
  // caso contrário refreshTimeline pode repor o último prazo durante o teste.
  await page.waitForFunction(()=>sat.satKnown && sat.radarFrames.length>0 && !sat.transition,{timeout:15000});
  await page.waitForTimeout(400);
+ // Avançar e recuar em modo minimizado, mantendo a sequência Meteosat/radar.
+ await togglePanel.click();
+ await page.waitForFunction(()=>!document.querySelector('#mapMiniForward').disabled);
+ const miniStarting=await page.evaluate(()=>sat.index);
+ await page.locator('#mapMiniBack').click();
+ const miniBackIndex=await page.evaluate(()=>sat.index);
+ assert.equal(miniBackIndex,Math.max(0,miniStarting-1),'Seta flutuante anterior deve recuar');
+ await page.locator('#mapMiniForward').click();
+ assert.equal(await page.evaluate(()=>sat.index),miniStarting,'Seta flutuante seguinte deve avançar');
+ await togglePanel.focus();
+ await page.keyboard.press('ArrowLeft');
+ assert.equal(await page.evaluate(()=>sat.index),Math.max(0,miniStarting-1),'Seta do teclado deve funcionar recolhido');
+ await togglePanel.click();
  const mapTimeline=page.locator('#satTools input[aria-label="Navegação temporal UTC"]');
  await mapTimeline.fill('0');
  await page.locator('#showLegends').focus();
