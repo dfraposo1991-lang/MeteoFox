@@ -361,7 +361,7 @@ try{
  });
  assert.ok(blendQuality.err<.005,'Mistura deve conservar opacidade com máscara complementar: '+JSON.stringify(blendQuality));
  const selective=await page.evaluate(()=>{
-  const M=window.MeteoFoxFogMask,coord={z:6,x:30,y:24};
+  const M=window.MeteoFoxFogMask,coord=L.point(30,24);coord.z=6;
   const day=Date.parse('2026-11-20T12:00:00Z'),night=Date.parse('2026-11-20T22:00:00Z');
   const orig=sat.satMode;sat.satMode='auto';
   const result={day:M.tileLighting(day,coord),night:M.tileLighting(night,coord),
