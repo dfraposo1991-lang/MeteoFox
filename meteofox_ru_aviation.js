@@ -60,6 +60,11 @@ function decodeGroup(t){
  }
  if((m=/^Q(\d{4})$/.exec(t)))return 'Давление QNH: '+Number(m[1])+' гПа';
  if((m=/^A(\d{4})$/.exec(t)))return 'Давление: '+num(Number(m[1])/100)+' дюйма рт. ст.';
+ if((m=/^(TX|TN)(M?\d{2})\/(\d{2})(\d{2})Z$/.exec(t))){
+  const temp=(m[2].startsWith('M')?'-':'')+Number(m[2].replace('M',''));
+  return (m[1]==='TX'?'Прогноз максимальной температуры: ':'Прогноз минимальной температуры: ')+
+   temp+' °C, '+m[3]+'-е число, '+m[4]+':00 UTC';
+ }
  if(t==='NSW')return 'Значимые погодные явления прекратятся';
  if(t==='VV///')return 'Вертикальная видимость не определена';
  if(t==='TX' || t==='TN')return null;
