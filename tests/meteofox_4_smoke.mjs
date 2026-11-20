@@ -319,9 +319,11 @@ try{
   const current=sat.satLayer;
   const newContainer=current?.getContainer();
   const oldStillMounted=sat.map.hasLayer(previous);
-  await new Promise(resolve=>setTimeout(resolve,410));
+  // O fade de 280 ms termina após o Promise da troca e dois RAF.
+  // Verificar a opacidade final só depois do fade, não no seu início.
+  await new Promise(resolve=>setTimeout(resolve,460));
   return {available:true,ok,oldStillOpaque,oldStillMounted,
-   newOpaque:getComputedStyle(newContainer).opacity==='1',
+   newOpaque:!!newContainer&&getComputedStyle(newContainer).opacity==='1',
    oldRemoved:!sat.map.hasLayer(previous)};
  });
  assert.equal(fadeCheck.available,true,'Camada Meteosat indisponível para teste');
