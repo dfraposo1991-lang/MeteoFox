@@ -22,7 +22,7 @@ try{
   const imageRequests=[];
   page.on('requestfailed',req=>failures.push({url:req.url(),reason:req.failure()?.errorText}));
   page.on('response',res=>{
-   if(/(?:chuva|rajadas|VIS)_\\d{3}\\.png/.test(res.url()))
+   if(/(?:chuva|rajadas|VIS)_\d{3}\.png/.test(res.url()))
     imageRequests.push({url:res.url(),status:res.status(),bytes:Number(res.headers()['content-length']||0)});
   });
   const started=Date.now();
@@ -43,7 +43,7 @@ try{
     loadEventMs:Math.round(nav?.loadEventEnd||0),
     resources:res.length,
     transferredBytes:res.reduce((n,r)=>n+(r.transferSize||0),0),
-    pngRequests:res.filter(r=>/\\.(?:png)(?:\\?|$)/.test(r.name)).length,
+    pngRequests:res.filter(r=>/\.(?:png)(?:\?|$)/.test(r.name)).length,
     pageWidth:document.documentElement.scrollWidth,
     viewportWidth:document.documentElement.clientWidth,
     rainSrc:document.querySelector('#ecmwfRain')?.getAttribute('src')||null,
