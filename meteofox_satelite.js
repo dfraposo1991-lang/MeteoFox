@@ -54,10 +54,11 @@ async function actualSatelliteTimes(){
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
+  this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
   this.back=add('button',host,'◀',{'type':'button','title':'Imagem anterior'});this.back.disabled=true;
   this.start=add('span',host,'—',{'class':'sat-clock'});
   this.slider=add('input',host,null,{type:'range',min:'0',max:'0',step:'1',value:'0','aria-label':'Navegação temporal UTC'});this.slider.disabled=true;this.slider.style.cssText='width:min(270px,40vw);accent-color:#07518b';
@@ -67,12 +68,13 @@ class MeteoFoxSatellite{
   this.attr=add('span',host,'Fonte: Meteosat MTG GeoColour RGB © EUMETSAT/NASA · Radar © RainViewer · dados de observação. ',{'class':'sat-attribution'});
   const a=add('a',this.attr,'EUMETView',{href:'https://view.eumetsat.int/',target:'_blank',rel:'noopener noreferrer'});a.style.color='#07518b';
   this.sat.onclick=()=>this.setSatellite(!this.satOn);this.radar.onclick=()=>this.setRadar(!this.radarOn);
-  this.play.onclick=()=>this.togglePlay();this.back.onclick=()=>this.select(this.index-1);this.forward.onclick=()=>this.select(this.index+1);
+  this.play.onclick=()=>this.togglePlay();this.speedButton.onclick=()=>this.cycleSpeed();this.back.onclick=()=>this.select(this.index-1);this.forward.onclick=()=>this.select(this.index+1);
   this.slider.oninput=()=>{this.stop();this.select(+this.slider.value)};
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)this.stop();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){this.stop();this.dropPrefetch();}});
+  map.on('zoomstart movestart',()=>this.dropPrefetch());
  }
  state(s){this.status.textContent=s;}
- async setSatellite(on){this.stop();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
+ async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='☁ Satélite: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
   if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
   // A camada é criada com TIME explícito após obter horários publicados.
   // Opacidade fixa a 80%; sem controlos adicionais.
@@ -82,7 +84,7 @@ class MeteoFoxSatellite{
   catch(e){if(this.satRequest!==satRequest)return;this.satKnown=false;this.satTimes=[];this.state('Satélite disponível sem horários confirmados ('+e.message+'). Não será animado com horas inventadas.');}
   if(this.satRequest===satRequest)this.refreshTimeline();
  }
- async setRadar(on){this.stop();this.cancelTransition();this.clearRadar();this.radarOn=on;this.radar.textContent='🌧 Radar: '+(on?'ligado':'desligado');this.radar.setAttribute('aria-pressed',String(on));
+ async setRadar(on){this.stop();this.dropPrefetch();this.cancelTransition();this.clearRadar();this.radarOn=on;this.radar.textContent='🌧 Radar: '+(on?'ligado':'desligado');this.radar.setAttribute('aria-pressed',String(on));
   if(!on){this.radarRequest=null;this.radarFrames=[];this.clearRadar();this.refreshTimeline();return;}
   this.state('A consultar horas de radar RainViewer…');
   const radarRequest=Symbol('radar');this.radarRequest=radarRequest;
@@ -94,6 +96,7 @@ class MeteoFoxSatellite{
   if(!this.radarOn)return;this.refreshTimeline();
  }
  refreshTimeline(){
+  this.dropPrefetch();
   this.cancelTransition();
   const sat=this.satOn&&this.satKnown?this.satTimes:[];
   const rad=this.radarOn?this.radarFrames.map(x=>x.time*1000):[];
@@ -122,6 +125,48 @@ class MeteoFoxSatellite{
  nearestRadar(time){if(!this.radarFrames.length)return null;let best=null,delta=Infinity;
   for(const f of this.radarFrames){const d=Math.abs(f.time*1000-time);if(d<delta){delta=d;best=f;}}
   return delta<=RADAR_MAX_DIFF?best:null;
+ }
+ // Pré-carregamento limitado: um único fotograma Meteosat seguinte, nunca
+ // a sequência inteira. A camada fica invisível enquanto recebe os mosaicos.
+ createSatLayer(time){
+  return L.tileLayer.wms(WMS,{
+   layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
+   time:new Date(time).toISOString(),opacity:.8,zIndex:300,maxZoom:16,
+   keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
+  });
+ }
+ dropPrefetch(keep=null){
+  if(this.prefetchTimer){clearTimeout(this.prefetchTimer);this.prefetchTimer=null;}
+  const item=this.prefetchSat;this.prefetchSat=null;
+  if(item&&item.layer!==keep&&this.map.hasLayer(item.layer))this.map.removeLayer(item.layer);
+ }
+ schedulePrefetch(){
+  if(!this.satOn||document.hidden||this.timeline.length<2)return;
+  const next=this.timeline[(this.index+1)%this.timeline.length];
+  const satTime=this.nearestSat(next);
+  if(satTime===null||satTime===this.satRenderedTime)return;
+  if(this.prefetchSat?.time===satTime)return;
+  this.dropPrefetch();
+  this.prefetchTimer=setTimeout(()=>{
+   this.prefetchTimer=null;
+   if(!this.satOn||document.hidden||this.nearestSat(this.timeline[(this.index+1)%this.timeline.length])!==satTime)return;
+   const layer=this.createSatLayer(satTime);
+   const item={time:satTime,layer,ready:false,error:false};
+   this.prefetchSat=item;
+   layer.on('tileerror',()=>{item.error=true;});
+   layer.on('load',()=>{item.ready=!item.error;});
+   layer.once('add',()=>{
+    const c=layer.getContainer();if(c){c.style.transition='none';c.style.opacity='0';}
+   });
+   layer.addTo(this.map);
+  },180);
+ }
+ cycleSpeed(){
+  this.speedIndex=(this.speedIndex+1)%this.speeds.length;
+  const value=this.speeds[this.speedIndex];
+  this.speedButton.textContent='Velocidade: '+value+'×';
+  this.speedButton.setAttribute('aria-label','Velocidade da animação: '+value+' vezes');
+  // Aplica-se no tick seguinte. Nunca acelera artificialmente imagens ainda incompletas.
  }
  // A transição só revela novas imagens quando TODOS os mosaicos das camadas ativas
  // estiverem prontos. As imagens anteriores mantêm-se visíveis até esse instante.
@@ -180,11 +225,16 @@ class MeteoFoxSatellite{
   const jobs=[];
   if(this.satOn){
    if(this.satLayer&&this.satRenderedTime===satTime&&this.map.hasLayer(this.satLayer))jobs.push({kind:'sat',layer:this.satLayer,reuse:true});
-   else jobs.push({kind:'sat',layer:L.tileLayer.wms(WMS,{
-    layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
-    time:new Date(satTime).toISOString(),opacity:.8,zIndex:300,maxZoom:16,
-    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
-   })});
+   else {
+    const cached=this.prefetchSat?.time===satTime?this.prefetchSat:null;
+    if(cached)this.dropPrefetch(cached.layer);
+    else this.dropPrefetch();
+    if(cached&&!cached.error)jobs.push({kind:'sat',layer:cached.layer,preloaded:cached});
+    else{
+     if(cached&&this.map.hasLayer(cached.layer))this.map.removeLayer(cached.layer);
+     jobs.push({kind:'sat',layer:this.createSatLayer(satTime)});
+    }
+   }
   }
   if(this.radarOn){
    const url=this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png';
@@ -250,12 +300,15 @@ class MeteoFoxSatellite{
       this.fadeTimer=setTimeout(()=>this.clearFades(),340);
      });
      this.state(info.join(' · '));
+     // Uma preparação em segundo plano só após estabilizar o fotograma atual.
+     this.schedulePrefetch();
      resolve(true);
     });
    };
    if(!pending.length){finish(true);return;}
-   let remaining=pending.length;
+   let remaining=pending.filter(x=>!x.preloaded?.ready).length;
    for(const x of pending){
+    if(x.preloaded?.ready)continue;
     let errors=0;
     x.layer.on('tileerror',()=>{errors++;});
     x.layer.once('load',()=>{
@@ -263,8 +316,10 @@ class MeteoFoxSatellite{
      remaining--;if(remaining===0)finish(true);
     });
    }
+   if(remaining===0){finish(true);return;}
    job.timeout=setTimeout(()=>finish(false),18000);
    for(const x of pending){
+    if(x.preloaded)continue;
     // Preparar o container invisível ANTES do primeiro mosaico aparecer.
     // O Leaflet gere o carregamento de cada tile com a opacidade habitual,
     // mas essa fragmentação fica totalmente oculta até o conjunto estar pronto.
@@ -295,7 +350,7 @@ class MeteoFoxSatellite{
    if(!this.playing)return;
    const i=this.index>=this.timeline.length-1?0:this.index+1;
    await this.select(i);
-   if(this.playing)this.frameTimeout=setTimeout(tick,1100);
+   if(this.playing)this.frameTimeout=setTimeout(tick,Math.round(1100/this.speeds[this.speedIndex]));
   };
   tick();
  }
