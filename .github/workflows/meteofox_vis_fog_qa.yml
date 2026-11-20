@@ -1,0 +1,35 @@
+name: MeteoFox | Avaliação visual VIS FOG Auto
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/meteofox_vis_fog_qa.py'
+      - '.github/workflows/meteofox_vis_fog_qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    name: Comparar imagens reais dia crepúsculo noite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar Pillow
+        run: python -m pip install pillow==11.3.0
+      - name: Obter imagens EUMETSAT e comparar mistura visual
+        run: python scripts/meteofox_vis_fog_qa.py
+      - name: Guardar painel e diagnóstico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteofox-vis-fog-comparacao
+          path: relatorios/vis_fog/
+          retention-days: 14
+          if-no-files-found: warn
