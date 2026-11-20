@@ -83,6 +83,7 @@ class MeteoFoxSatellite{
      this.satOpacity=value/100;
      for(const layer of [this.satLayer,this.fogLayer,this.prefetchSat?.layer,...(this.transition?.layers||[]).filter(x=>x.wmsParams)])
       if(layer)layer.setOpacity(this.satOpacity);
+     this.refreshAutoMasks();
     }else{
      this.radarOpacity=value/100;
      for(const layer of [this.radarLayer,...this.radarLayers,...(this.transition?.layers||[]).filter(x=>!x.wmsParams)])
@@ -202,11 +203,34 @@ class MeteoFoxSatellite{
  // Pré-carregamento limitado: um único fotograma Meteosat seguinte, nunca
  // a sequência inteira. A camada fica invisível enquanto recebe os mosaicos.
  createSatLayer(time){
-  return L.tileLayer.wms(WMS,{
-   layers:this.satMode==='fog'?FOG_LAYER:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
+  const mode=this.satMode;
+  const layer=L.tileLayer.wms(WMS,{
+   layers:mode==='fog'?FOG_LAYER:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
    time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:300,maxZoom:16,
    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
+  if(mode==='auto')layer.on('tileload',e=>this.applyAutoGeoMask(e.tile,e.coords,time));
+  layer.meteofoxAutoGeo=mode==='auto';
+  layer.meteofoxTime=time;
+  return layer;
+ }
+ applyAutoGeoMask(tile,coords,time){
+  const mask=window.MeteoFoxFogMask?.tileMask(time,coords,64,'geo',this.satOpacity);
+  if(!mask||!tile)return;
+  tile.style.webkitMaskImage='url("'+mask+'")';
+  tile.style.maskImage='url("'+mask+'")';
+  tile.style.webkitMaskSize='100% 100%';tile.style.maskSize='100% 100%';
+ }
+ refreshAutoMasks(){
+  // GeoColour necessita de nova máscara quando muda a opacidade.
+  // _tiles é a coleção de mosaicos carregados do Leaflet 1.9.
+  const candidates=[this.satLayer,this.prefetchSat?.layer,...(this.transition?.layers||[])];
+  for(const layer of new Set(candidates)){
+   if(!layer?.meteofoxAutoGeo||!layer._tiles)continue;
+   for(const entry of Object.values(layer._tiles))
+    if(entry?.loaded&&entry.el&&entry.coords)
+     this.applyAutoGeoMask(entry.el,entry.coords,layer.meteofoxTime);
+  }
  }
  createFogOverlay(time){
   const layer=L.tileLayer.wms(WMS,{
