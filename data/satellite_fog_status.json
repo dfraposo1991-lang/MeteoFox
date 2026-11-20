@@ -1,11 +1,11 @@
 {
-  "checked_utc": "2026-11-20T19:55:47.482103Z",
+  "checked_utc": "2026-11-20T20:27:54.178982Z",
   "ready": true,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
   "fog_layer": "mtg_fd:rgb_fog",
-  "matching_time_utc": "2026-11-20T18:40:00Z",
-  "reason": "MTG Fog RGB discovered; explicit-time WMS sample returned PNG; frame-by-frame availability still to validate",
+  "matching_time_utc": "2026-11-20T19:40:00Z",
+  "reason": "Fog WMS validation unavailable: dictionary update sequence element #0 has length 1; 2 is required",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
@@ -24,5 +24,32 @@
     "capabilities": 1,
     "sample_tiles": 1
   },
-  "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME"
+  "wms_dimensions": {
+    "mtg_fd:rgb_fog": [
+      {
+        "name": "time",
+        "raw_preview": ""
+      },
+      {
+        "name": "time",
+        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-20T20:00:00.000Z/PT10M"
+      }
+    ],
+    "mtg_fd:rgb_geocolour": [
+      {
+        "name": "time",
+        "raw_preview": ""
+      },
+      {
+        "name": "time",
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-20T20:00:00.000Z/PT10M"
+      }
+    ]
+  },
+  "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME",
+  "sample_test": {
+    "time_utc": "2026-11-20T19:40:00Z",
+    "bytes": 37685,
+    "sha256": "3008d4f9911e9e67ca30173c8795fc8ddc3a303c70b7ef8a1f8c692136c001aa"
+  }
 }
