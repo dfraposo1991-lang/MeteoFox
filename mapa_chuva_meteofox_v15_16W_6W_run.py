@@ -209,8 +209,18 @@ def criar_mapa():
         0.47, 0.975, "Precipitação acumulada [mm] | ECMWF IFS",
         ha="center", va="top", fontsize=15, color="#222222"
     )
-    # Run e validade não são desenhados no PNG: a interface apresenta
-    # ambos apenas por baixo de cada imagem, sem duplicação nem caixas.
+    # Única legenda, desenhada na faixa branca superior do PNG.
+    # Sem caixa, sombra ou ano: o site não acrescenta outra por cima.
+    fig.text(
+        0.028, 0.944, "run ECMWF " + legenda_utc(ciclo),
+        ha="left", va="top", fontsize=9, fontweight="normal",
+        color="#52677a", fontfamily="sans-serif"
+    )
+    fig.text(
+        0.96, 0.944, "válido " + legenda_utc(validade),
+        ha="right", va="top", fontsize=9, fontweight="normal",
+        color="#52677a", fontfamily="sans-serif"
+    )
     fig.savefig(SAIDA, dpi=165, facecolor="white", pad_inches=0.01)
     plt.close(fig)
 
