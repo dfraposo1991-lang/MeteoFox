@@ -14,6 +14,7 @@ const frames=Array.from({length:5},(_,i)=>current-(4-i)*600000);
 await page.route(/\/(chuva|rajadas)_\d{3}\.png(?:\?.*)?$/,respondPNG);
 await page.route('**/meteofox_ecmwf_manifest.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cycle_utc:mockCycleUTC,images:Object.fromEntries(Array.from({length:16},(_,i)=>'chuva_'+String(9+i*3).padStart(3,'0')+'.png').map(k=>[k,'ok']))})}));
 await page.route('**/api.rainviewer.com/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({host:'https://tilecache.rainviewer.com',radar:{past:frames.map((t,i)=>({time:Math.floor(t/1000),path:'/mock'+i}))}})}));
+await page.route('**/raw.githubusercontent.com/**/data/satellite_fog_status.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ready:true,checked_utc:new Date().toISOString(),geo_layer:'mtg_fd:rgb_geocolour',fog_layer:'mtg_fd:rgb_fog',matching_time_utc:new Date().toISOString()})}));
 await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString())})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation_valencia.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({
@@ -327,6 +328,32 @@ try{
  assert.equal(fadeCheck.oldStillMounted,true,'Não retirar a imagem antes de revelar a nova');
  assert.equal(fadeCheck.newOpaque,true,'Imagem nova deve terminar totalmente opaca');
  assert.equal(fadeCheck.oldRemoved,true,'Imagem antiga deve sair após a transição');
+ // Modo VIS / FOG Auto com máscara dia/noite: mantém GeoColour como fallback.
+ const solarMask=await page.evaluate(()=>{
+  const mask=window.MeteoFoxFogMask;
+  const noon=mask.sun(Date.parse('2026-06-21T12:00:00Z'));
+  const night=mask.sun(Date.parse('2026-06-21T00:00:00Z'));
+  return {loaded:!!mask,
+   daytime:mask.fogWeight(mask.elevation(39,-9,noon)),
+   nighttime:mask.fogWeight(mask.elevation(39,-9,night)),
+   png:mask.tileMask(Date.parse('2026-06-21T00:00:00Z'),{z:6,x:30,y:24}).startsWith('data:image/png;base64,')};
+ });
+ assert.equal(solarMask.loaded,true,'Módulo de máscara solar disponível');
+ assert.equal(solarMask.daytime,0,'Fog completamente oculto durante o dia');
+ assert.equal(solarMask.nighttime,1,'Fog totalmente visível durante a noite');
+ assert.equal(solarMask.png,true,'Máscara por mosaico renderizada');
+ const modes=await page.evaluate(async()=>{
+  const initial=sat.satMode;
+  await sat.cycleSatMode();
+  const fog=sat.satMode;
+  await sat.cycleSatMode();
+  const auto=sat.satMode;
+  await sat.cycleSatMode();
+  const restored=sat.satMode;
+  return {initial,fog,auto,restored,geoLayer:sat.satLayer?.wmsParams?.layers};
+ });
+ assert.deepEqual([modes.initial,modes.fog,modes.auto,modes.restored],['geo','fog','auto','geo'],'Sequência de modos deve preservar fallback');
+ assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','Voltar a GeoColour sem apagar fallback');
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
  const beforeZoom=await page.evaluate(()=>appMap.getZoom());
  await page.locator('#largeMap').hover();
