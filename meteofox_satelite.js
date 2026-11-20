@@ -54,11 +54,33 @@ async function actualSatelliteTimes(){
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=.8;this.radarOpacity=.66;
   this.sat=add('button',host,'☁ Satélite: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
   this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
+  const opacityControls=add('div',host,null,{'class':'mf-opacity-controls','role':'group','aria-label':'Opacidade das camadas'});
+  const makeOpacity=(name,initial,key)=>{
+   const label=add('label',opacityControls,null,{'class':'mf-opacity-item'});
+   const text=add('span',label,name+' '+initial+'%',{'class':'mf-opacity-label'});
+   const slider=add('input',label,null,{type:'range',min:'0',max:'100',step:'5',value:String(initial),'aria-label':'Opacidade '+name.toLowerCase()});
+   slider.oninput=()=>{
+    const value=Number(slider.value);
+    text.textContent=name+' '+value+'%';
+    if(key==='sat'){
+     this.satOpacity=value/100;
+     for(const layer of [this.satLayer,this.prefetchSat?.layer,...(this.transition?.layers||[]).filter(x=>x.wmsParams)])
+      if(layer)layer.setOpacity(this.satOpacity);
+    }else{
+     this.radarOpacity=value/100;
+     for(const layer of [this.radarLayer,...this.radarLayers,...(this.transition?.layers||[]).filter(x=>!x.wmsParams)])
+      if(layer)layer.setOpacity(this.radarOpacity);
+    }
+   };
+   return slider;
+  };
+  this.satOpacitySlider=makeOpacity('Satélite',80,'sat');
+  this.radarOpacitySlider=makeOpacity('Radar',66,'radar');
   this.back=add('button',host,'◀',{'type':'button','title':'Imagem anterior'});this.back.disabled=true;
   this.start=add('span',host,'—',{'class':'sat-clock'});
   this.slider=add('input',host,null,{type:'range',min:'0',max:'0',step:'1',value:'0','aria-label':'Navegação temporal UTC'});this.slider.disabled=true;this.slider.style.cssText='width:min(270px,40vw);accent-color:#07518b';
@@ -131,7 +153,7 @@ class MeteoFoxSatellite{
  createSatLayer(time){
   return L.tileLayer.wms(WMS,{
    layers:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',
-   time:new Date(time).toISOString(),opacity:.8,zIndex:300,maxZoom:16,
+   time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:300,maxZoom:16,
    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
  }
@@ -240,7 +262,7 @@ class MeteoFoxSatellite{
    const url=this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png';
    if(this.radarLayer?.meteofoxUrl===url&&this.map.hasLayer(this.radarLayer))jobs.push({kind:'radar',layer:this.radarLayer,reuse:true});
    else {const layer=L.tileLayer(url,{
-    opacity:.66,zIndex:350,maxNativeZoom:10,maxZoom:18,
+    opacity:this.radarOpacity,zIndex:350,maxNativeZoom:10,maxZoom:18,
     attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true
    });layer.meteofoxUrl=url;jobs.push({kind:'radar',layer});}
   }
