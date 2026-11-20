@@ -16,12 +16,49 @@ await page.route('**/meteofox_ecmwf_manifest.json*',route=>route.fulfill({status
 await page.route('**/api.rainviewer.com/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({host:'https://tilecache.rainviewer.com',radar:{past:frames.map((t,i)=>({time:Math.floor(t/1000),path:'/mock'+i}))}})}));
 await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString())})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
+await page.route('**/raw.githubusercontent.com/**/data/aviation_valencia.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({
+ checked_utc:new Date().toISOString(),source:'NOAA',metar:{LEVC:{raw:'METAR LEVC 201900Z 28012G20KT 9999 FEW030 18/10 Q1018',utc:new Date().toISOString()}},
+ taf:{LEVC:{raw:'TAF LEVC 201700Z 2018/2118 29010KT CAVOK TEMPO 2021/2101 4000 SHRA BKN020',utc:new Date().toISOString()}},speci:{}
+})}));
+const hourlyTimes=Array.from({length:186},(_,i)=>new Date(Math.floor(Date.now()/3600000)*3600000+(i-8)*3600000).toISOString().slice(0,16));
+const fakeHours={time:hourlyTimes,temperature_2m:hourlyTimes.map(()=>18),
+ relative_humidity_2m:hourlyTimes.map(()=>65),apparent_temperature:hourlyTimes.map(()=>19),
+ precipitation:hourlyTimes.map(()=>0.2),precipitation_probability:hourlyTimes.map(()=>20),
+ wind_speed_10m:hourlyTimes.map(()=>28),wind_direction_10m:hourlyTimes.map(()=>280),
+ wind_gusts_10m:hourlyTimes.map(()=>45),pressure_msl:hourlyTimes.map(()=>1018),
+ dew_point_2m:hourlyTimes.map(()=>10),cloud_cover:hourlyTimes.map(()=>45),
+ weather_code:hourlyTimes.map(()=>2)};
+const fakeDaily={time:Array.from({length:7},(_,i)=>new Date(Date.now()+i*86400000).toISOString().slice(0,10)),
+ temperature_2m_max:Array(7).fill(20),temperature_2m_min:Array(7).fill(13),
+ precipitation_sum:Array(7).fill(1.2),precipitation_probability_max:Array(7).fill(30),
+ uv_index_max:Array(7).fill(2),weather_code:Array(7).fill(2)};
+await page.route('**/api.open-meteo.com/v1/forecast?*',route=>{
+ const u=new URL(route.request().url());
+ if(u.searchParams.get('latitude')!=='39.4699'||u.searchParams.get('wind_speed_unit')!=='kmh')return route.continue();
+ route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({
+ latitude:39.4699,longitude:-0.3763,utc_offset_seconds:0,
+ current:{time:hourlyTimes[8],temperature_2m:18,apparent_temperature:19,
+ relative_humidity_2m:65,precipitation:0.2,wind_speed_10m:28,wind_gusts_10m:45},
+ hourly:fakeHours,daily:fakeDaily})});
+});
 await page.route(/tilecache\.rainviewer\.com/,respondPNG);
 await page.route(/tile\.openstreetmap\.org/,respondPNG);
 await page.route(/view\.eumetsat\.int/,respondPNG);
 
 try{
  await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
+ assert.equal(await page.locator('#place option[value="Valência"]').count(),1,'Valência deve existir na lista da Síntese');
+ await page.locator('#place').selectOption('Valência');
+ await page.waitForFunction(()=>document.querySelector('#wind')?.textContent?.includes('км/ч'),{timeout:15000});
+ assert.ok((await page.locator('#placeTitle').innerText()).includes('Валенсия'));
+ assert.ok((await page.locator('#summary').innerText()).includes('км/ч'));
+ assert.ok((await page.locator('#gust').innerText()).includes('км/ч'));
+ assert.ok((await page.locator('#hours').innerText()).includes('км/ч'));
+ assert.ok((await page.locator('#meteoLargeSvg').textContent()).includes('км/ч'));
+ assert.equal(await page.locator('#foxVerifiedButton').isVisible(),true,'Fox Verified deve existir também para Valência');
+ await page.locator('#place').selectOption('Lisboa');
+ await page.waitForFunction(()=>document.querySelector('#placeTitle')?.textContent?.includes('Lisboa'),{timeout:15000});
+ assert.equal(await page.locator('#overview .metric .k').first().innerText(),'Temperatura','Lisboa mantém português');
  assert.equal(await page.locator('[data-tab="precipGust"]').innerText(),'▤ Produtos');
  assert.equal(await page.locator('[data-tab="satRadar"]').count(),0);
  await page.locator('[data-tab="precipGust"]').click();
@@ -53,6 +90,21 @@ try{
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
  await page.goto('http://127.0.0.1:8765/mapa.html',{waitUntil:'domcontentloaded',timeout:45000});
  await page.waitForSelector('#satTools button',{timeout:25000});
+ await page.waitForFunction(()=>data?.metar?.LEVC?.raw&&data?.taf?.LEVC?.raw,{timeout:20000});
+ assert.equal(await page.locator('header #valencia').count(),1,'Atalho Valência no mapa');
+ const reports=await page.evaluate(()=>{
+  const find=(lat)=>{let html=null;markers.eachLayer(layer=>{
+   if(Math.abs(layer.getLatLng().lat-lat)<.0001){
+    const popup=layer.getPopup();const cb=popup.getContent();html=typeof cb==='function'?cb():cb;
+   }
+  });return html;};
+  return {levc:find(39.4893),lisboa:find(38.781)};
+ });
+ assert.ok(reports.levc?.includes('Аэропорт Валенсии'),'LEVC em russo');
+ assert.ok(reports.levc?.includes('Ветер'),'LEVC descodifica vento em russo');
+ assert.ok(reports.levc?.includes('Период прогноза'),'LEVC descodifica TAF');
+ assert.ok(!reports.levc?.includes('28012G20KT'),'LEVC não apresenta METAR bruto');
+ assert.ok(reports.lisboa?.includes('27007KT'),'Lisboa conserva boletim original');
  assert.equal(await page.locator('#mapLegends').isHidden(),true);
  const viewport=page.viewportSize(),mapBounds=await page.locator('#largeMap').boundingBox(),headerBounds=await page.locator('header').boundingBox();
  assert.ok(mapBounds.y>=headerBounds.y+headerBounds.height-3,'Mapa abaixo do cabeçalho');
