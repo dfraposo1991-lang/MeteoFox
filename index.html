@@ -39,8 +39,14 @@
 .ecmwf-field{min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:10px;overflow:hidden}
 .ecmwf-field h4{font-size:12px;color:var(--txt);padding:11px 13px;margin:0;border-bottom:1px solid var(--line)}
 .ecmwf-field img{display:block;width:100%;height:auto;background:#e7edf4}
+.mf-image-wrap{position:relative;min-width:0;isolation:isolate}
+.mf-image-wrap > img{display:block;width:100%;height:auto}
+.mf-image-wrap > .mf-image-times{position:absolute;top:4.2%;left:2.5%;right:2.5%;z-index:2;pointer-events:none}
+.vis-figure.mf-image-wrap{position:relative}
+.vis-figure.mf-image-wrap > .mf-image-times{top:2%;left:2%;right:2%}
+@media(max-width:650px){.mf-image-wrap > .mf-image-times{top:4%;left:2%;right:2%}}
 /* Run e validade em texto discreto, sem fundo nem sombreado. */
-.mf-image-times{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:7px 3px 1px;padding:0!important;background:none!important;background-color:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;color:var(--muted);font:400 11px/1.5 Inter,system-ui,sans-serif;letter-spacing:0}
+ .mf-image-times{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0;padding:0!important;background:none!important;background-color:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;color:var(--muted);font:400 11px/1.5 Inter,system-ui,sans-serif;letter-spacing:0}
 .mf-image-times span{display:inline;min-width:0;margin:0!important;padding:0!important;background:none!important;background-color:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;text-shadow:none!important;filter:none!important}
 .mf-image-times span:first-child{text-align:left}
 .mf-image-times span:last-child{text-align:right;margin-left:auto}
@@ -214,8 +220,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
       <input id="ecmwfSlider" aria-label="Prazo comum da chuva e rajadas" type="range" min="0" max="15" step="1" value="0">
     </div>
     <div class="ecmwf-fields">
-      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de precipitação"><span id="ecmwfRainRun">run —</span><span id="ecmwfRainValid">válido —</span></div></div>
-      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de rajadas"><span id="ecmwfGustRun">run —</span><span id="ecmwfGustValid">válido —</span></div></div>
+      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><div class="mf-image-wrap"><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de precipitação"><span id="ecmwfRainRun">run —</span><span id="ecmwfRainValid">válido —</span></div></div></div>
+      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><div class="mf-image-wrap"><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de rajadas"><span id="ecmwfGustRun">run —</span><span id="ecmwfGustValid">válido —</span></div></div></div>
     </div>
     <p id="ecmwfMessage" class="note" aria-live="polite" hidden></p>
   </div>
@@ -231,8 +237,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
      <button class="action" id="visSimNext" type="button">Seguinte ▶</button>
      <input id="visSimSlider" aria-label="Selecionar validade da previsão do satélite" type="range" min="0" max="15" step="1" value="0" disabled/>
     </div>
-   <div class="vis-figure"><img id="visSimImage" alt="Imagem de satélite visível simulada ECMWF" style="display:none"/></div>
-    <div class="mf-image-times" aria-label="Run e validade do satélite simulado"><span id="visSimRun">run —</span><span id="visSimValid">válido —</span></div>
+   <div class="vis-figure mf-image-wrap"><img id="visSimImage" alt="Imagem de satélite visível simulada ECMWF" style="display:none"/><div class="mf-image-times" aria-label="Run e validade do satélite simulado"><span id="visSimRun">run —</span><span id="visSimValid">válido —</span></div></div>
    <div id="visSimMessage" class="note" aria-live="polite" hidden></div>
    <p class="note">Fonte: ECMWF OpenCharts · imagens visíveis simuladas (não são imagens observadas nem Cloud RGB). © ECMWF · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. A disponibilidade depende da API do ECMWF.</p>
   </div>
