@@ -86,6 +86,29 @@ try{
  assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),expectedUrl('chuva','054'));
  assert.notEqual(await page.locator('#ecmwfRain').getAttribute('src'),priorURL,'Novo run não pode reutilizar URL anterior');
  await page.locator('[data-tab="aerodromes"]').click();
+ // Os TAF formam linhas apenas nas mudanças, sem partir palavras ou grupos.
+ const tafSpec=await page.evaluate(()=>{
+  const short='TAF LPPT 201200Z 2012/2112 25008KT CAVOK BECMG 2015/2017 27012KT TEMPO 2018/2022 4000 SHRA BKN018';
+  const long='TAF LPPR 201200Z 2012/2112 25008KT CAVOK PROB30 TEMPO 2018/2022 3000 TSRA BKN010CB FM210600 28015G25KT 9999 SCT030';
+  const formatted=[formatTAF(short),formatTAF(long)];
+  const sandbox=document.createElement('div');sandbox.className='aviation-results';
+  sandbox.style.cssText='position:absolute;left:-3000px;top:0;width:1200px';
+  sandbox.innerHTML=[short,long].map((raw,i)=>'<article class="aviation-card"><div class="aviation-bulletins">'+aviationReport('TAF',{raw,utc:new Date().toISOString()},'NOAA')+'</div></article>').join('');
+  document.body.append(sandbox);
+  const widths=[...sandbox.querySelectorAll('.aviation-card')].map(el=>el.getBoundingClientRect().width);
+  const subWidths=[...sandbox.querySelectorAll('.aviation-report')].map(el=>el.getBoundingClientRect().width);
+  const whiteSpace=getComputedStyle(sandbox.querySelector('pre.taf-formatted')).whiteSpace;
+  sandbox.remove();
+  return {formatted,widths,subWidths,whiteSpace};
+ });
+ assert.ok(tafSpec.formatted[0].includes('\nBECMG '),'BECMG inicia linha');
+ assert.ok(tafSpec.formatted[0].includes('\nTEMPO '),'TEMPO inicia linha');
+ assert.ok(tafSpec.formatted[1].includes('\nPROB30 TEMPO '),'PROB30 TEMPO permanece junto');
+ assert.ok(tafSpec.formatted[1].includes('\nFM210600 '),'FM inicia linha');
+ assert.equal(tafSpec.whiteSpace,'pre','A linha não pode partir a meio');
+ assert.ok(tafSpec.widths[0]<tafSpec.widths[1],'Cada cartão ajusta à largura do TAF: '+JSON.stringify(tafSpec.widths));
+ assert.ok(tafSpec.subWidths[0]<tafSpec.subWidths[1],'Caixas individuais seguem o comprimento do boletim');
+
  assert.equal(await page.locator('#aerodromes .metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
  await page.goto('http://127.0.0.1:8765/mapa.html',{waitUntil:'domcontentloaded',timeout:45000});
@@ -106,6 +129,26 @@ try{
  assert.ok(reports.levc?.includes('Прогноз максимальной температуры'),'LEVC descodifica temperatura maxima TAF');
  assert.ok(!reports.levc?.includes('28012G20KT'),'LEVC não apresenta METAR bruto');
  assert.ok(reports.lisboa?.includes('27007KT'),'Lisboa conserva boletim original');
+ const popupLayout=await page.evaluate(()=>{
+  const sample='TAF LPPT 201200Z 2012/2112 25008KT CAVOK BECMG 2015/2017 27012KT TEMPO 2018/2022 4000 SHRA BKN018';
+  const test=formatOriginalTAF(sample);
+  const probe=document.createElement('div');probe.className='popup';
+  probe.style.cssText='position:absolute;left:-5000px;top:0';
+  probe.innerHTML=reportBlock('TAF',{raw:sample,utc:new Date().toISOString()});
+  document.body.append(probe);
+  const popupRect=probe.getBoundingClientRect();
+  const block=probe.querySelector('.aviation-map-report');
+  const pre=probe.querySelector('pre');
+  const result={test,popupWidth:popupRect.width,blockWidth:block.getBoundingClientRect().width,
+    nowrap:getComputedStyle(pre).whiteSpace,maxHeight:getComputedStyle(pre).maxHeight};
+  probe.remove();
+  return result;
+ });
+ assert.ok(popupLayout.test.includes('\nBECMG ')&&popupLayout.test.includes('\nTEMPO '),'Mapa principal preserva regras TAF');
+ assert.equal(popupLayout.nowrap,'pre','TAF mapa não quebra linhas automaticamente');
+ assert.equal(popupLayout.maxHeight,'none','Sem cortes verticais no TAF');
+ assert.ok(popupLayout.popupWidth<680,'Popup curta não ocupa largura fixa 680px: '+JSON.stringify(popupLayout));
+
  assert.equal(await page.locator('#mapLegends').isHidden(),true);
  const viewport=page.viewportSize(),mapBounds=await page.locator('#largeMap').boundingBox(),headerBounds=await page.locator('header').boundingBox();
  assert.ok(mapBounds.y>=headerBounds.y+headerBounds.height-3,'Mapa abaixo do cabeçalho');
