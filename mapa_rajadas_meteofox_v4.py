@@ -223,14 +223,8 @@ def make_map():
     valid = cycle + timedelta(hours=step)
     fig.text(.455, .972, "Rajadas maximas 10 m [kt] | ECMWF IFS",
              ha="center", va="top", fontsize=15, color="#222222")
-    # Run à esquerda e validade à direita, sem fundos, contornos ou sombras.
-    fig.text(.025, .943, "run ECMWF " + legenda_utc(cycle),
-             ha="left", va="top", fontsize=9, fontweight="normal",
-             color="#52677a", fontfamily="sans-serif")
-    fig.text(.93, .943, "válido " + legenda_utc(valid),
-             ha="right", va="top", fontsize=9, fontweight="normal",
-             color="#52677a", fontfamily="sans-serif")
-
+    # Run e validade são mostrados exclusivamente sob a imagem no portal.
+    # Evitar texto duplicado dentro da carta PNG.
     fig.savefig(OUTPUT, dpi=165, facecolor="white", pad_inches=.01)
     plt.close(fig)
     print("Mapa criado:", OUTPUT)
