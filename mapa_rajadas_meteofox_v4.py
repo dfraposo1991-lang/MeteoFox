@@ -97,6 +97,14 @@ def read_fields(file_path):
 
     return campos
 
+_DIAS_PT = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo")
+
+
+def legenda_utc(data):
+    """Dia da semana, dia/mês e hora UTC, sem ano."""
+    return f"{_DIAS_PT[data.weekday()]}, {data:%d/%m}, {data:%H:%M} UTC"
+
+
 def make_map():
     if not GRIB.exists():
         raise FileNotFoundError(
@@ -215,10 +223,13 @@ def make_map():
     valid = cycle + timedelta(hours=step)
     fig.text(.455, .972, "Rajadas maximas 10 m [kt] | ECMWF IFS",
              ha="center", va="top", fontsize=15, color="#222222")
-    fig.text(.025, .943, f"Run: {cycle:%d/%m/%Y %H} UTC  |  +{step:02d} h",
-             ha="left", va="top", fontsize=10)
-    fig.text(.93, .943, f"Válido: {valid:%d/%m/%Y %H} UTC",
-             ha="right", va="top", fontsize=10)
+    # Run à esquerda e validade à direita, sem fundos, contornos ou sombras.
+    fig.text(.025, .943, "run ECMWF " + legenda_utc(cycle),
+             ha="left", va="top", fontsize=9, fontweight="normal",
+             color="#52677a", fontfamily="sans-serif")
+    fig.text(.93, .943, "válido " + legenda_utc(valid),
+             ha="right", va="top", fontsize=9, fontweight="normal",
+             color="#52677a", fontfamily="sans-serif")
 
     fig.savefig(OUTPUT, dpi=165, facecolor="white", pad_inches=.01)
     plt.close(fig)
