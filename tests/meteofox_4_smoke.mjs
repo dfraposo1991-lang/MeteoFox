@@ -74,6 +74,20 @@ try{
  assert.equal(await page.locator('#mapLegends').isHidden(),true);
  assert.equal(await page.locator('.metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('.metar-table:nth-child(2) tbody tr').count(),4);
+ const speedControl=page.getByRole('button',{name:/Velocidade da animação/});
+ assert.equal(await speedControl.count(),1,'Controlo de velocidade deve existir no mapa');
+ assert.equal(await speedControl.innerText(),'Velocidade: 1×');
+ await speedControl.click();
+ assert.equal(await speedControl.innerText(),'Velocidade: 1.5×');
+ await speedControl.click();
+ assert.equal(await speedControl.innerText(),'Velocidade: 2×');
+ // As restantes velocidades também devem estar disponíveis.
+ await speedControl.click();
+ assert.equal(await speedControl.innerText(),'Velocidade: 3×');
+ await speedControl.click();
+ assert.equal(await speedControl.innerText(),'Velocidade: 0.5×');
+ await speedControl.click();
+ assert.equal(await speedControl.innerText(),'Velocidade: 1×');
  await page.getByRole('button',{name:/Satélite: desligado/}).click();
  await page.getByRole('button',{name:/Radar: desligado/}).click();
  await page.waitForFunction(()=>{const slider=document.querySelector('#satTools input[type="range"]');return slider&&!slider.disabled&&Number(slider.max)>=1;},{timeout:15000});
@@ -138,6 +152,17 @@ try{
  assert.equal(afterZoom.radarOn,true);
  assert.equal(afterZoom.buffer,0,'Preservar configuração anterior de mosaicos');
  assert.equal(afterZoom.zoomUpdate,true,'Atualizar imagens durante o zoom');
+ // Preload de apenas um instante: não acumular mosaicos escondidos.
+ await page.waitForTimeout(900);
+ const prefetched=await page.evaluate(()=>({
+  count:sat.prefetchSat?1:0,
+  time:sat.prefetchSat?.time??null,
+  matched:sat.prefetchSat? sat.nearestSat(sat.timeline[(sat.index+1)%sat.timeline.length])===sat.prefetchSat.time : true,
+  currentStillVisible:!!sat.satLayer&&appMap.hasLayer(sat.satLayer)
+ }));
+ assert.ok(prefetched.count<=1,'Pré-carregamento limitado a um fotograma');
+ assert.equal(prefetched.matched,true,'Pré-carregar apenas instante seguinte');
+ assert.equal(prefetched.currentStillVisible,true,'Não ocultar o fotograma atual');
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
  console.log('PASS desktop: Produtos, 16 passos +9..+54 chuva+rajadas, independência VIS, METAR, mapa radar/Meteosat');
