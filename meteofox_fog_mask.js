@@ -31,11 +31,12 @@ function fogWeight(alt){
  const t=Math.max(0,Math.min(1,(3-alt)/9));
  return t*t*(3-2*t);
 }
-function tileMask(time,coords,dimension=64){
+function tileMask(time,coords,dimension=64,kind='fog',opacity=0.8){
  const z=coords?.z,x=coords?.x,y=coords?.y;
  if(!Number.isInteger(z)||!Number.isInteger(x)||!Number.isInteger(y)||
     z<0||z>19||!Number.isFinite(time))return '';
- const key=[time,z,x,y,dimension].join(':');
+ const a=Math.max(0,Math.min(1,Number(opacity)||0));
+ const key=[time,z,x,y,dimension,kind,Math.round(a*1000)].join(':');
  if(cache.has(key))return cache.get(key);
  const solar=sun(time);if(!solar)return '';
  const canvas=document.createElement('canvas');canvas.width=canvas.height=dimension;
@@ -49,7 +50,13 @@ function tileMask(time,coords,dimension=64){
    const longitude=(x+(i+.5)/dimension)/zoom*360-180;
    const k=4*(j*dimension+i);
    im.data[k]=im.data[k+1]=im.data[k+2]=0;
-   im.data[k+3]=Math.round(255*fogWeight(elevation(latitude,longitude,solar)));
+   const fog=fogWeight(elevation(latitude,longitude,solar));
+   // Exata composição alpha dos dois layers com opacidade global a:
+   // Fog: a*fog; GeoColour: a*(1-fog)/(1-a*fog).
+   // A máscara do Geo deve usar (1-fog)/(1-a*fog) para que
+   // a opacidade total e a proporção das cores sejam constantes.
+   const m=kind==='geo'?(1-fog)/Math.max(1e-8,1-a*fog):fog;
+   im.data[k+3]=Math.round(255*Math.max(0,Math.min(1,m)));
   }
  }
  ctx.putImageData(im,0,0);
