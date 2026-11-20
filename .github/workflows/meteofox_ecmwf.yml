@@ -29,8 +29,10 @@ on:
 permissions:
   contents: read
 
+# A geração pode durar bastante tempo e não deve ser cancelada por
+# publicações rápidas da interface. Só a publicação Pages partilha a fila.
 concurrency:
-  group: meteofox-pages
+  group: meteofox-ecmwf-geracao
   cancel-in-progress: false
 
 jobs:
@@ -264,6 +266,9 @@ jobs:
           retention-days: 1
 
   publicar:
+    concurrency:
+      group: meteofox-pages
+      cancel-in-progress: false
     name: Atualizar site MeteoFox
     needs: preparar
     runs-on: ubuntu-24.04
