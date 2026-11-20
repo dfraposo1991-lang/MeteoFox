@@ -117,6 +117,23 @@ try{
  assert.equal(fadeCheck.oldStillMounted,true,'Não retirar a imagem antes de revelar a nova');
  assert.equal(fadeCheck.newOpaque,true,'Imagem nova deve terminar totalmente opaca');
  assert.equal(fadeCheck.oldRemoved,true,'Imagem antiga deve sair após a transição');
+ // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
+ const beforeZoom=await page.evaluate(()=>appMap.getZoom());
+ await page.locator('#largeMap').hover();
+ for(let n=0;n<5;n++)await page.mouse.wheel(0,-210);
+ await page.waitForTimeout(1300);
+ const afterZoom=await page.evaluate(()=>({
+  zoom:appMap.getZoom(),satOn:sat.satOn,radarOn:sat.radarOn,
+  satVisible:!!sat.satLayer&&appMap.hasLayer(sat.satLayer),
+  radarVisible:!!sat.radarLayer&&appMap.hasLayer(sat.radarLayer),
+  buffer:sat.satLayer?.options.keepBuffer,
+  zoomUpdate:sat.satLayer?.options.updateWhenZooming
+ }));
+ assert.ok(afterZoom.zoom>=beforeZoom,'Zoom após scroll deve responder');
+ assert.equal(afterZoom.satOn,true);
+ assert.equal(afterZoom.radarOn,true);
+ assert.equal(afterZoom.buffer,2,'Guardar mosaicos vizinhos para reduzir piscar');
+ assert.equal(afterZoom.zoomUpdate,false,'Evitar pedidos por cada passo intermédio do zoom');
  const endText=await page.locator('#satTools .sat-clock').last().innerText();
  assert.ok(endText.includes('Z'),endText);
  console.log('PASS desktop: Produtos, 16 passos +9..+54 chuva+rajadas, independência VIS, METAR, mapa radar/Meteosat');
