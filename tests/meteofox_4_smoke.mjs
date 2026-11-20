@@ -271,7 +271,9 @@ try{
  assert.equal(await speedControl.innerText(),'Velocidade: 0.5×');
  await speedControl.click();
  assert.equal(await speedControl.innerText(),'Velocidade: 1×');
- await page.getByRole('button',{name:/Satélite: desligado/}).click();
+ assert.equal(await page.locator('#satTools button').filter({hasText:'RGB: GeoColour'}).count(),0,'Não deve existir seletor separado de RGB');
+ assert.equal(await page.locator('#satTools button').filter({hasText:'🌗 VIS / FOG Auto: desligado'}).count(),1,'Auto é o único botão de satélite');
+ await page.getByRole('button',{name:/VIS \/ FOG Auto: desligado/}).click();
  await page.getByRole('button',{name:/Radar: desligado/}).click();
  await page.waitForFunction(()=>{const slider=document.querySelector('#satTools input[aria-label="Navegação temporal UTC"]');return slider&&!slider.disabled&&Number(slider.max)>=1;},{timeout:15000});
  // Esperar a conclusão de ambas as consultas e da transição inicial;
@@ -389,34 +391,33 @@ try{
 
  const modes=await page.evaluate(async()=>{
   const initial=sat.satMode;
-  await sat.cycleSatMode();
-  const fog=sat.satMode;
-  await sat.cycleSatMode();
-  const auto=sat.satMode;
   const ready=await sat.select(sat.index);
   const fogLayer=sat.fogLayer;
-  const fogRendered=!!fogLayer&&sat.map.hasLayer(fogLayer);
-  const fogWms=fogLayer?.wmsParams?.layers;
-  const geoUTC=sat.satLayer?.wmsParams?.time;
-  const fogUTC=fogLayer?.wmsParams?.time;
-  const maskUTC=sat.fogRenderedTime;
-  const geoBaseUTC=sat.satRenderedTime;
-  const tileMasks=fogLayer?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
-  await sat.cycleSatMode();
-  const restored=sat.satMode;
-  return {initial,fog,auto,ready,fogRendered,fogWms,tileMasks,geoUTC,fogUTC,maskUTC,geoBaseUTC,restored,geoLayer:sat.satLayer?.wmsParams?.layers};
+  return {
+   initial,ready,button:sat.sat.textContent,hasSelector:!!sat.modeButton,
+   fogRendered:!!fogLayer&&sat.map.hasLayer(fogLayer),
+   fogWms:fogLayer?.wmsParams?.layers,
+   geoUTC:sat.satLayer?.wmsParams?.time,
+   fogUTC:fogLayer?.wmsParams?.time,
+   maskUTC:sat.fogRenderedTime,
+   geoBaseUTC:sat.satRenderedTime,
+   tileMasks:fogLayer?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0,
+   geoLayer:sat.satLayer?.wmsParams?.layers
+  };
  });
- assert.deepEqual([modes.initial,modes.fog,modes.auto,modes.restored],['geo','fog','auto','geo'],'Sequência de modos deve preservar fallback');
- assert.equal(modes.ready,true,'Fotograma experimental VIS/FOG Auto deve ficar preparado');
+ assert.equal(modes.initial,'auto','VIS / FOG Auto tem de ser o único modo predefinido');
+ assert.equal(modes.hasSelector,false,'Retirar botão de escolha GeoColour/Fog da interface');
+ assert.ok(modes.button.includes('VIS / FOG Auto: ligado'),'Botão único apresenta nome Auto');
+ assert.equal(modes.ready,true,'Fotograma VIS / FOG Auto deve ficar preparado');
  assert.equal(modes.fogRendered,true,'Modo híbrido deve montar camada MTG Fog');
  assert.equal(modes.fogWms,'mtg_fd:rgb_fog','Camada Fog verificada em WMS');
  assert.equal(modes.geoUTC,modes.fogUTC,'GeoColour e Fog têm de pedir o MESMO instante UTC ao WMS');
  assert.equal(Date.parse(modes.geoUTC),modes.geoBaseUTC,'Hora UTC pedida deve coincidir com a referência GeoColour');
- assert.equal(modes.maskUTC,modes.geoBaseUTC,'Máscara solar tem de usar o mesmo instante UTC');
+ assert.equal(modes.maskUTC,modes.geoBaseUTC,'Máscara solar usa o mesmo instante UTC');
  assert.ok(modes.tileMasks>=1,'Máscara solar aplicada pelo menos a um mosaico Fog');
+ assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','GeoColour mantém-se componente interna');
+
  const dualMasks=await page.evaluate(async()=>{
-  await sat.cycleSatMode(); // Geo -> Fog
-  await sat.cycleSatMode(); // Fog -> Auto
   const ok=await sat.select(sat.index);
   const geo=sat.satLayer,fog=sat.fogLayer;
   const maskedGeo=geo?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
@@ -432,15 +433,32 @@ try{
   sat.satOpacitySlider.value='80';
   sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
   sat.refreshAutoMasks=origRefresh;
-  await sat.cycleSatMode(); // Auto -> Geo
   return {ok,maskedGeo,maskedFog,refreshCount,changed:before!==after};
  });
- assert.equal(dualMasks.ok,true,'Nova seleção Auto deve carregar');
- assert.ok(dualMasks.maskedGeo>0&&dualMasks.maskedFog>0,'Geo e Fog devem ter máscaras complementares: '+JSON.stringify(dualMasks));
- assert.ok(dualMasks.refreshCount>=2,'Mudança de opacidade deve recalcular máscaras');
- assert.equal(dualMasks.changed,true,'Máscara Geo no crepúsculo deve depender da opacidade');
+ assert.equal(dualMasks.ok,true,'Modo Auto continua a carregar');
+ assert.ok(dualMasks.maskedGeo>0&&dualMasks.maskedFog>0,'Geo e Fog têm máscaras complementares: '+JSON.stringify(dualMasks));
+ assert.ok(dualMasks.refreshCount>=2,'Mudança de opacidade recalcula máscaras');
+ assert.equal(dualMasks.changed,true,'Máscara Geo no crepúsculo depende da opacidade');
 
- assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','Voltar a GeoColour sem apagar fallback');
+ // Falha do Fog não deve expor seletor adicional nem desligar o radar.
+ const fallback=await page.evaluate(async()=>{
+  sat.fallbackToGeoColour('teste controlado');
+  const safeMode=sat.satMode;
+  const button=sat.sat.textContent;
+  const radarStillOn=sat.radarOn;
+  await sat.setSatellite(false);
+  await sat.setSatellite(true);
+  const restoredMode=sat.satMode;
+  const restoredButton=sat.sat.textContent;
+  return {safeMode,button,radarStillOn,restoredMode,restoredButton,hasSelector:!!sat.modeButton};
+ });
+ assert.equal(fallback.safeMode,'geo','GeoColour é a alternativa interna');
+ assert.equal(fallback.radarStillOn,true,'O radar mantém-se quando Fog falha');
+ assert.equal(fallback.hasSelector,false,'Não apresentar seletor em modo de segurança');
+ assert.ok(fallback.button.includes('VIS / FOG Auto'),'O nome do botão mantém-se no fallback');
+ assert.equal(fallback.restoredMode,'auto','Ao reativar, voltar a tentar VIS / FOG Auto');
+ assert.ok(fallback.restoredButton.includes('VIS / FOG Auto: ligado'),'Botão mantém-se simples');
+
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
  const beforeZoom=await page.evaluate(()=>appMap.getZoom());
  await page.locator('#largeMap').hover();
