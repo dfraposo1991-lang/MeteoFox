@@ -42,9 +42,11 @@
 .mf-image-wrap{position:relative;min-width:0;isolation:isolate}
 .mf-image-wrap > img{display:block;width:100%;height:auto}
 .mf-image-wrap > .mf-image-times{position:absolute;top:4.2%;left:2.5%;right:2.5%;z-index:2;pointer-events:none}
+/* O VIS ECMWF já traz uma faixa branca na parte superior do PNG.
+   Colocar o texto nessa faixa, nunca sobre o conteúdo meteorológico. */
 .vis-figure.mf-image-wrap{position:relative}
-.vis-figure.mf-image-wrap > .mf-image-times{top:2%;left:2%;right:2%}
-@media(max-width:650px){.mf-image-wrap > .mf-image-times{top:4%;left:2%;right:2%}}
+.vis-figure.mf-image-wrap > .mf-image-times{top:1.1%;left:2%;right:2%;color:#52677a}
+@media(max-width:650px){.vis-figure.mf-image-wrap > .mf-image-times{top:1%;left:2%;right:2%;font-size:10px}}
 /* Run e validade em texto discreto, sem fundo nem sombreado. */
  .mf-image-times{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0;padding:0!important;background:none!important;background-color:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;filter:none!important;backdrop-filter:none!important;color:var(--muted);font:400 11px/1.5 Inter,system-ui,sans-serif;letter-spacing:0}
 .mf-image-times span{display:inline;min-width:0;margin:0!important;padding:0!important;background:none!important;background-color:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;text-shadow:none!important;filter:none!important}
@@ -220,8 +222,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
       <input id="ecmwfSlider" aria-label="Prazo comum da chuva e rajadas" type="range" min="0" max="15" step="1" value="0">
     </div>
     <div class="ecmwf-fields">
-      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><div class="mf-image-wrap"><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de precipitação"><span id="ecmwfRainRun">run —</span><span id="ecmwfRainValid">válido —</span></div></div></div>
-      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><div class="mf-image-wrap"><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"><div class="mf-image-times" aria-label="Run e validade da carta de rajadas"><span id="ecmwfGustRun">run —</span><span id="ecmwfGustValid">válido —</span></div></div></div>
+      <div class="ecmwf-field"><h4>Precipitação acumulada em 3 h · mm</h4><img id="ecmwfRain" alt="Mapa ECMWF de precipitação em 3 horas" loading="lazy"></div>
+      <div class="ecmwf-field"><h4>Rajadas máximas · kt</h4><img id="ecmwfGust" alt="Mapa ECMWF de rajadas" loading="lazy"></div>
     </div>
     <p id="ecmwfMessage" class="note" aria-live="polite" hidden></p>
   </div>
@@ -731,12 +733,7 @@ function ecmwfRender(i){
  $('ecmwfGust').src='./rajadas_'+step+'.png';
  $('ecmwfSlider').value=String(ecmwfAt);
  
- const runText='run ECMWF '+mfDateUTC(ecmwfCycleUTC);
- const validText='válido '+(ecmwfCycleUTC?mfDateUTC(Date.parse(ecmwfCycleUTC)+ECMWF_STEPS[ecmwfAt]*3600000):'—');
- for(const name of ['ecmwfRain','ecmwfGust']){
-  $(name+'Run').textContent=runText;
-  $(name+'Valid').textContent=validText;
- }
+ // Run e validade estão integrados no próprio PNG; não sobrepor HTML.
 }
 function ecmwfStop(){if(ecmwfTimer){clearInterval(ecmwfTimer);ecmwfTimer=null}$('ecmwfPlay').textContent='▶ Animar'}
 function ecmwfInit(){
