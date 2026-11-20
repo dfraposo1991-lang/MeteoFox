@@ -18,7 +18,7 @@ await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=
 await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation_valencia.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({
  checked_utc:new Date().toISOString(),source:'NOAA',metar:{LEVC:{raw:'METAR LEVC 201900Z 28012G20KT 9999 FEW030 18/10 Q1018',utc:new Date().toISOString()}},
- taf:{LEVC:{raw:'TAF LEVC 201700Z 2018/2118 29010KT CAVOK TEMPO 2021/2101 4000 SHRA BKN020',utc:new Date().toISOString()}},speci:{}
+ taf:{LEVC:{raw:'TAF LEVC 201700Z 2018/2118 29010KT CAVOK TX23/2112Z TN11/2106Z TEMPO 2021/2101 4000 SHRA BKN020',utc:new Date().toISOString()}},speci:{}
 })}));
 const hourlyTimes=Array.from({length:186},(_,i)=>new Date(Math.floor(Date.now()/3600000)*3600000+(i-8)*3600000).toISOString().slice(0,16));
 const fakeHours={time:hourlyTimes,temperature_2m:hourlyTimes.map(()=>18),
@@ -103,6 +103,7 @@ try{
  assert.ok(reports.levc?.includes('Аэропорт Валенсии'),'LEVC em russo');
  assert.ok(reports.levc?.includes('Ветер'),'LEVC descodifica vento em russo');
  assert.ok(reports.levc?.includes('Период прогноза'),'LEVC descodifica TAF');
+ assert.ok(reports.levc?.includes('Прогноз максимальной температуры'),'LEVC descodifica temperatura maxima TAF');
  assert.ok(!reports.levc?.includes('28012G20KT'),'LEVC não apresenta METAR bruto');
  assert.ok(reports.lisboa?.includes('27007KT'),'Lisboa conserva boletim original');
  assert.equal(await page.locator('#mapLegends').isHidden(),true);
