@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""MeteoFox: discover and safely validate a NIGHT MICROPHYSICS/Fog RGB WMS layer.
+Does not publish imagery or modify the established GeoColour animation.
+Never substitute stale imagery or fabricate satellite timestamps.
+"""
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+import json
+import re
+import xml.etree.ElementTree as ET
+
+WMS = 'https://view.eumetsat.int/geoserver/wms'
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / 'data' / 'satellite_fog_status.json'
+HEADERS = {'User-Agent': 'MeteoFox-fog-validation/1.0', 'Accept': 'application/xml,*/*'}
+NOW = datetime.now(timezone.utc)
+
+def fetch(url, limit=16_000_000, timeout=30):
+    with urlopen(Request(url, headers=HEADERS), timeout=timeout) as reply:
+        data = reply.read(limit + 1)
+        if len(data) > limit: raise ValueError('WMS response exceeds safety limit')
+        return data
+
+def local(tag):
+    return tag.rsplit('}', 1)[-1]
+
+def child(node, tag):
+    return next((c for c in node if local(c.tag) == tag), None)
+
+def descendants(root, tag):
+    return (n for n in root.iter() if local(n.tag) == tag)
+
+def direct_text(node, tag):
+    sub = child(node, tag)
+    return (sub.text or '').strip() if sub is not None else ''
+
+def parse_time(text):
+    """Accept explicit instants and WMS ISO-8601 start/end/period, sampling recent end."""
+    results = []
+    for part in (text or '').split(','):
+        token = part.strip()
+        if not token: continue
+        if '/' in token:
+            # Take listed end only; never invent intermediate times.
+            token = token.split('/')[1].strip()
+        if not re.match(r'^\d{4}-\d\d-\d\dT', token): continue
+        try:
+            d = datetime.fromisoformat(token.replace('Z','+00:00'))
+            if d.tzinfo is None: d = d.replace(tzinfo=timezone.utc)
+            results.append(d.astimezone(timezone.utc))
+        except ValueError: pass
+    return results
+
+def load_reference():
+    try:
+        data=json.loads((ROOT/'data'/'satellite_times.json').read_text(encoding='utf-8'))
+        times=[datetime.fromisoformat(s.replace('Z','+00:00')) for s in data.get('times_utc',[])]
+        return sorted(t for t in times if NOW-t <= timedelta(hours=4) and t<=NOW+timedelta(minutes=5))
+    except (ValueError, OSError): return []
+
+def main():
+    out={'checked_utc':NOW.isoformat().replace('+00:00','Z'),
+         'ready':False, 'source':'EUMETSAT EUMETView WMS GetCapabilities',
+         'geo_layer':'mtg_fd:rgb_geocolour','fog_layer':None,
+         'matching_time_utc':None,'reason':'Validation has not finished',
+         'candidate_layers':[], 'request_budget':{'capabilities':1,'sample_tiles':1}}
+    try:
+        params=urlencode({'service':'WMS','version':'1.1.1','request':'GetCapabilities'})
+        root=ET.fromstring(fetch(WMS+'?'+params,timeout=35))
+        candidates=[]
+        for node in descendants(root,'Layer'):
+            name=direct_text(node,'Name')
+            title=direct_text(node,'Title')
+            if not name: continue
+            title_low=title.lower()
+            name_low=name.lower()
+            if not (name.startswith('mtg_fd:') or name.startswith('msg_fes:')): continue
+            if not ('fog' in name_low or 'night' in name_low or
+                    'low cloud' in title_low or 'night microphysics' in title_low): continue
+            dimension=next((x for x in node if local(x.tag) in ('Extent','Dimension') and
+                            (x.get('name','').lower() == 'time')),None)
+            times=parse_time(dimension.text if dimension is not None else '')
+            last=max(times) if times else None
+            candidates.append({'name':name,'title':title,
+              'last_listed_utc':last.isoformat().replace('+00:00','Z') if last else None,
+              'is_mtg':name.startswith('mtg_fd:')})
+        out['candidate_layers']=candidates[:20]
+        if not candidates:
+            out['reason']='No MTG/European MSG Fog or Night Microphysics layer found in WMS capabilities'
+        else:
+            # Require the same satellite generation as existing GeoColour for geo-registration;
+            # never silently combine MSG+MTG, which have different sampling geometries.
+            mtg=[x for x in candidates if x['is_mtg']]
+            fresh=[x for x in mtg if x['last_listed_utc'] and
+              abs((NOW-datetime.fromisoformat(x['last_listed_utc'].replace('Z','+00:00'))).total_seconds())<=45*60]
+            reference=load_reference()
+            matching=None
+            selected=None
+            for c in fresh:
+                fog_time=datetime.fromisoformat(c['last_listed_utc'].replace('Z','+00:00'))
+                nearest=min(reference,key=lambda t:abs((t-fog_time).total_seconds())) if reference else None
+                if nearest and abs((nearest-fog_time).total_seconds())<=5*60:
+                    matching=nearest
+                    selected=c
+                    break
+            if not mtg:
+                out['reason']='Fog found only on another satellite generation; not aligned with MTG GeoColour'
+            elif not fresh:
+                out['reason']='No MTG Fog layer with a confirmed fresh UTC time dimension'
+            elif selected is None:
+                out['reason']='No Fog timestamp within five minutes of a confirmed MTG GeoColour frame'
+            else:
+                # Probe a single modest-sized tile; do not start a bulk download.
+                params=urlencode({
+                  'service':'WMS','version':'1.1.1','request':'GetMap',
+                  'layers':selected['name'],'styles':'','format':'image/png',
+                  'transparent':'true','srs':'EPSG:4326','bbox':'35,-11,45,4',
+                  'width':'128','height':'128',
+                  'time':selected['last_listed_utc']})
+                sample=fetch(WMS+'?'+params,limit=350_000,timeout=25)
+                if not sample.startswith(b'\x89PNG\r\n\x1a\n'):
+                    out['reason']='WMS did not return a valid PNG for the selected UTC time'
+                else:
+                    out['ready']=True
+                    out['fog_layer']=selected['name']
+                    out['matching_time_utc']=matching.isoformat().replace('+00:00','Z')
+                    out['reason']='Same-generation candidate, recent times and test tile verified'
+    except Exception as e:
+        out['reason']='Fog WMS validation unavailable: '+str(e)[:250]
+    OUTPUT.parent.mkdir(parents=True,exist_ok=True)
+    OUTPUT.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    print(json.dumps(out,ensure_ascii=False,indent=2))
+    return 0
+
+if __name__=='__main__': raise SystemExit(main())
