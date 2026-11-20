@@ -1,0 +1,27 @@
+{
+  "checked_utc": "2026-11-20T19:54:37.911038Z",
+  "ready": false,
+  "source": "EUMETSAT EUMETView WMS GetCapabilities",
+  "geo_layer": "mtg_fd:rgb_geocolour",
+  "fog_layer": null,
+  "matching_time_utc": null,
+  "reason": "No MTG Fog layer with a confirmed fresh UTC time dimension",
+  "candidate_layers": [
+    {
+      "name": "mtg_fd:rgb_fog",
+      "title": "Fog / Low Clouds RGB - MTG-I - 0 degree",
+      "last_listed_utc": null,
+      "is_mtg": true
+    },
+    {
+      "name": "msg_fes:rgb_fog",
+      "title": "Fog / Low Clouds RGB - MSG - 0 degree",
+      "last_listed_utc": null,
+      "is_mtg": false
+    }
+  ],
+  "request_budget": {
+    "capabilities": 1,
+    "sample_tiles": 1
+  }
+}
