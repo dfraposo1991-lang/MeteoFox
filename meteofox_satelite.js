@@ -8,6 +8,7 @@ const WMS='https://view.eumetsat.int/geoserver/wms';
 const SAT_MANIFEST='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_times.json';
 const LAYER='mtg_fd:rgb_geocolour';
 const FOG_LAYER='mtg_fd:rgb_fog';
+const BLANK_TILE='data:image/svg+xml,%3Csvg xmlns=%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width=%221%22 height=%221%22%2F%3E';
 const FOG_STATUS='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/satellite_fog_status.json';
 const RADAR_API='https://api.rainviewer.com/public/weather-maps.json';
 const RADAR_MAX_DIFF=8*60*1000;
@@ -209,7 +210,11 @@ class MeteoFoxSatellite{
    time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:300,maxZoom:16,
    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
-  if(mode==='auto')layer.on('tileload',e=>this.applyAutoGeoMask(e.tile,e.coords,time));
+  if(mode==='auto'){
+   const original=layer.getTileUrl.bind(layer);
+   layer.getTileUrl=coords=>window.MeteoFoxFogMask?.tileLighting(time,coords)==='night'?BLANK_TILE:original(coords);
+   layer.on('tileload',e=>this.applyAutoGeoMask(e.tile,e.coords,time));
+  }
   layer.meteofoxAutoGeo=mode==='auto';
   layer.meteofoxTime=time;
   return layer;
@@ -238,6 +243,8 @@ class MeteoFoxSatellite{
    time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:325,maxZoom:16,
    keepBuffer:0,updateWhenIdle:true,attribution:'Fog RGB © EUMETSAT'
   });
+  const original=layer.getTileUrl.bind(layer);
+  layer.getTileUrl=coords=>window.MeteoFoxFogMask?.tileLighting(time,coords)==='day'?BLANK_TILE:original(coords);
   layer.on('tileload',e=>{
    const url=window.MeteoFoxFogMask?.tileMask(time,e.coords);
    if(url&&e.tile){
