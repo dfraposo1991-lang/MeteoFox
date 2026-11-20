@@ -108,6 +108,29 @@ try{
  assert.equal(tafSpec.whiteSpace,'pre','A linha não pode partir a meio');
  assert.ok(tafSpec.widths[0]<tafSpec.widths[1],'Cada cartão ajusta à largura do TAF: '+JSON.stringify(tafSpec.widths));
  assert.ok(tafSpec.subWidths[0]<tafSpec.subWidths[1],'Caixas individuais seguem o comprimento do boletim');
+ // Mesma estação: o bloco METAR deve ser mais curto que o TAF e
+ // nem o cartão exterior nem o <pre> podem impor largura uniforme.
+ const pairLayout=await page.evaluate(()=>{
+  const metar='METAR LPBJ 201800Z 19005KT 9999 FEW020 16/10 Q1017';
+  const taf='TAF LPBJ 201701Z 2018/2118 15005KT 9999 FEW030 BECMG 2110/2112 18012KT SCT015 BKN025 TEMPO 2112/2118 20015G25KT TEMPO 2116/2118 3000 RADZ BR SCT008 BKN014';
+  const sandbox=document.createElement('div');
+  sandbox.className='aviation-results';
+  sandbox.style.cssText='position:absolute;left:-3000px;top:0;width:1200px';
+  sandbox.innerHTML='<article class="aviation-card"><div class="aviation-bulletins">'+
+   aviationReport('METAR',{raw:metar,utc:new Date().toISOString()},'OGIMET')+
+   aviationReport('TAF',{raw:taf,utc:new Date().toISOString()},'NOAA')+'</div></article>';
+  document.body.append(sandbox);
+  const sections=[...sandbox.querySelectorAll('.aviation-report')];
+  const out={widths:sections.map(x=>Math.round(x.getBoundingClientRect().width)),
+   preScrolls:sections.map(x=>x.querySelector('pre').scrollWidth),
+   contents:[...sections].map(x=>x.querySelector('pre').innerText),
+   cardWidth:Math.round(sandbox.querySelector('.aviation-card').getBoundingClientRect().width)};
+  sandbox.remove();return out;
+ });
+ console.log('TAF/METAR REALISTIC WIDTHS',JSON.stringify(pairLayout));
+ assert.ok(pairLayout.widths[0]+50<pairLayout.widths[1],'METAR deve ocupar caixa visivelmente menor do que TAF');
+ assert.ok(pairLayout.contents[1].includes('\nBECMG ')&&pairLayout.contents[1].includes('\nTEMPO '),'TAF preserva cabeçalhos de grupos');
+
 
  assert.equal(await page.locator('#aerodromes .metar-table:first-child tbody tr').count(),7);
  assert.equal(await page.locator('#aerodromes .metar-table:nth-child(2) tbody tr').count(),4);
@@ -148,6 +171,7 @@ try{
  assert.equal(popupLayout.nowrap,'pre','TAF mapa não quebra linhas automaticamente');
  assert.equal(popupLayout.maxHeight,'none','Sem cortes verticais no TAF');
  assert.ok(popupLayout.popupWidth<680,'Popup curta não ocupa largura fixa 680px: '+JSON.stringify(popupLayout));
+ console.log('MAP POPUP DIMENSIONS',JSON.stringify(popupLayout));
 
  assert.equal(await page.locator('#mapLegends').isHidden(),true);
  const viewport=page.viewportSize(),mapBounds=await page.locator('#largeMap').boundingBox(),headerBounds=await page.locator('header').boundingBox();
