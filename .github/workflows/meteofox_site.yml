@@ -30,6 +30,7 @@ on:
       - 'data/aviation_valencia.json'
       - 'laboratorio.html'
       - 'meteofox_conveccao.js'
+      - 'calcular_conveccao_metpy.py'
       - 'fox-verified-skewt.html'
       - 'produtos_experimentais/fox_verified_skewt_previsoes.json'
       - 'produtos_experimentais/radiossondagem_lisboa.json'
@@ -54,6 +55,11 @@ jobs:
     steps:
       - name: Obter os ficheiros do MeteoFox
         uses: actions/checkout@v4
+
+      - name: Instalar MetPy para índices termodinâmicos
+        run: python -m pip install 'metpy>=1.6,<2' 'numpy>=1.26,<3'
+      - name: Calcular índices a partir do ECMWF versionado
+        run: python calcular_conveccao_metpy.py
 
       - name: Reutilizar os mapas ja publicados
         run: |
@@ -111,6 +117,10 @@ jobs:
           target = public / 'produtos_experimentais'
           target.mkdir(exist_ok=True)
           shutil.copy2(source_data, target / 'previsao_ecmwf.json')
+          thermo = Path('produtos_experimentais/conveccao_termodinamica.json')
+          diagnostics = json.loads(thermo.read_text(encoding='utf-8'))
+          assert diagnostics['run_utc'] == raw['run_utc'] and len(diagnostics['soundings']) == len(raw['soundings']), 'Diagnósticos MetPy não correspondem ao run ECMWF'
+          shutil.copy2(thermo, target / 'conveccao_termodinamica.json')
           print('Incluído: laboratório e dados ECMWF reais validados')
           # O Fox Verified Skew-T nunca recebe dados inventados: JSON opcionais.
           for name in ('fox_verified_skewt_previsoes.json', 'radiossondagem_lisboa.json'):
