@@ -170,7 +170,7 @@ jobs:
                   raise
 
           (public / '.nojekyll').write_text('', encoding='utf-8')
-          assert len(list(public.glob('*.png'))) == 32, 'Faltam mapas ECMWF'
+          assert len([p for p in public.glob('*.png') if p.name.startswith(('chuva_', 'rajadas_'))]) == 32, 'Faltam mapas ECMWF'
           print('Site pronto: index.html, mapa.html, meteofox_satelite.js, animacao e 32 mapas ECMWF')
           PY
 
