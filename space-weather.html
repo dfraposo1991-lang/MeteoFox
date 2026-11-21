@@ -28,7 +28,13 @@ h1{font-size:19px;color:#173e5c;margin:5px 0 5px}
 @media(max-width:650px){header{padding:15px 12px}.brand strong{font-size:20px}main{padding:13px}.tabs{flex-wrap:wrap}}
 </style><style id="mf-space-products">
 .sw-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:14px 0}.sw-product{min-width:0}.sw-product .sw-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sw-product h3{margin:0}.sw-product img{display:block;width:100%;max-height:420px;object-fit:contain;background:#e9f2f8;border:1px solid #d4e3ef;border-radius:8px}.sw-product .sw-error{display:none}.sw-product.failed img{display:none}.sw-product.failed .sw-error{display:block;color:#8b4c27;background:#fff7e8;padding:14px;border-radius:8px}.sw-product a{font-size:11px;color:#07518b}.sw-chart{height:180px;display:flex;align-items:end;gap:2px;border-bottom:1px solid #cbdde9;margin:12px 0 6px;overflow:hidden}.sw-chart i{flex:1;min-width:2px;background:#187eaa;border-radius:2px 2px 0 0}.sw-chart .negative{background:#c26c60}.sw-meta{font-size:11px;color:#627d94}.sw-alerts{display:grid;gap:8px;max-height:360px;overflow:auto}.sw-alert{border:1px solid #d4e3ef;background:#f7fafc;padding:12px;border-radius:9px}.sw-alert b{display:block;color:#174b6e;font-size:12px}.sw-alert pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 Consolas,monospace;color:#344e60;max-height:150px;overflow:auto}.sw-alert small{color:#607e94}.sw-map-note{font-size:11px;color:#607e94;margin:9px 0 0}@media(max-width:850px){.sw-products{grid-template-columns:1fr}}
-</style></head><body>
+</style><style>
+html.embedded body{padding:0;margin:0;background:transparent}
+html.embedded header{display:none!important}
+html.embedded main{max-width:none;margin:0;padding:0 2px}
+html.embedded main>h1,html.embedded main>.intro{display:none}
+html.embedded .foot{margin-bottom:0}
+</style><script>if(new URLSearchParams(location.search).get('embedded')==='1')document.documentElement.classList.add('embedded');</script></head><body>
 <header><a class="brand" href="./index.html"><img src="./MeteoFox_logo_v1.svg" onerror="this.onerror=null;this.src='./meteofox-logo.png'" alt="Logótipo MeteoFox"><span><strong>MeteoFox</strong><small>Centro de Análise Meteorológica</small></span></a><a class="back" href="./index.html">← Página principal</a></header>
 <main><h1>☀ Space Weather</h1><p class="intro muted">Monitorização solar e geomagnética · Produtos para aviação e operações com satélites</p>
 <div class="tabs" role="tablist" aria-label="Área operacional"><button id="tab-aviation" role="tab" aria-controls="aviation" aria-selected="true">✈ Aviation</button><button id="tab-satellites" role="tab" aria-controls="satellites" aria-selected="false">🛰 Satellites</button><button class="refresh" id="reload" type="button">↻ Atualizar indicadores</button></div>
@@ -147,4 +153,10 @@ else for(const a of messages){const box=document.createElement('div');box.classN
 }
 
 $('reload').onclick=()=>{load();loadProducts()};load();loadProducts();
+if(window.parent!==window&&document.documentElement.classList.contains('embedded')){
+ const sendHeight=()=>window.parent.postMessage({type:'meteofox-space-weather-height',height:Math.ceil(document.documentElement.scrollHeight)},location.origin);
+ addEventListener('load',sendHeight);
+ new ResizeObserver(sendHeight).observe(document.body);
+ sendHeight();
+}
 </script></body></html>
