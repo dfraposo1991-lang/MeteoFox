@@ -1,0 +1,28 @@
+name: MeteoFox | Auditoria termodinâmica MetPy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'laboratorio.html'
+      - 'validar_skewt_metpy.py'
+      - 'produtos_experimentais/previsao_ecmwf.json'
+      - '.github/workflows/validar_skewt_metpy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  metpy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar MetPy e NumPy
+        run: python -m pip install 'metpy>=1.6,<2' 'numpy>=1.26,<3'
+      - name: Comparar motor MeteoFox com MetPy
+        run: python validar_skewt_metpy.py
