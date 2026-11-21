@@ -170,20 +170,20 @@
     {
       "station": "08521",
       "name": "MADEIRA / LPMA",
-      "latest_utc": "2026-11-21T15:00:00Z",
+      "latest_utc": "2026-11-21T16:00:00Z",
       "periods": {
         "12": {
           "mm": 0.5,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-21T15:00:00Z"
+          "utc": "2026-11-21T16:00:00Z"
         }
       }
     },
     {
       "station": "08524",
       "name": "Porto Santo",
-      "latest_utc": "2026-11-21T15:00:00Z",
+      "latest_utc": "2026-11-21T16:00:00Z",
       "periods": {
         "12": {
           "mm": 2.0,
@@ -258,5 +258,5 @@
       }
     }
   ],
-  "checked_utc": "2026-11-21T15:53:28.405263Z"
+  "checked_utc": "2026-11-21T16:54:19.561004Z"
 }
