@@ -42,7 +42,7 @@ cases={k:synthetic(k) for k in ('stable','unstable','inversion')}
 datafile=ROOT/'produtos_experimentais/previsao_ecmwf.json'
 if datafile.exists():
     data=json.loads(datafile.read_text(encoding='utf-8'))
-    for sounding in data.get('soundings',[])[:3]:
+    for sounding in data.get('soundings',[]):
         for city,rows in sounding.get('cities',{}).items():
             cases[f"ECMWF_{city}_{sounding['step_h']}h"]=rows
 failures=[]
@@ -56,11 +56,13 @@ for name,rows in cases.items():
         parcel_delta=abs(parcel500-b['parcel500'])
         print(f"{name}: LCL Δ={lcl_delta:.1f} hPa, parcela 500 Δ={parcel_delta:.1f} °C, "
               f"CAPE MF={a['cape']} MetPy={b['cape']:.0f}, CIN MF={a['cin']} MetPy={b['cin']:.0f}")
-        if lcl_delta>15 or parcel_delta>3: failures.append(f'{name}: trajetória/LCL divergente')
-        if a['cape'] is not None and b['cape']>100 and abs(a['cape']-b['cape'])>max(200,.4*b['cape']):
+        if lcl_delta>10 or parcel_delta>2: failures.append(f'{name}: trajetória/LCL divergente')
+        if a['cape'] is not None and abs(a['cape']-b['cape'])>max(150,.3*abs(b['cape'])):
             failures.append(f'{name}: CAPE divergente')
-        if a['cin'] is not None and abs(b['cin'])>50 and abs(a['cin']-b['cin'])>max(150,.6*abs(b['cin'])):
+        if a['cin'] is not None and abs(a['cin']-b['cin'])>max(100,.5*abs(b['cin'])):
             failures.append(f'{name}: CIN divergente')
+        if a['cape'] is not None and (a['cape']<0 or a['lfc'] is None or a['el'] is None): failures.append(f'{name}: CAPE sem LFC/EL')
+        if a['cin'] is not None and a['cin']>0: failures.append(f'{name}: CIN positivo')
         if any(not math.isfinite(x['t']) or not math.isfinite(x['buoy']) for x in parcel):
             failures.append(f'{name}: valores não finitos')
     except Exception as exc: failures.append(f'{name}: {exc}')
