@@ -61,7 +61,7 @@ class MeteoFoxSatellite{
   // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
   this.bordersLayer=null;this.bordersRequest=null;
   this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
-  this.bordersPane.style.zIndex='450';
+  this.bordersPane.style.zIndex='650';
   this.bordersPane.style.pointerEvents='none';
   this.sat=add('button',host,'🌗 VIS / FOG Auto: desligado',{'type':'button','aria-pressed':'false','title':'Satélite automático: GeoColour de dia e Fog RGB à noite; GeoColour de segurança'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
@@ -145,9 +145,12 @@ class MeteoFoxSatellite{
    return r.json();
   }).then(data=>{
    if(!data||data.type!=='FeatureCollection'||!Array.isArray(data.features))throw Error('GeoJSON inválido');
+   // O mapa usa preferCanvas:true; sem um renderer SVG explícito,
+   // o GeoJSON pode acabar num canvas do overlayPane, atrás do satélite.
+   const borderRenderer=L.svg({pane:'meteofoxCountryBorders',padding:.5});
    this.bordersLayer=L.geoJSON(data,{
-    pane:'meteofoxCountryBorders',interactive:false,
-    style:{color:'#f2f7fa',weight:1.05,opacity:.72,fill:false,lineCap:'round',lineJoin:'round'}
+    pane:'meteofoxCountryBorders',renderer:borderRenderer,interactive:false,
+    style:{color:'#ffffff',weight:1.45,opacity:.9,fill:false,lineCap:'round',lineJoin:'round'}
    });
    if(this.satOn)this.bordersLayer.addTo(this.map);
   }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
