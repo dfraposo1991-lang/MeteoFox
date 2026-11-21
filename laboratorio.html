@@ -71,7 +71,7 @@ body.embedded .heading .sub{color:#617c90}
 <section id="panelS" class="panel active">
 <div class="card">
 <div class="toolbar"><label for="city">Localidade</label><select id="city"><option>Porto</option><option selected>Lisboa</option><option>Beja</option></select>
-<label for="step">Prazo de previsão</label><button type="button" id="skewPrev" aria-label="Prazo anterior">◀</button><input type="range" min="0" max="15" value="0" step="1" id="skewSlider" aria-label="Prazo de previsão Skew-T"><button type="button" id="skewNext" aria-label="Prazo seguinte">▶</button><select id="step" aria-label="Selecionar prazo"></select></div>
+<label for="step">Prazo de previsão</label><button type="button" id="skewPrev" aria-label="Prazo anterior">◀</button><input type="range" min="0" max="15" value="0" step="1" id="skewSlider" aria-label="Prazo de previsão Skew-T"><button type="button" id="skewNext" aria-label="Prazo seguinte">▶</button></div>
 <h2>Perfil vertical previsto · Skew-T / log-P + Hodógrafo</h2>
 
 <div class="sounding-layout">
@@ -150,22 +150,22 @@ function initialize(data){
  const steps=data.soundings;
  if(steps.some((r,i)=>r.step_h!==9+i*3||!r.cities||!['Porto','Lisboa','Beja'].every(city=>Array.isArray(r.cities[city])&&r.cities[city].length>=8)))throw Error('Níveis ou prazos Skew-T incompletos');
  $('status').hidden=true;
- $('step').replaceChildren();
- steps.forEach((r,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent='+'+r.step_h+' h · '+formatValid(r.valid_utc);$('step').append(option)});
+
+
  function selectIndex(index){
   index=Math.max(0,Math.min(steps.length-1,index));
-  $('skewSlider').value=String(index);$('step').value=String(index);
+  $('skewSlider').value=String(index);
   const record=steps[index],city=$('city').value;
   drawSkew(record.cities[city],city);
    drawHodograph(record.cities[city]);
 
 
  }
- $('step').addEventListener('change',()=>selectIndex(Number($('step').value)));
+
  $('skewSlider').addEventListener('input',()=>selectIndex(Number($('skewSlider').value)));
- $('city').addEventListener('change',()=>selectIndex(Number($('step').value)));
- $('skewPrev').addEventListener('click',()=>selectIndex(Number($('step').value)-1));
- $('skewNext').addEventListener('click',()=>selectIndex(Number($('step').value)+1));
+ $('city').addEventListener('change',()=>selectIndex(Number($('skewSlider').value)));
+ $('skewPrev').addEventListener('click',()=>selectIndex(Number($('skewSlider').value)-1));
+ $('skewNext').addEventListener('click',()=>selectIndex(Number($('skewSlider').value)+1));
  selectIndex(0);
 }
 
