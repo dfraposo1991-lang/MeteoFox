@@ -347,9 +347,7 @@ h1{font-size:19px;color:#173e5c;margin:5px 0 5px}
   <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR e TAF da NOAA; SPECI apenas se existir. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
  </div>
 </section>
-<section id="spaceWeather" class="section" aria-label="Space Weather">
- <div class="heading"><div><h2>☀ Space Weather</h2><div class="sub">Monitorização solar e geomagnética · NOAA SWPC · Horas UTC</div></div></div>
- <div class="space-native"><div class="tabs" role="tablist" aria-label="Área operacional"><button id="tab-aviation" role="tab" aria-controls="aviation" aria-selected="true">✈ Aviation</button><button id="tab-satellites" role="tab" aria-controls="satellites" aria-selected="false">🛰 Satellites</button><button class="refresh" id="reload" type="button">↻ Atualizar indicadores</button></div>
+<section id="spaceWeather" class="section" aria-label="Space Weather"><div class="heading"><div><h2>☀ Space Weather</h2><div class="sub">Monitorização solar e geomagnética · NOAA SWPC · Horas UTC</div></div></div><div class="space-native"><div class="tabs" role="tablist" aria-label="Área operacional"><button id="tab-aviation" role="tab" aria-controls="aviation" aria-selected="true">✈ Aviation</button><button id="tab-satellites" role="tab" aria-controls="satellites" aria-selected="false">🛰 Satellites</button><button class="refresh" id="reload" type="button">↻ Atualizar indicadores</button></div>
 <div class="status" id="status" role="status" aria-live="polite">A aguardar atualização…</div>
 <div class="grid" aria-label="Indicadores comuns">
 <div class="card"><div class="label">Kp · último valor</div><div class="value" id="kp">—</div><div class="small" id="kpTime">NOAA SWPC · índice planetário</div></div>
@@ -383,8 +381,7 @@ h1{font-size:19px;color:#173e5c;margin:5px 0 5px}
 <div class="card sw-product"><h3>Fluxo de eletrões GOES</h3><div id="electronChart" class="sw-chart" aria-label="Fluxo de eletrões GOES"></div><div id="electronChartInfo" class="sw-meta">A obter dados NOAA…</div><a href="https://www.swpc.noaa.gov/products/goes-electron-flux" target="_blank" rel="noopener">Produto oficial e interpretação</a></div>
 </div></section>
 <div class="notice"><strong>Informação de apoio — não certificada para uso operacional.</strong> Os indicadores são recolhidos de produtos públicos NOAA SWPC e podem sofrer atrasos ou indisponibilidade. As mensagens e decisões operacionais devem ser verificadas nas fontes oficiais. Valores ausentes são apresentados como «—», nunca substituídos por dados simulados.</div>
-<div class="foot">MeteoFox · Space Weather · Dados: NOAA SWPC · Referências: ICAO / ESA · Horas em UTC</div></div>
-</section>
+<div class="foot">MeteoFox · Space Weather · Dados: NOAA SWPC · Referências: ICAO / ESA · Horas em UTC</div></div></section>
 <section id="synop" class="section">
  <div class="heading"><div><h2>Precipitação observada · SYNOP</h2><div class="sub">Estações civis e militares · PT e Ilhas · horas UTC</div></div><span class="status" id="synopStatus">Por consultar</span></div>
 
