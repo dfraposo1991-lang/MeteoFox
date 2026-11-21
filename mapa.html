@@ -42,8 +42,8 @@ header{flex:none;position:relative;z-index:1100}
 @media(max-width:480px){header{padding:8px 10px}header strong{font-size:17px}header span{font-size:10px}.map-overlays .toolbar button{font-size:11px;padding:6px 8px}#satTools button{font-size:11px;padding:6px 8px}.map-overlays{max-height:54%}}
 </style><style id="meteofox-header-controls-v2">
 .map-header{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;background:#f7fbff;color:#16466f;padding:11px 16px;box-shadow:0 1px 6px #103b5b1f;flex-wrap:wrap}
-.map-brand{display:flex;align-items:center;gap:11px 12px;min-width:0;color:#124b7d;text-decoration:none;flex-wrap:wrap}.map-brand-logo{display:block;width:clamp(120px,16vw,159px);max-width:100%;height:auto;aspect-ratio:159 / 36;object-fit:contain;flex:0 1 auto;border:0!important;outline:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important}
-.map-brand strong{font-size:22px;white-space:nowrap}
+.map-brand{display:flex;align-items:center;gap:12px;min-width:0;color:#124b7d;text-decoration:none;flex-wrap:nowrap}.map-brand-icon{display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;border-radius:11px;overflow:hidden}.map-brand-logo{display:block;width:44px;height:44px;object-fit:contain;flex:none;border:0!important;outline:0!important;border-radius:10px!important;box-shadow:none!important;filter:none!important}
+.map-brand strong{font-size:22px;white-space:nowrap;margin:0}
 .map-brand span{font-size:12px;font-weight:500;color:#57758f;opacity:1;white-space:nowrap}
 .header-buttons{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
 .header-buttons button{border:1px solid #bcd9ed;background:#fff;color:#165385;border-radius:9px;padding:9px 12px;font:650 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
@@ -93,7 +93,7 @@ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:700 15px Inter,
 #satTools .mf-opacity-item input{width:83px}
 }
 </style><style id="meteofox-ru-lecv">.popup .ru-decoded-report{white-space:pre-line;line-height:1.6;overflow-wrap:anywhere;background:#eef4fa;border:1px solid #d6e4ed;border-radius:8px;padding:10px;max-height:290px;overflow:auto}.popup .ru-disclaimer{font-size:11px;color:#59778b;line-height:1.45}</style></head><body>
-<header class="map-header"><a class="map-brand" href="./index.html" title="Voltar à página principal do MeteoFox"><img class="map-brand-logo" src="./MeteoFox_logo_v1.svg" onerror="this.onerror=null;this.src='./meteofox-logo.png'" width="159" height="36" alt="Logótipo original MeteoFox"><strong>MeteoFox</strong><span>Mapa meteorológico · Portugal e Ilhas</span></a><nav class="header-buttons" aria-label="Regiões e ferramentas do mapa">
+<header class="map-header"><a class="map-brand" href="./index.html" title="Voltar à página principal do MeteoFox"><span class="map-brand-icon"><img class="map-brand-logo" src="./MeteoFox_icon_v1_solid.svg" onerror="this.onerror=null;this.src='./meteofox-logo.png'" width="44" height="44" alt=""></span><strong>MeteoFox</strong><span>Mapa meteorológico</span></a><nav class="header-buttons" aria-label="Regiões e ferramentas do mapa">
 <button id="all" type="button">Portugal e Ilhas</button><button id="valencia" type="button">Valência</button><button id="mainland" type="button">Continente</button><button id="islands" type="button">Açores</button><button id="madeira" type="button">Madeira</button><button id="refresh" type="button">↻ Atualizar boletins</button><button id="showLegends" type="button" aria-expanded="false" aria-controls="mapLegends">☰ Legendas METAR e Voo</button>
 </nav></header>
 <main id="mapMain">
