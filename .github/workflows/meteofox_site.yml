@@ -5,7 +5,7 @@ on:
   # O GITHUB_TOKEN usado no refresh das sondagens não desencadeia um novo push workflow.
   # workflow_run publica o JSON atualizado assim que a geração termina com sucesso.
   workflow_run:
-    workflows: ["MeteoFox Labs | Atualizar meteograma e sondagens"]
+    workflows: ["MeteoFox Labs | Atualizar meteograma e sondagens", "MeteoFox | Radiossondagem observada Lisboa 12Z"]
     types: [completed]
   push:
     branches: [main]
@@ -29,6 +29,9 @@ on:
       - 'meteofox_ru_aviation.js'
       - 'data/aviation_valencia.json'
       - 'laboratorio.html'
+      - 'fox-verified-skewt.html'
+      - 'produtos_experimentais/fox_verified_skewt_previsoes.json'
+      - 'produtos_experimentais/radiossondagem_lisboa.json'
       - 'produtos_experimentais/previsao_ecmwf.json'
       - '.github/workflows/meteofox_site.yml'
       - '.github/workflows/meteofox_ecmwf.yml'
@@ -63,7 +66,7 @@ jobs:
           public.mkdir(exist_ok=True)
 
           # Publicar todas as paginas e o JavaScript do mapa grande.
-          for name in ('index.html', 'mapa.html', 'space-weather.html', 'meteofox_satelite.js', 'meteofox_fog_mask.js', 'meteofox_ru_aviation.js', 'laboratorio.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
+          for name in ('index.html', 'mapa.html', 'space-weather.html', 'meteofox_satelite.js', 'meteofox_fog_mask.js', 'meteofox_ru_aviation.js', 'laboratorio.html', 'fox-verified-skewt.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
               source = Path(name)
               assert source.is_file() and source.stat().st_size > 0, f'{name} nao encontrado ou vazio'
               if name.endswith('.html'):
@@ -108,6 +111,15 @@ jobs:
           target.mkdir(exist_ok=True)
           shutil.copy2(source_data, target / 'previsao_ecmwf.json')
           print('Incluído: laboratório e dados ECMWF reais validados')
+          # O Fox Verified Skew-T nunca recebe dados inventados: JSON opcionais.
+          for name in ('fox_verified_skewt_previsoes.json', 'radiossondagem_lisboa.json'):
+              source = Path('produtos_experimentais') / name
+              if source.is_file():
+                  json.loads(source.read_text(encoding='utf-8'))
+                  shutil.copy2(source, target / name)
+                  print('Incluído:', name)
+              else:
+                  print('Ainda sem dados reais:', name)
 
           base = 'https://dfraposo1991-lang.github.io/MeteoFox/'
           # Aceitar o conjunto previamente publicado enquanto o primeiro novo run
