@@ -21,6 +21,8 @@ on:
       - 'meteofox_meteograma.css'
       - 'mapa.html'
       - 'meteofox-logo.png'
+      - 'MeteoFox_logo_v1.svg'
+      - 'favicon.ico'
       - 'meteofox_satelite.js'
       - 'meteofox_fog_mask.js'
       - 'meteofox_ru_aviation.js'
@@ -73,6 +75,11 @@ jobs:
           assert logo.is_file() and logo.stat().st_size > 1000, 'Logótipo MeteoFox em falta'
           shutil.copy2(logo, public / logo.name)
           print('Incluído: meteofox-logo.png')
+          for asset_name in ('MeteoFox_logo_v1.svg', 'favicon.ico'):
+              asset = Path(asset_name)
+              if asset.is_file():
+                  shutil.copy2(asset, public / asset.name)
+                  print('Incluído:', asset.name)
 
           # Observações necessárias ao Fox Verified.
           observations = public / 'data'
