@@ -27,7 +27,13 @@ footer{font-size:11px;color:var(--muted);line-height:1.6;margin-top:13px;padding
 <section class="panel"><h2>Previsão ECMWF · 12Z</h2><p id="forecastMeta">Run e validade UTC</p><iframe id="forecast" title="Skew-T previsto ECMWF Lisboa às 12 UTC"></iframe></section>
 <section class="panel"><h2>Radiossondagem observada · Lisboa 08579 · 12Z</h2><p id="observedMeta">Observação real TEMP FM35</p><iframe id="observed" title="Skew-T observado Lisboa às 12 UTC"></iframe></section>
 </div>
-<footer>Comparação apenas quando previsão e observação têm exatamente a mesma validade nominal de 12 UTC. O ECMWF deve ter sido emitido antes dessa validade. A resolução vertical do modelo é inferior à da radiossondagem. Dados observados: University of Wyoming / estação 08579; os diagnósticos termodinâmicos são calculados pelo MeteoFox e continuam experimentais. Nunca são substituídos por perfis fictícios.</footer>
+<div id="ipmaFallback" hidden>
+  <div class="columns">
+    <section class="panel"><h2>Previsão ECMWF · Lisboa 12 UTC</h2><p id="fallbackForecastMeta">Selecionar previsão arquivada</p><iframe id="fallbackForecast" title="Previsão ECMWF Lisboa 12 UTC"></iframe></section>
+    <section class="panel"><h2>Observação · tefigramas oficiais IPMA</h2><p>Fonte oficial IPMA. Selecionar Lisboa e a mesma data/hora da previsão na página do IPMA. A correspondência de datas ainda não é automática.</p><iframe id="ipmaPage" title="Página oficial de tefigramas IPMA" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://www.ipma.pt/pt/otempo/obs.sondagens/"></iframe><p>Se o IPMA impedir a incorporação, <a href="https://www.ipma.pt/pt/otempo/obs.sondagens/" target="_blank" rel="noopener noreferrer">abrir o tefigrama no IPMA</a>.</p></section>
+  </div>
+</div>
+<footer>Comparação apenas quando previsão e observação têm exatamente a mesma validade nominal de 12 UTC. O ECMWF deve ter sido emitido antes dessa validade. A resolução vertical do modelo é inferior à da radiossondagem. Dados observados: University of Wyoming / estação 08579 quando existe perfil bruto; alternativa visual: página oficial IPMA, sem correspondência automática de data; os diagnósticos termodinâmicos são calculados pelo MeteoFox e continuam experimentais. Nunca são substituídos por perfis fictícios.</footer>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -36,19 +42,36 @@ async function read(path){
  if(!r.ok)throw Error(path+' (HTTP '+r.status+')');
  return r.json();
 }
+function showIpmaAlternative(forecasts){
+ const valid=forecasts.filter(x=>x.valid_utc?.endsWith('12:00:00Z')&&Date.parse(x.run_utc)<Date.parse(x.valid_utc))
+   .sort((a,b)=>b.valid_utc.localeCompare(a.valid_utc));
+ if(!valid.length)throw Error('Sem previsão ECMWF arquivada para as 12 UTC.');
+ $('date').replaceChildren(...valid.map(x=>{const option=document.createElement('option');option.value=x.valid_utc;option.textContent=x.valid_utc.slice(0,10)+' · 12 UTC';return option;}));
+ const render=()=>{
+  const entry=valid.find(x=>x.valid_utc===$('date').value);
+  if(!entry)return;
+  $('fallbackForecastMeta').textContent='Run '+entry.run_utc+' · válido '+entry.valid_utc+' · verificar manualmente a mesma data no IPMA';
+  $('fallbackForecast').src='./laboratorio.html?embedded=1&verify=forecast&valid='+encodeURIComponent(entry.valid_utc);
+ };
+ $('date').addEventListener('change',render);
+ $('ipmaFallback').hidden=false;
+ $('state').textContent='Modo visual IPMA: a previsão ECMWF está arquivada, mas a observação deve ser selecionada no IPMA para a mesma data e 12 UTC. Sem dados brutos não há verificação numérica automática.';
+ render();
+}
 Promise.allSettled([
  read('./produtos_experimentais/fox_verified_skewt_previsoes.json'),
  read('./produtos_experimentais/radiossondagem_lisboa.json')
 ]).then(results=>{
  const [fc,obs]=results;
- if(fc.status!=='fulfilled'||obs.status!=='fulfilled'){
-  const missing=[fc,obs].map((r,i)=>r.status==='rejected'?(i===0?'Arquivo de previsões 12Z':'Radiossondagem observada 12Z'):null).filter(Boolean);
-  throw Error('Ainda sem '+missing.join(' e ')+'. Os dados reais estão a ser recolhidos automaticamente.');
+ if(fc.status!=='fulfilled')throw Error('Arquivo de previsões ECMWF 12Z indisponível. Não é possível comparar datas.');
+ if(obs.status!=='fulfilled'){
+  showIpmaAlternative(fc.value.forecasts||[]);
+  return;
  }
  const observed=new Map((obs.value.soundings||[]).map(x=>[x.valid_utc,x]));
  const matches=(fc.value.forecasts||[]).filter(x=>observed.has(x.valid_utc)&&Date.parse(x.run_utc)<Date.parse(x.valid_utc))
   .sort((a,b)=>b.valid_utc.localeCompare(a.valid_utc));
- if(!matches.length)throw Error('Ainda não existe um dia com previsão ECMWF arquivada antes das 12Z e radiossondagem real das mesmas 12Z. A comparação ficará disponível quando ambos os dados coincidirem.');
+ if(!matches.length){showIpmaAlternative(fc.value.forecasts||[]);return;}
  $('date').replaceChildren(...matches.map(x=>{const o=document.createElement('option');o.value=x.valid_utc;o.textContent=x.valid_utc.slice(0,10)+' · 12 UTC';return o}));
  function show(valid){
   const f=matches.find(x=>x.valid_utc===valid),o=observed.get(valid);
