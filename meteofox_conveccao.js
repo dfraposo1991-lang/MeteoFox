@@ -5,7 +5,7 @@
 'use strict';
 const KT=0.514444444, TO_KT=1/KT;
 const finite=Number.isFinite;
-function interpolate(a,b,z){const f=(z-a.z)/(b.z-a.z);return {z,u:a.u+(b.u-a.u)*f,v:a.v+(b.v-a.v)*f};}
+function interpolate(a,b,z){const f=(z-a.z)/(b.z-a.z);return {z,u:a.u+(b.u-a.u)*f,v:a.v+(b.v-a.v)*f,p:a.p+(b.p-a.p)*f};}
 function at(points,z){
  if(!points.length||z<points[0].z-1||z>points[points.length-1].z+1)return null;
  for(let i=1;i<points.length;i++)if(points[i-1].z<=z&&z<=points[i].z)return interpolate(points[i-1],points[i],z);
@@ -33,17 +33,25 @@ function analyze(group,thermo){
   const z=height(p);
   if(!finite(z)||!finite(speed)||!finite(dir)||speed<0||dir<0||dir>360)return null;
   const rad=dir*Math.PI/180;
-  return {z,u:-speed*Math.sin(rad)*KT,v:-speed*Math.cos(rad)*KT};
+  return {z,p,u:-speed*Math.sin(rad)*KT,v:-speed*Math.cos(rad)*KT};
  }).filter(Boolean).sort((a,b)=>a.z-b.z);
  const unique=pts.filter((p,i)=>!i||p.z-pts[i-1].z>1);
  if(unique.length<3||unique[0].z>200)return {error:'Vento perto da superfície insuficiente'};
  // O primeiro nível disponível é a origem aproximada da camada AGL.
  const z0=unique[0].z,wind=unique.map(p=>({...p,z:p.z-z0}));
  const bulk=top=>{const a=at(wind,0),b=at(wind,top);return a&&b?Math.hypot(b.u-a.u,b.v-a.v)*TO_KT:null};
- const mean=(bottom,top)=>{const u=integrate(wind,top,(a,b)=>((a.u+b.u)/2)*(b.z-a.z)),v=integrate(wind,top,(a,b)=>((a.v+b.v)/2)*(b.z-a.z));if(u===null||v===null)return null;
-  if(bottom===0)return {u:u/top,v:v/top};
-  const ul=integrate(wind,bottom,(a,b)=>((a.u+b.u)/2)*(b.z-a.z)),vl=integrate(wind,bottom,(a,b)=>((a.v+b.v)/2)*(b.z-a.z));
-  return ul===null||vl===null?null:{u:(u-ul)/(top-bottom),v:(v-vl)/(top-bottom)};
+ // MetPy Bunkers: médias de vento ponderadas pela pressão, não pela altura.
+ const mean=(bottom,top)=>{
+  const a=at(wind,bottom),b=at(wind,top);
+  if(!a||!b)return null;
+  const section=[a,...wind.filter(p=>p.z>bottom&&p.z<top),b];
+  let su=0,sv=0,weight=0;
+  for(let i=1;i<section.length;i++){
+   const x=section[i-1],y=section[i],dp=x.p-y.p;
+   if(!(dp>0))return null;
+   su+=(x.u+y.u)*.5*dp;sv+=(x.v+y.v)*.5*dp;weight+=dp;
+  }
+  return weight>0?{u:su/weight,v:sv/weight}:null;
  };
  const m06=mean(0,6000),low=mean(0,500),high=mean(5500,6000);
  let right=null,left=null;
