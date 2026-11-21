@@ -95,6 +95,7 @@ body.embedded .heading .sub{color:#617c90}
 
 <div class="sounding-times" aria-label="Run e validade da sondagem"><span id="soundingRun">run —</span><span id="soundingValid">válido —</span></div>
 <div class="instability-strip" aria-label="Índices termodinâmicos"><span><b>LI</b> <strong id="idxLI">—</strong></span><span><b>CAPE</b> <strong id="idxCAPE">—</strong></span><span><b>CIN</b> <strong id="idxCIN">—</strong></span><span><b>Base nuvens</b> <strong id="idxLCL">—</strong></span></div>
+<section class="cloud-panel" id="thermoAdvanced" aria-label="Termodinâmica convectiva experimental"><h3>Termodinâmica convectiva · MetPy / ECMWF</h3><div class="convective-factors"><span>MLCAPE <strong id="advMLCAPE">—</strong></span><span>MLCIN <strong id="advMLCIN">—</strong></span><span>MUCAPE <strong id="advMUCAPE">—</strong></span><span>MUCIN <strong id="advMUCIN">—</strong></span><span>ML LCL <strong id="advMLLCL">—</strong></span></div><p class="muted" id="advThermoNote">A aguardar dados MetPy da mesma execução ECMWF. MLCAPE/MLCIN: camada média de 100 hPa; MUCAPE/MUCIN: parcela mais instável nos primeiros 300 hPa. Valores experimentais, não observações.</p></section>
 <div class="sounding-layout">
 <div><h3>Skew-T / log-P</h3><div class="skew-scroll" role="region" aria-label="Diagrama de sondagem deslocável horizontalmente"><svg id="skew" class="skew" viewBox="0 0 900 570" role="img" aria-label="Diagrama de temperatura e ponto de orvalho com escala logarítmica de pressão"></svg></div></div>
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
@@ -326,6 +327,36 @@ function updateInstability(group){
  $('cloudNote').textContent='Critérios indicativos (não operacionais): TCU CAPE ≥100 J/kg, LFC–EL ≥1 800 m, HR média 700–500 hPa ≥45% e |CIN| ≤200 J/kg; CB CAPE ≥500 J/kg, LFC–EL ≥5 500 m, HR ≥55%, |CIN| ≤125 J/kg e temperatura no EL ≤−20 °C. Requerem LFC e EL identificados. Base LCL e EL em ft acima do nível de partida (hPa entre parênteses). O EL não é o topo real de uma nuvem; não confirma TCU/CB. Se o EL estiver acima do limite superior do perfil, a avaliação fica inconclusiva.';
  return d;
 }
+let advancedThermo=null;
+const advancedFields={mlcape_jkg:['advMLCAPE',' J/kg'],mlcin_jkg:['advMLCIN',' J/kg'],mucape_jkg:['advMUCAPE',' J/kg'],mucin_jkg:['advMUCIN',' J/kg'],ml_lcl_hpa:['advMLLCL',' hPa']};
+function showAdvancedThermo(run,valid,city){
+ const note=$('advThermoNote');
+ for(const [key,[id]] of Object.entries(advancedFields))$(id).textContent='—';
+ if(!advancedThermo||advancedThermo.run_utc!==run){
+  note.textContent='Índices indisponíveis: dados MetPy não publicados ou execução ECMWF diferente. Não são reutilizados valores de outro ciclo.';
+  return;
+ }
+ const step=advancedThermo.soundings?.find(x=>x.valid_utc===valid);
+ const record=step?.cities?.[city];
+ if(!record||record.status!=='ok'){
+  note.textContent='Índices indisponíveis para esta cidade e validade; perfil insuficiente ou cálculo não concluído.';
+  return;
+ }
+ for(const [key,[id,unit]] of Object.entries(advancedFields)){
+  const value=record[key];
+  $(id).textContent=typeof value==='number'&&Number.isFinite(value)?value.toFixed(1)+unit:'—';
+ }
+ note.textContent='MetPy · ECMWF run '+formatStamp(run)+' · válido '+formatStamp(valid)+' UTC. Camada média 100 hPa; parcela mais instável pesquisada até 300 hPa. Níveis isobáricos limitados; análise experimental, não aviso meteorológico.';
+}
+async function loadAdvancedThermo(){
+ try{
+  const response=await fetch('./produtos_experimentais/conveccao_termodinamica.json',{cache:'no-store'});
+  if(response.ok){
+   const payload=await response.json();
+   if(payload?.experimental===true&&Array.isArray(payload.soundings))advancedThermo=payload;
+  }
+ }catch(e){console.warn('Termodinâmica MetPy indisponível:',e)}
+}
 function initialize(data){
  if(!data||!Array.isArray(data.soundings)||data.soundings.length!==16)throw Error('Sondagens incompletas');
  const steps=data.soundings;
@@ -339,6 +370,7 @@ function initialize(data){
   const record=steps[index],city=$('city').value;
   $('soundingRun').textContent='run '+formatStamp(data.run_utc);
   $('soundingValid').textContent='válido '+formatStamp(record.valid_utc);
+  showAdvancedThermo(data.run_utc,record.valid_utc,city);
   const diagnostics=updateInstability(record.cities[city]);
   drawSkew(record.cities[city],city,diagnostics);
    drawHodograph(record.cities[city]);
