@@ -195,19 +195,21 @@ function formatStamp(iso){
    flutuabilidade virtual, com interpolação log-p do perfil ECMWF.
    Resultados estimativos, dependentes da resolução vertical do modelo. */
 function thermodynamics(group){
+ // Parcela de superfície pseudoadiabática; integração RK4 em ln(p).
+ // Perfil ECMWF em níveis isobáricos: diagnóstico experimental, não radiossondagem.
  const lev=group.map(r=>({p:+r.hpa,t:+r.temp_c+273.15,td:+r.dewpoint_c+273.15}))
-  .filter(r=>Number.isFinite(r.p)&&Number.isFinite(r.t)&&Number.isFinite(r.td)&&r.p>=200&&r.p<=1050)
+  .filter(r=>Number.isFinite(r.p)&&Number.isFinite(r.t)&&Number.isFinite(r.td)&&r.p>=100&&r.p<=1050&&r.t>=180&&r.t<=330&&r.td<=r.t+0.2)
   .sort((a,b)=>b.p-a.p);
- if(lev.length<8||lev[0].td>lev[0].t||lev[0].t<180)return null;
- const Rd=287.05,cp=1004,eps=0.622,Lv=2.5e6,g=9.80665,k=Rd/cp;
+ if(lev.length<8||lev[0].p<850||lev[lev.length-1].p>300)return null;
+ const Rd=287.05,Rv=461.5,cp=1004,g=9.80665,eps=Rd/Rv,k=Rd/cp;
  const es=t=>6.112*Math.exp(17.67*(t-273.15)/(t-29.65));
  const mix=(p,t)=>{const e=Math.min(es(t),p*.95);return eps*e/(p-e)};
  const tv=(t,r)=>t*(1+0.61*r/(1+r));
- const p0=lev[0].p,t0=lev[0].t,td0=lev[0].td;
+ const p0=lev[0].p,t0=lev[0].t,td0=lev[0].td,r0=mix(p0,td0);
  const tlcl=1/(1/(td0-56)+Math.log(t0/td0)/800)+56;
  const plcl=p0*Math.pow(tlcl/t0,1/k);
- const r0=mix(p0,td0);
- const interpolate=(p,key)=>{
+ if(!Number.isFinite(plcl)||plcl>p0||plcl<lev[lev.length-1].p)return null;
+ const interp=(p,key)=>{
   for(let i=1;i<lev.length;i++)if(lev[i-1].p>=p&&p>=lev[i].p){
    const a=lev[i-1],b=lev[i],w=Math.log(a.p/p)/Math.log(a.p/b.p);
    return a[key]+(b[key]-a[key])*w;
@@ -215,56 +217,73 @@ function thermodynamics(group){
   return null;
  };
  const moistSlope=(p,t)=>{
-  const rs=mix(p,t);
-  return k*t*(1+Lv*rs/(Rd*t))/(1+Lv*Lv*rs*eps/(cp*Rd*t*t));
+  const rs=mix(p,t),lv=2.501e6-2369*(t-273.15);
+  return k*t*(1+lv*rs/(Rd*t))/(1+lv*lv*rs*eps/(cp*Rd*t*t));
  };
- let parcel=t0,z=0,prev=null,cape=0,cin=0,lfc=null,el=null;
- const samples=[],step=.009;
- for(let lp=Math.log(p0);lp>=Math.log(lev[lev.length-1].p)-1e-8;lp-=step){
-  const p=Math.max(lev[lev.length-1].p,Math.exp(lp));
-  const ta=interpolate(p,'t'),tda=interpolate(p,'td');
+ const moistStep=(p,t,pNext)=>{
+  const h=Math.log(pNext/p),mid=p*Math.exp(h/2);
+  const k1=moistSlope(p,t),k2=moistSlope(mid,t+h*k1/2);
+  const k3=moistSlope(mid,t+h*k2/2),k4=moistSlope(pNext,t+h*k3);
+  return t+h*(k1+2*k2+2*k3+k4)/6;
+ };
+ const pMin=lev[lev.length-1].p;
+ let p=p0,parcel=t0,z=0;
+ const samples=[];
+ for(let count=0;count<1200;count++){
+  const ta=interp(p,'t'),tda=interp(p,'td');
   if(ta===null||tda===null)break;
   const envR=mix(p,tda),parcelR=p>=plcl?r0:mix(p,parcel);
   const buoy=g*(tv(parcel,parcelR)-tv(ta,envR))/tv(ta,envR);
-  const point={p,t:parcel-273.15,env:ta-273.15,z,buoy};
-  if(prev){
-   const dz=z-prev.z,energy=(prev.buoy+buoy)*dz/2;
-   if(lfc===null){
-    if(prev.buoy<=0&&buoy>0&&p<=plcl)lfc={p,z};
-    if(energy<0)cin+=energy;
-    else if(p<=plcl&&prev.buoy>0){lfc={p,z};cape+=energy}
-   }else if(el===null){
-    if(prev.buoy>=0&&buoy<0)el={p,z};
-    else if(energy>0)cape+=energy;
-   }
-  }else if(buoy>0&&p<=plcl)lfc={p,z};
-  samples.push(point);
-  prev=point;
-  if(p<=lev[lev.length-1].p)break;
-  const pNext=Math.max(lev[lev.length-1].p,p*Math.exp(-step));
-  const dlp=Math.log(pNext/p);
-  const nextParcel=p>plcl&&pNext>=plcl
-    ?parcel*Math.pow(pNext/p,k)
-    :p>plcl
-     ?(()=>{let t=parcel*Math.pow(plcl/p,k);const d=Math.log(pNext/plcl);return t+moistSlope(plcl,t)*d})()
-     :parcel+moistSlope(p,parcel)*dlp;
-  const envNext=interpolate(pNext,'t');
-  if(envNext===null)break;
-  z+=Rd*(ta+envNext)/2/g*Math.log(p/pNext);
-  parcel=nextParcel;
+  samples.push({p,t:parcel-273.15,env:ta-273.15,z,buoy});
+  if(p<=pMin+1e-7)break;
+  const next=Math.max(pMin,p*Math.exp(-.006));
+  const taNext=interp(next,'t'),tdNext=interp(next,'td');
+  if(taNext===null||tdNext===null)break;
+  const nextParcel=next>=plcl?parcel*Math.pow(next/p,k):
+   p>plcl?moistStep(plcl,parcel*Math.pow(plcl/p,k),next):
+   moistStep(p,parcel,next);
+  const envTv0=tv(ta,envR),envTv1=tv(taNext,mix(next,tdNext));
+  z+=Rd*(envTv0+envTv1)/(2*g)*Math.log(p/next);
+  if(!Number.isFinite(nextParcel)||!Number.isFinite(z)||nextParcel<170||nextParcel>340)return null;
+  p=next;parcel=nextParcel;
  }
- if(samples.length<25)return null;
+ if(samples.length<40||samples[samples.length-1].p>pMin+.1)return null;
+ const cross=(a,b)=>{const fraction=Math.max(0,Math.min(1,-a.buoy/(b.buoy-a.buoy)));return {p:Math.exp(Math.log(a.p)+(Math.log(b.p)-Math.log(a.p))*fraction),z:a.z+(b.z-a.z)*fraction}};
+ const lclIndex=samples.findIndex(r=>r.p<=plcl);
+ const lcl=lclIndex>0?(()=>{const a=samples[lclIndex-1],b=samples[lclIndex],w=Math.log(a.p/plcl)/Math.log(a.p/b.p);return {p:plcl,z:a.z+(b.z-a.z)*w}})():{p:plcl,z:0};
+ // Apenas convecção livre após o LCL; separar sinais ao cruzar flutuabilidade zero.
+ let lfc=null,el=null,cape=0,cin=0,hadPositive=false;
+ const integrate=(a,b,mode)=>{
+  const dz=b.z-a.z;
+  if(!dz||!Number.isFinite(dz))return;
+  const energy=(a.buoy+b.buoy)*dz/2;
+  if(mode==='pre')cin+=Math.min(0,energy);
+  if(mode==='cape')cape+=Math.max(0,energy);
+ };
+ for(let i=1;i<samples.length;i++){
+  const a=samples[i-1],b=samples[i];
+  if(b.p>plcl){integrate(a,b,'pre');continue}
+  if(!lfc){
+   if(a.buoy<=0&&b.buoy>0){lfc=cross(a,b);hadPositive=true;const zero={...lfc,buoy:0};integrate(a,zero,'pre');integrate(zero,b,'cape')}
+   else if(a.buoy>0&&b.buoy>0){lfc={p:Math.min(plcl,a.p),z:Math.max(lcl.z,a.z)};hadPositive=true;integrate(a,b,'cape')}
+   else integrate(a,b,'pre');
+  }else if(!el){
+   if(a.buoy>=0&&b.buoy<0){el=cross(a,b);const zero={...el,buoy:0};integrate(a,zero,'cape')}
+   else if(a.buoy>0||b.buoy>0)integrate(a,b,'cape');
+  }
+ }
+ // CAPE parcial até ao topo do perfil não equivale a CAPE total.
+ const complete=!!(lfc&&el&&hadPositive);
  const at500=samples.reduce((best,v)=>Math.abs(v.p-500)<Math.abs(best.p-500)?v:best,samples[0]);
- const lclSample=samples.reduce((best,v)=>Math.abs(v.p-plcl)<Math.abs(best.p-plcl)?v:best,samples[0]);
- return {samples,cape:Math.max(0,cape),cin:Math.min(0,cin),li:at500.env-at500.t,
-   lcl:{p:plcl,z:lclSample.z},lfc,el,top:lev[lev.length-1].p};
+ return {samples,cape:complete?Math.max(0,cape):null,cin:lfc?Math.min(0,cin):null,
+  li:at500.env-at500.t,lcl,lfc,el,top:pMin,complete};
 }
 function fmtLevel(point){return point?Math.round(point.z*3.28084/100)*100+' ft AGL ('+Math.round(point.p)+' hPa)':'—'}
 function updateInstability(group){
  const d=thermodynamics(group);
  $('idxLI').textContent=d?d.li.toFixed(1)+' °C':'—';
- $('idxCAPE').textContent=d?Math.round(d.cape)+' J/kg':'—';
- $('idxCIN').textContent=d?Math.round(d.cin)+' J/kg':'—';
+ $('idxCAPE').textContent=d?.cape!==null&&d?.cape!==undefined?Math.round(d.cape)+' J/kg':'—';
+ $('idxCIN').textContent=d?.cin!==null&&d?.cin!==undefined?Math.round(d.cin)+' J/kg':'—';
  $('idxLCL').textContent=d?Math.round(d.lcl.z*3.28084/100)*100+' ft':'—';
  $('cloudBase').textContent=d?fmtLevel(d.lcl):'Indisponível';
  const levels=group.map(r=>({p:Number(r.hpa),rh:Number(r.rh_percent)}))
@@ -276,11 +295,11 @@ function updateInstability(group){
  $('cloudDepth').textContent=depth!==null?Math.round(depth*3.28084/100)*100+' ft':'— (EL não identificado)';
  $('cloudRH').textContent=rh!==null?Math.round(rh)+' %':'—';
  $('cloudTopTemp').textContent=Number.isFinite(topTemp)?topTemp.toFixed(1)+' °C':'—';
- $('cloudInhibition').textContent=d?Math.round(d.cin)+' J/kg':'—';
+ $('cloudInhibition').textContent=d?.cin!==null&&d?.cin!==undefined?Math.round(d.cin)+' J/kg':'—';
  // Classificação indicativa e conservadora, não identificação de nuvens.
  // EL é limite termodinâmico, não topo real da nuvem.
- const complete=!!(d&&d.lfc&&d.el&&depth!==null&&rh!==null&&Number.isFinite(topTemp));
- const inhibition=d?Math.abs(d.cin):Infinity;
+ const complete=!!(d?.complete&&depth!==null&&rh!==null&&Number.isFinite(topTemp));
+ const inhibition=d?.cin!==null&&d?.cin!==undefined?Math.abs(d.cin):Infinity;
  const deep=complete&&d.cape>=500&&depth>=5500&&rh>=55&&inhibition<=125&&topTemp<=-20;
  const towering=complete&&!deep&&d.cape>=100&&depth>=1800&&rh>=45&&inhibition<=200;
  const base=d?fmtLevel(d.lcl):'—';
