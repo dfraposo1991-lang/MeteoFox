@@ -26,6 +26,8 @@ h1{font-size:19px;color:#173e5c;margin:5px 0 5px}
 .twocol{grid-template-columns:1.4fr 1fr}
 @media(max-width:850px){.twocol{grid-template-columns:1fr}}
 @media(max-width:650px){header{padding:15px 12px}.brand strong{font-size:20px}main{padding:13px}.tabs{flex-wrap:wrap}}
+</style><style id="mf-space-products">
+.sw-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:14px 0}.sw-product{min-width:0}.sw-product .sw-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sw-product h3{margin:0}.sw-product img{display:block;width:100%;max-height:420px;object-fit:contain;background:#e9f2f8;border:1px solid #d4e3ef;border-radius:8px}.sw-product .sw-error{display:none}.sw-product.failed img{display:none}.sw-product.failed .sw-error{display:block;color:#8b4c27;background:#fff7e8;padding:14px;border-radius:8px}.sw-product a{font-size:11px;color:#07518b}.sw-chart{height:180px;display:flex;align-items:end;gap:2px;border-bottom:1px solid #cbdde9;margin:12px 0 6px;overflow:hidden}.sw-chart i{flex:1;min-width:2px;background:#187eaa;border-radius:2px 2px 0 0}.sw-chart .negative{background:#c26c60}.sw-meta{font-size:11px;color:#627d94}.sw-alerts{display:grid;gap:8px;max-height:360px;overflow:auto}.sw-alert{border:1px solid #d4e3ef;background:#f7fafc;padding:12px;border-radius:9px}.sw-alert b{display:block;color:#174b6e;font-size:12px}.sw-alert pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 Consolas,monospace;color:#344e60;max-height:150px;overflow:auto}.sw-alert small{color:#607e94}.sw-map-note{font-size:11px;color:#607e94;margin:9px 0 0}@media(max-width:850px){.sw-products{grid-template-columns:1fr}}
 </style></head><body>
 <header><a class="brand" href="./index.html"><img src="./meteofox-logo.png" alt="Logótipo MeteoFox"><span><strong>MeteoFox</strong><small>Centro de Análise Meteorológica</small></span></a><a class="back" href="./index.html">← Página principal</a></header>
 <main><h1>☀ Space Weather</h1><p class="intro muted">Monitorização solar e geomagnética · Produtos para aviação e operações com satélites</p>
@@ -43,7 +45,12 @@ h1{font-size:19px;color:#173e5c;margin:5px 0 5px}
 <a class="link" href="https://www.swpc.noaa.gov/products/us-total-electron-content" target="_blank" rel="noopener">GNSS · Total Electron Content<span>Indicadores de perturbação ionosférica; cobertura regional dependente do produto</span></a>
 <a class="link" href="https://www.swpc.noaa.gov/phenomena/solar-radiation-storm" target="_blank" rel="noopener">Radiação solar e operações em altitude<span>Contexto de risco para rotas polares e elevada altitude</span></a>
 </div></div><div class="card"><h2>Interpretação operacional</h2><p>Os avisos ICAO SWX são a referência para impactos aeronáuticos. Os indicadores NOAA apresentados acima são <strong>contexto de monitorização</strong>, não substituem avisos ICAO.</p><p class="small">Confirmar sempre produto, área afetada, hora UTC, validade, severidade e evolução prevista. Kp, raios X ou vento solar isoladamente não determinam a categoria de um aviso aeronáutico.</p><h3>Escalas NOAA</h3><p class="small">G: tempestades geomagnéticas · R: radio blackouts · S: tempestades de radiação solar. Não confundir com as categorias MOD/SEV dos avisos ICAO.</p></div></div>
-</section>
+<div class="sw-products">
+<div class="card sw-product" id="drapPanel"><div class="sw-head"><h3>Mapa D-RAP · absorção HF</h3><a href="https://www.swpc.noaa.gov/products/d-region-absorption-predictions-d-rap" target="_blank" rel="noopener">Fonte NOAA</a></div><img id="drapMap" alt="Mapa global NOAA D-RAP de absorção ionosférica" loading="lazy"><div class="sw-error">Imagem NOAA não disponível neste momento. Consulta a fonte oficial.</div><p class="sw-map-note">Produto observacional/modelado; consultar legenda, validade e cobertura na fonte oficial.</p></div>
+<div class="card sw-product"><h3>Raios X GOES · últimas 24 horas</h3><div id="xrayChart" class="sw-chart" aria-label="Série temporal de raios X GOES"></div><div id="xrayChartInfo" class="sw-meta">A obter dados NOAA…</div></div>
+<div class="card sw-product"><div class="sw-head"><h3>Alertas NOAA SWPC · mensagens recentes</h3><a href="https://www.swpc.noaa.gov/products/alerts-watches-and-warnings" target="_blank" rel="noopener">Consultar fonte</a></div><div id="swAlerts" class="sw-alerts" aria-live="polite">A carregar alertas…</div><p class="sw-map-note">Alertas NOAA, não são avisos ICAO SWX. Consultar avisos ICAO no acesso acima.</p></div>
+<div class="card sw-product"><h3>Kp · evolução recente</h3><div id="kpChart" class="sw-chart" aria-label="Evolução do índice Kp"></div><div id="kpChartInfo" class="sw-meta">A obter dados NOAA…</div><p class="sw-map-note">Kp é um índice geomagnético global; não traduz diretamente impactos GNSS ou HF numa rota.</p></div>
+</div></section>
 <section class="pane" id="satellites" role="tabpanel" aria-labelledby="tab-satellites" hidden>
 <div class="twocol"><div class="card"><h2>Ambiente espacial e riscos orbitais</h2><div class="list">
 <a class="link" href="https://www.swpc.noaa.gov/products/goes-proton-flux" target="_blank" rel="noopener">GOES · Fluxo de protões<span>Eventos de partículas energéticas e efeitos na eletrónica</span></a>
@@ -51,7 +58,12 @@ h1{font-size:19px;color:#173e5c;margin:5px 0 5px}
 <a class="link" href="https://swe.ssa.esa.int/" target="_blank" rel="noopener">ESA Space Weather Service Network<span>Produtos especializados para GEO, LEO e radiação espacial</span></a>
 <a class="link" href="https://www.swpc.noaa.gov/products/geomagnetic-storms" target="_blank" rel="noopener">Tempestades geomagnéticas<span>Contexto para alterações de densidade termosférica e arrasto em LEO</span></a>
 </div></div><div class="card"><h2>Vento solar · histórico recente</h2><div class="chart" id="speedChart" aria-label="Gráfico de barras da velocidade do vento solar"></div><p class="small" id="chartCaption">A carregar série temporal NOAA…</p><h3>Considerações operacionais</h3><p class="small">A velocidade do vento solar e o Kp não fornecem, por si só, uma previsão quantitativa do arrasto orbital, carregamento ou dose de radiação. Para avaliação de risco são necessários produtos específicos, órbita e características do veículo.</p></div></div>
-</section>
+<div class="sw-products">
+<div class="card sw-product" id="auroraPanel"><div class="sw-head"><h3>Mapa de aurora · hemisfério norte</h3><a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast" target="_blank" rel="noopener">Fonte NOAA</a></div><img id="auroraMap" alt="Mapa NOAA OVATION de probabilidade de aurora" loading="lazy"><div class="sw-error">Imagem NOAA não disponível neste momento. Consulta a fonte oficial.</div><p class="sw-map-note">Previsão de aurora; não representa diretamente o risco para um satélite.</p></div>
+<div class="card sw-product"><h3>Campo magnético interplanetário · Bz</h3><div id="bzChart" class="sw-chart" aria-label="Evolução de Bz"></div><div id="bzChartInfo" class="sw-meta">A obter dados NOAA…</div></div>
+<div class="card sw-product"><h3>Fluxo de protões GOES</h3><div id="protonChart" class="sw-chart" aria-label="Fluxo de protões GOES"></div><div id="protonChartInfo" class="sw-meta">A obter dados NOAA…</div><a href="https://www.swpc.noaa.gov/products/goes-proton-flux" target="_blank" rel="noopener">Produto oficial e interpretação</a></div>
+<div class="card sw-product"><h3>Fluxo de eletrões GOES</h3><div id="electronChart" class="sw-chart" aria-label="Fluxo de eletrões GOES"></div><div id="electronChartInfo" class="sw-meta">A obter dados NOAA…</div><a href="https://www.swpc.noaa.gov/products/goes-electron-flux" target="_blank" rel="noopener">Produto oficial e interpretação</a></div>
+</div></section>
 <div class="notice"><strong>Informação de apoio — não certificada para uso operacional.</strong> Os indicadores são recolhidos de produtos públicos NOAA SWPC e podem sofrer atrasos ou indisponibilidade. As mensagens e decisões operacionais devem ser verificadas nas fontes oficiais. Valores ausentes são apresentados como «—», nunca substituídos por dados simulados.</div>
 <div class="foot">MeteoFox · Space Weather · Dados: NOAA SWPC · Referências: ICAO / ESA · Horas em UTC</div></main>
 <script>
@@ -102,5 +114,37 @@ if(sample.length){const max=Math.max(700,...sample.map(r=>Number(r[si])));$('spe
 }
 $('status').textContent=successes===4?'4/4 indicadores NOAA disponíveis · '+new Date().toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC':successes?'Atualização parcial ('+successes+'/4 indicadores) · verificar fontes':'Fontes NOAA indisponíveis neste momento · consultar ligações oficiais';
 }
-$('reload').onclick=load;load();
+
+function drawSeries(id,info,values,description,negative=false){
+const target=$(id);if(!target)return;
+const a=values.filter(v=>Number.isFinite(v)).slice(-100);
+target.replaceChildren();
+if(!a.length){$(info).textContent='Sem série disponível nesta fonte; consultar produto oficial.';return}
+const lo=negative?Math.min(0,...a):0,hi=Math.max(...a,lo+0.01),span=hi-lo;
+for(const v of a){const bar=document.createElement('i');bar.style.height=Math.max(2,((v-lo)/span)*100)+'%';if(v<0)bar.className='negative';bar.title=String(v);target.appendChild(bar)}
+$(info).textContent=description+' · '+a.length+' amostras · valores de fonte NOAA';
+}
+function setMap(id,url){const el=$(id);if(!el)return;const panel=el.closest('.sw-product');el.onload=()=>panel.classList.remove('failed');el.onerror=()=>panel.classList.add('failed');el.src=url+(url.includes('?')?'&':'?')+'t='+Math.floor(Date.now()/900000)}
+async function loadProducts(){
+setMap('drapMap','https://services.swpc.noaa.gov/images/animations/d-rap/global/d-rap/latest.png');
+setMap('auroraMap','https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg');
+const calls=await Promise.allSettled([
+json('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+json('https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json'),
+json('https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json'),
+json('https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json'),
+json('https://services.swpc.noaa.gov/json/goes/primary/integral-electrons-1-day.json'),
+json('https://services.swpc.noaa.gov/products/alerts.json')]);
+const val=i=>calls[i].status==='fulfilled'?calls[i].value:null;
+if(Array.isArray(val(0))){drawSeries('kpChart','kpChartInfo',val(0).slice(1).map(r=>Number(Array.isArray(r)?r[1]:r.Kp)),'Índice Kp')}
+if(Array.isArray(val(1))){drawSeries('xrayChart','xrayChartInfo',val(1).filter(r=>r.energy==='0.1-0.8nm').map(r=>Math.log10(Math.max(1e-10,Number(r.flux)))),'Log10 do fluxo de raios X (W/m²)')}
+if(Array.isArray(val(2))){const rows=val(2),h=rows[0]||[],idx=h.indexOf('bz_gsm');drawSeries('bzChart','bzChartInfo',rows.slice(1).map(r=>Number(r[idx])),'Bz GSM (nT)',true)}
+if(Array.isArray(val(3))){const a=val(3).filter(r=>r.energy==='>=10 MeV');drawSeries('protonChart','protonChartInfo',a.map(r=>Math.log10(Math.max(1e-6,Number(r.flux)))),'Log10 fluxo integral ≥10 MeV (pfu)')}
+if(Array.isArray(val(4))){const a=val(4).filter(r=>r.energy==='>=2 MeV');drawSeries('electronChart','electronChartInfo',a.map(r=>Math.log10(Math.max(1e-6,Number(r.flux)))),'Log10 fluxo integral ≥2 MeV')}
+const out=$('swAlerts');out.replaceChildren();const messages=Array.isArray(val(5))?val(5).slice(0,8):[];
+if(!messages.length){out.textContent='Não foi possível obter a lista de alertas NOAA. Consulta a fonte oficial.'}
+else for(const a of messages){const box=document.createElement('div');box.className='sw-alert';const title=document.createElement('b');title.textContent=a.product_id||'Mensagem NOAA SWPC';const date=document.createElement('small');date.textContent=a.issue_datetime?time(a.issue_datetime):'Hora não indicada';const body=document.createElement('pre');body.textContent=String(a.message||'Mensagem indisponível').slice(0,1800);box.append(title,date,body);out.append(box)}
+}
+
+$('reload').onclick=()=>{load();loadProducts()};load();loadProducts();
 </script></body></html>
