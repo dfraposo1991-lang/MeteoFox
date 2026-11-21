@@ -58,6 +58,9 @@ body.embedded .top,body.embedded .tabs,body.embedded .footer{display:none}
 .instability-strip b{font-size:12px}.instability-strip strong{font-size:13px;color:#184f7e;font-weight:600}
 .cloud-panel{border:1px solid var(--line);border-radius:11px;background:#fff;padding:13px;margin-top:13px}
 .cloud-panel h3{margin:0 0 12px;font-size:13px}
+.convective-factors{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.convective-factors span{display:inline-flex;gap:6px;align-items:center;border:1px solid #dbe4ec;border-radius:7px;background:#f8fafc;padding:7px 9px;font-size:11px;color:#5a7185}
+.convective-factors strong{font-size:11px;color:#244b70}
 .cloud-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cloud-grid>div{background:#f8fafc;border:1px solid #dbe4ec;border-radius:8px;padding:11px;display:flex;flex-direction:column;gap:7px}
 .cloud-grid span{font-size:11px;color:#60768a}.cloud-grid strong{font-size:13px;color:#244b70}
@@ -97,7 +100,7 @@ body.embedded .heading .sub{color:#617c90}
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
-<div class="cloud-panel"><h3>Base das nuvens e convecção profunda</h3><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · potencial previsto · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · potencial previsto · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
+<div class="cloud-panel"><h3>Base das nuvens e potencial convectivo previsto</h3><div class="convective-factors" aria-label="Diagnósticos complementares"><span>Profundidade LFC–EL <strong id="cloudDepth">—</strong></span><span>HR 700–500 hPa <strong id="cloudRH">—</strong></span><span>Topo termodinâmico <strong id="cloudTopTemp">—</strong></span><span>Inibição CIN <strong id="cloudInhibition">—</strong></span></div><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · potencial previsto · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · potencial previsto · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
 <div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span><i style="background:#a855f7"></i>Parcela de superfície</span><span><i style="background:#f59e0b;height:9px;opacity:.5"></i>CAPE</span><span><i style="background:#3b82f6;height:9px;opacity:.35"></i>CIN</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
 <p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI, LCL/LFC/EL e trajetória da parcela são estimativas de superfície calculadas com interpolação dos níveis disponíveis; a resolução vertical limitada pode afetar significativamente os resultados. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
 </div></section>
@@ -264,13 +267,29 @@ function updateInstability(group){
  $('idxCIN').textContent=d?Math.round(d.cin)+' J/kg':'—';
  $('idxLCL').textContent=d?Math.round(d.lcl.z*3.28084/100)*100+' ft':'—';
  $('cloudBase').textContent=d?fmtLevel(d.lcl):'Indisponível';
- // CB/TCU são apenas potencial termodinâmico, nunca identificação observada.
- const top=d?.el?fmtLevel(d.el):'—';
- $('cloudTCU').textContent=d&&d.cape>=50&&d.lfc
-   ?'Potencial · base '+fmtLevel(d.lcl)+' / topo '+top:'Potencial não diagnosticado';
- $('cloudCB').textContent=d&&d.cape>=500&&d.lfc
-   ?'Potencial · base '+fmtLevel(d.lcl)+' / topo '+top:'Potencial não diagnosticado';
- $('cloudNote').textContent='Diagnóstico estimativo de parcela de superfície, com perfil ECMWF interpolado em log-p. Base LCL e topo EL (quando identificado) em pés acima do nível de partida, com pressão em hPa. CAPE e limiares são indicadores de potencial convectivo, não confirmam TCU/CB nem os respetivos limites reais. CIN/LFC/EL dependem da resolução vertical.';
+ const levels=group.map(r=>({p:Number(r.hpa),rh:Number(r.rh_percent)}))
+  .filter(r=>Number.isFinite(r.p)&&Number.isFinite(r.rh)&&r.p<=700&&r.p>=500);
+ const rh=levels.length>=2?levels.reduce((sum,r)=>sum+r.rh,0)/levels.length:null;
+ const depth=d?.lfc&&d.el&&d.el.z>d.lfc.z?d.el.z-d.lfc.z:null;
+ const topSample=d?.el?d.samples.reduce((best,r)=>Math.abs(r.p-d.el.p)<Math.abs(best.p-d.el.p)?r:best,d.samples[0]):null;
+ const topTemp=topSample?.env;
+ $('cloudDepth').textContent=depth!==null?Math.round(depth*3.28084/100)*100+' ft':'— (EL não identificado)';
+ $('cloudRH').textContent=rh!==null?Math.round(rh)+' %':'—';
+ $('cloudTopTemp').textContent=Number.isFinite(topTemp)?topTemp.toFixed(1)+' °C':'—';
+ $('cloudInhibition').textContent=d?Math.round(d.cin)+' J/kg':'—';
+ // Classificação indicativa e conservadora, não identificação de nuvens.
+ // EL é limite termodinâmico, não topo real da nuvem.
+ const complete=!!(d&&d.lfc&&d.el&&depth!==null&&rh!==null&&Number.isFinite(topTemp));
+ const inhibition=d?Math.abs(d.cin):Infinity;
+ const deep=complete&&d.cape>=500&&depth>=5500&&rh>=55&&inhibition<=125&&topTemp<=-20;
+ const towering=complete&&!deep&&d.cape>=100&&depth>=1800&&rh>=45&&inhibition<=200;
+ const base=d?fmtLevel(d.lcl):'—';
+ const el=d?.el?fmtLevel(d.el):'—';
+ $('cloudTCU').textContent=towering?'Potencial TCU · base '+base+' / EL '+el:
+   deep?'Potencial de convecção profunda (ver CB)':'Potencial TCU não conclusivo';
+ $('cloudCB').textContent=deep?'Potencial CB · base '+base+' / EL '+el:
+   'Potencial CB não conclusivo';
+ $('cloudNote').textContent='Critérios indicativos (não operacionais): TCU CAPE ≥100 J/kg, LFC–EL ≥1 800 m, HR média 700–500 hPa ≥45% e |CIN| ≤200 J/kg; CB CAPE ≥500 J/kg, LFC–EL ≥5 500 m, HR ≥55%, |CIN| ≤125 J/kg e temperatura no EL ≤−20 °C. Requerem LFC e EL identificados. Base LCL e EL em ft acima do nível de partida (hPa entre parênteses). O EL não é o topo real de uma nuvem; não confirma TCU/CB. Se o EL estiver acima do limite superior do perfil, a avaliação fica inconclusiva.';
  return d;
 }
 function initialize(data){
