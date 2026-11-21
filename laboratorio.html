@@ -91,7 +91,7 @@ body.embedded .heading .sub{color:#617c90}
 
 
 <div class="sounding-times" aria-label="Run e validade da sondagem"><span id="soundingRun">run —</span><span id="soundingValid">válido —</span></div>
-<div class="instability-strip" aria-label="Índices termodinâmicos"><span><b>LI</b> <strong id="idxLI">—</strong></span><span><b>CAPE</b> <strong id="idxCAPE">—</strong></span><span><b>CIN</b> <strong id="idxCIN">—</strong></span><span><b>LCL</b> <strong id="idxLCL">—</strong></span></div>
+<div class="instability-strip" aria-label="Índices termodinâmicos"><span><b>LI</b> <strong id="idxLI">—</strong></span><span><b>CAPE</b> <strong id="idxCAPE">—</strong></span><span><b>CIN</b> <strong id="idxCIN">—</strong></span><span><b>Base nuvens</b> <strong id="idxLCL">—</strong></span></div>
 <div class="sounding-layout">
 <div><h3>Skew-T / log-P</h3><div class="skew-scroll" role="region" aria-label="Diagrama de sondagem deslocável horizontalmente"><svg id="skew" class="skew" viewBox="0 0 900 570" role="img" aria-label="Diagrama de temperatura e ponto de orvalho com escala logarítmica de pressão"></svg></div></div>
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
@@ -262,7 +262,7 @@ function updateInstability(group){
  $('idxLI').textContent=d?d.li.toFixed(1)+' °C':'—';
  $('idxCAPE').textContent=d?Math.round(d.cape)+' J/kg':'—';
  $('idxCIN').textContent=d?Math.round(d.cin)+' J/kg':'—';
- $('idxLCL').textContent=d?Math.round(d.lcl.p)+' hPa':'—';
+ $('idxLCL').textContent=d?Math.round(d.lcl.z*3.28084/100)*100+' ft':'—';
  $('cloudBase').textContent=d?fmtLevel(d.lcl):'Indisponível';
  // CB/TCU são apenas potencial termodinâmico, nunca identificação observada.
  const top=d?.el?fmtLevel(d.el):'—';
