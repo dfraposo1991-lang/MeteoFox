@@ -263,7 +263,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="card"><h3>Disponibilidade e referência temporal</h3><div id="modelRuns" class="legend">A aguardar consulta…</div><p class="note">A API pode não fornecer a hora de inicialização de cada execução. Nesse caso será indicada como não disponibilizada, nunca inferida.</p></div>
  <div class="grid two" style="margin-top:13px"><div class="card"><h3>Temperatura a 2 m · °C</h3><div class="chartbox tall"><canvas id="modelTemp"></canvas></div></div><div class="card"><h3>Precipitação horária · mm</h3><div class="chartbox tall"><canvas id="modelRain"></canvas></div></div></div>
  <div class="grid two" style="margin-top:13px"><div class="card"><h3>Vento a 10 m · kt</h3><div class="chartbox"><canvas id="modelWind"></canvas></div></div><div class="card"><h3>Pressão MSL · hPa</h3><div class="chartbox"><canvas id="modelPressure"></canvas></div></div></div>
- <div class="card" style="margin-top:13px"><h3>Comparação diária · próximos 3 dias</h3><div class="tablewrap"><table><thead><tr><th>Modelo</th><th>Dia</th><th>T máx. °C</th><th>T mín. °C</th><th>Precip. mm</th></tr></thead><tbody id="modelTable"></tbody></table></div></div>
+ <div class="card" style="margin-top:13px"><h3>Comparação diária por variável · próximos 3 dias</h3><div class="tablewrap"><table><thead><tr><th>Variável</th><th>Dia</th><th>ECMWF IFS</th><th>NOAA GFS</th><th>DWD ICON</th><th>ECMWF AIFS</th></tr></thead><tbody id="modelTable"></tbody></table></div></div>
  <p class="note">As curvas são alinhadas pela hora válida da previsão (UTC), não pelo índice da série. A hora de inicialização dos modelos deve ser verificada na fonte operacional antes de qualquer comparação rigorosa entre ciclos. Fonte: Open-Meteo.</p>
 </section>
 <section id="aerodromes" class="section">
@@ -465,7 +465,10 @@ async function loadModels(){const [lat,lon]=current,token=lat+','+lon;$('modelSt
  const series=(m,key)=>{const h=m.d.hourly,lookup=new Map(h.time.map((t,i)=>[t,i]));return valid.map(t=>{const idx=lookup.get(t);return idx===undefined?null:h[key]?.[idx]??null})};
  const lab=valid.map(t=>t.slice(5,10)+' '+t.slice(11)+'Z');
  for(const [id,key] of [['modelTemp','temperature_2m'],['modelRain','precipitation'],['modelWind','wind_speed_10m'],['modelPressure','pressure_msl']])chart(id,lab,ok.map(m=>({label:m.name,data:series(m,key),borderColor:m.color,backgroundColor:m.color+'44',pointRadius:0,tension:.2,spanGaps:false})), 'line');
- $('modelTable').innerHTML=ok.flatMap(m=>m.d.daily.time.slice(0,3).map((t,i)=>`<tr><td>${m.name}</td><td>${t}</td><td>${fmt(m.d.daily.temperature_2m_max?.[i],1)}</td><td>${fmt(m.d.daily.temperature_2m_min?.[i],1)}</td><td>${fmt(m.d.daily.precipitation_sum?.[i],1)}</td></tr>`)).join('');
+ const dailyFields=[['Precipitação (mm)','precipitation_sum'],['Temperatura máxima (°C)','temperature_2m_max'],['Temperatura mínima (°C)','temperature_2m_min']];
+ const modelOrder=['ECMWF IFS','NOAA GFS','DWD ICON','ECMWF AIFS'];
+ const dailyDates=[...new Set(ok.flatMap(m=>(m.d.daily?.time||[]).slice(0,3)))].sort().slice(0,3);
+ $('modelTable').innerHTML=dailyFields.map(([label,key])=>dailyDates.map((date,i)=>`<tr><th scope="row">${i===0?label:''}</th><td>${date}</td>${modelOrder.map(name=>{const m=ok.find(item=>item.name===name);const idx=m?.d.daily?.time?.indexOf(date)??-1;return `<td>${idx<0?'—':fmt(m.d.daily[key]?.[idx],1)}</td>`}).join('')}</tr>`).join('')).join('');
  $('modelStatus').textContent=`${ok.length}/4 modelos disponíveis${bad.length?' · '+bad.map(m=>m.name).join(', ')+' sem dados':''}`;
 }
 const AIRPORTS={Madeira:ISLAND_AIRPORTS.Madeira,'Açores':ISLAND_AIRPORTS['Açores'],Lisboa:['LPPT','LPAR','LPST','LPCS'],Setúbal:['LPMT'],Évora:['LPBJ'],Porto:['LPPR','LPOV'],Coimbra:['LPMR'],Faro:['LPFR'],'Valência':['LEVC']};
