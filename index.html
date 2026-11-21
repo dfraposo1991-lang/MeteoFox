@@ -56,6 +56,15 @@
 .mf-image-times span:last-child{text-align:right;margin-left:auto}
 @media(max-width:550px){.mf-image-times{gap:8px;font-size:10px;padding:7px 9px!important}}
 @media(max-width:750px){.ecmwf-fields{grid-template-columns:1fr}.ecmwf-controls strong{width:100%}}
+
+/* Cabeçalho: símbolo compacto, sem decoração, alinhado ao nome */
+.top .brand.meteologo-link{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;gap:12px!important;width:max-content;max-width:100%;margin:0!important;padding:0!important}
+.top .brand .logo{display:flex!important;align-items:center!important;justify-content:center!important;width:52px!important;height:52px!important;min-width:52px!important;min-height:52px!important;flex:0 0 52px!important;aspect-ratio:1!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;overflow:visible!important}
+.top .brand .logo img{display:block!important;width:52px!important;height:52px!important;max-width:52px!important;object-fit:contain!important;aspect-ratio:1!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;filter:none!important}
+.top .brand .brand-copy{display:flex;flex-direction:column;justify-content:center;min-width:0;margin:0!important;padding:0!important}
+.top .brand .brand-copy h1{margin:0!important;line-height:1.15}
+.top .brand .brand-copy small{margin-top:4px}
+@media(max-width:600px){.top .brand.meteologo-link{gap:10px!important}.top .brand .logo,.top .brand .logo img{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important}.top .brand .logo{flex-basis:48px!important}.top .brand .brand-copy small{letter-spacing:.07em;white-space:normal}}
 </style>
 <style id="meteofox-v1-brand"> 
 /* MeteoFox professional visual refresh. Overrides only the original palette/layout. */
@@ -168,7 +177,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 <body>
 <div class="wrap">
 <header class="top">
- <a class="brand meteologo-link" href="./mapa.html" title="Abrir mapa meteorológico interativo em grande"><div class="logo"><img src="./MeteoFox_logo_v1.svg" onerror="this.onerror=null;this.src='./meteofox-logo.png'" alt="Logótipo original MeteoFox" width="159" height="36"></div><div><h1>MeteoFox</h1><small>PORTUGAL · CENTRO DE ANÁLISE METEOROLÓGICA</small></div></a>
+ <a class="brand meteologo-link" href="./mapa.html" title="Abrir mapa meteorológico interativo em grande"><span class="logo"><img src="./MeteoFox_icon_v1_solid.svg" onerror="this.onerror=null;this.src='./meteofox-logo.png'" alt="" width="52" height="52"></span><span class="brand-copy"><h1>MeteoFox</h1><small>PORTUGAL · CENTRO DE ANÁLISE METEOROLÓGICA</small></span></a>
  <div class="topright"><span class="pill">● DADOS ONLINE · DISPONIBILIDADE VARIÁVEL</span><select id="place" class="select" aria-label="Localidade">
  <option value="Viana do Castelo">Viana do Castelo</option><option value="Braga">Braga</option><option value="Porto">Porto</option><option value="Coimbra">Coimbra</option><option value="Castelo Branco">Castelo Branco</option><option value="Santarém">Santarém</option><option value="Lisboa" selected>Lisboa</option><option value="Valência">Valência · Валенсия</option><option value="Setúbal">Setúbal</option><option value="Évora">Évora</option><option value="Faro">Faro</option><option value="Madeira">Madeira</option><option value="Açores">Açores</option></select><span id="updated" class="status">A iniciar…</span></div>
 </header>
