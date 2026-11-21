@@ -97,7 +97,7 @@ body.embedded .heading .sub{color:#617c90}
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
-<div class="cloud-panel"><h3>Base das nuvens e convecção profunda</h3><div class="cloud-grid"><div><span>Base estimada (LCL)</span><strong id="cloudBase">—</strong></div><div><span>TCU · base / topo</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · base / topo</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">O LCL é uma estimativa termodinâmica da base de nuvens convectivas; não determina por si só a presença de TCU ou CB. A identificação e os topos requerem dados verticais mais completos e/ou observação.</p></div>
+<div class="cloud-panel"><h3>Base das nuvens e convecção profunda</h3><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · base / topo · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · base / topo · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
 <div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
 <p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI não são calculados com os níveis atualmente disponíveis; o LCL é apenas uma estimativa de superfície. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
 </div></section>
@@ -186,9 +186,9 @@ function updateInstability(group){
  $('idxCAPE').textContent='— J/kg';
  $('idxCIN').textContent='— J/kg';
  $('idxLCL').textContent=lcl?Math.round(lcl.p)+' hPa':'—';
- $('cloudBase').textContent=lcl?Math.round(lcl.agl/10)*10+' m AGL · '+Math.round(lcl.p)+' hPa':'Indisponível';
- $('cloudTCU').textContent='Não determinável';
- $('cloudCB').textContent='Não determinável';
+ $('cloudBase').textContent=lcl?Math.round(lcl.agl*3.28084/100)*100+' ft AGL ('+Math.round(lcl.p)+' hPa)':'Indisponível';
+ $('cloudTCU').textContent='Base — / Topo —';
+ $('cloudCB').textContent='Base — / Topo —';
 }
 function initialize(data){
  if(!data||!Array.isArray(data.soundings)||data.soundings.length!==16)throw Error('Sondagens incompletas');
