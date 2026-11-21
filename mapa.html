@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#07518b"><title>MeteoFox — Mapa Meteorológico Interativo</title>
+<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#07518b"><link rel="icon" type="image/png" sizes="160x160" href="./meteofox-logo.png"><link rel="apple-touch-icon" href="./meteofox-logo.png"><title>MeteoFox — Mapa Meteorológico Interativo</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>
 *{box-sizing:border-box}body{margin:0;font:14px Inter,system-ui,sans-serif;background:#edf4fa;color:#163c55}
 header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;background:#07518b;color:white;padding:13px 20px}
@@ -42,7 +42,7 @@ header{flex:none;position:relative;z-index:1100}
 @media(max-width:480px){header{padding:8px 10px}header strong{font-size:17px}header span{font-size:10px}.map-overlays .toolbar button{font-size:11px;padding:6px 8px}#satTools button{font-size:11px;padding:6px 8px}.map-overlays{max-height:54%}}
 </style><style id="meteofox-header-controls-v2">
 .map-header{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;background:#f7fbff;color:#16466f;padding:11px 16px;box-shadow:0 1px 6px #103b5b1f;flex-wrap:wrap}
-.map-brand{display:flex;align-items:center;gap:11px 18px;min-width:0;color:#124b7d;text-decoration:none;flex-wrap:wrap}
+.map-brand{display:flex;align-items:center;gap:11px 12px;min-width:0;color:#124b7d;text-decoration:none;flex-wrap:wrap}.map-brand-logo{width:42px;height:42px;object-fit:cover;flex:none;border-radius:12px}
 .map-brand strong{font-size:22px;white-space:nowrap}
 .map-brand span{font-size:12px;font-weight:500;color:#57758f;opacity:1;white-space:nowrap}
 .header-buttons{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
@@ -93,7 +93,7 @@ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:700 15px Inter,
 #satTools .mf-opacity-item input{width:83px}
 }
 </style><style id="meteofox-ru-lecv">.popup .ru-decoded-report{white-space:pre-line;line-height:1.6;overflow-wrap:anywhere;background:#eef4fa;border:1px solid #d6e4ed;border-radius:8px;padding:10px;max-height:290px;overflow:auto}.popup .ru-disclaimer{font-size:11px;color:#59778b;line-height:1.45}</style></head><body>
-<header class="map-header"><a class="map-brand" href="./index.html" title="Voltar à página principal do MeteoFox"><strong>⛅ MeteoFox</strong><span>Mapa meteorológico · Portugal e Ilhas</span></a><nav class="header-buttons" aria-label="Regiões e ferramentas do mapa">
+<header class="map-header"><a class="map-brand" href="./index.html" title="Voltar à página principal do MeteoFox"><img class="map-brand-logo" src="./meteofox-logo.png" width="42" height="42" alt="Logótipo MeteoFox: raposa e nuvem"><strong>MeteoFox</strong><span>Mapa meteorológico · Portugal e Ilhas</span></a><nav class="header-buttons" aria-label="Regiões e ferramentas do mapa">
 <button id="all" type="button">Portugal e Ilhas</button><button id="valencia" type="button">Valência</button><button id="mainland" type="button">Continente</button><button id="islands" type="button">Açores</button><button id="madeira" type="button">Madeira</button><button id="refresh" type="button">↻ Atualizar boletins</button><button id="showLegends" type="button" aria-expanded="false" aria-controls="mapLegends">☰ Legendas METAR e Voo</button>
 </nav></header>
 <main id="mapMain">
