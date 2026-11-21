@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MeteoFox · Fox Verified Skew-T Lisboa 12Z</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#091a2d;color:#e5f1ff}
+*{box-sizing:border-box}body{margin:0;padding:16px}header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:16px;margin:0;font-weight:750}small{color:#9db4c9;font-size:12px}.spacer{flex:1}
+select{border:1px solid #315475;background:#122e4a;color:#e5f1ff;border-radius:8px;padding:8px;font:inherit;font-size:12px}
+#state{border:1px solid #315475;background:#112941;color:#bcd5e9;border-radius:9px;padding:12px;margin:10px 0;font-size:13px}
+#state[hidden]{display:none}
+.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.panel{min-width:0;background:#f8fafc;border:1px solid #274d70;border-radius:11px;overflow:hidden}
+.panel h2{margin:0;background:#0c3558;color:#e9f7ff;padding:11px 14px;font-size:14px}
+.panel p{margin:0;padding:8px 12px;background:#eaf2f8;color:#334d63;font-size:12px}
+iframe{width:100%;height:1060px;display:block;border:0;background:#f8fafc}
+footer{font-size:12px;color:#9db4c9;line-height:1.55;margin-top:12px}
+@media(max-width:1050px){.columns{grid-template-columns:1fr}iframe{height:1070px}}
+</style></head><body>
+<header><h1>Fox Verified · Skew-T 12Z · Lisboa</h1><span class="spacer"></span><label for="date">Validade observada (UTC)</label><select id="date" aria-label="Selecionar dia com previsão e observação coincidentes"><option>A verificar…</option></select></header>
+<div id="state" role="status">A procurar pares de previsão ECMWF e radiossondagem observada às 12 UTC…</div>
+<div class="columns" id="columns" hidden>
+<section class="panel"><h2>Previsão ECMWF · 12Z</h2><p id="forecastMeta">Run e validade UTC</p><iframe id="forecast" title="Skew-T previsto ECMWF Lisboa às 12 UTC"></iframe></section>
+<section class="panel"><h2>Radiossondagem observada · Lisboa 08579 · 12Z</h2><p id="observedMeta">Observação real TEMP FM35</p><iframe id="observed" title="Skew-T observado Lisboa às 12 UTC"></iframe></section>
+</div>
+<footer>Comparação apenas quando previsão e observação têm exatamente a mesma validade nominal de 12 UTC. O ECMWF deve ter sido emitido antes dessa validade. A resolução vertical do modelo é inferior à da radiossondagem. Dados observados: University of Wyoming / estação 08579; os diagnósticos termodinâmicos são calculados pelo MeteoFox e continuam experimentais. Nunca são substituídos por perfis fictícios.</footer>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+async function read(path){
+ const r=await fetch(path,{cache:'no-store'});
+ if(!r.ok)throw Error(path+' (HTTP '+r.status+')');
+ return r.json();
+}
+Promise.allSettled([
+ read('./produtos_experimentais/fox_verified_skewt_previsoes.json'),
+ read('./produtos_experimentais/radiossondagem_lisboa.json')
+]).then(results=>{
+ const [fc,obs]=results;
+ if(fc.status!=='fulfilled'||obs.status!=='fulfilled'){
+  const missing=[fc,obs].map((r,i)=>r.status==='rejected'?(i===0?'Arquivo de previsões 12Z':'Radiossondagem observada 12Z'):null).filter(Boolean);
+  throw Error('Ainda sem '+missing.join(' e ')+'. Os dados reais estão a ser recolhidos automaticamente.');
+ }
+ const observed=new Map((obs.value.soundings||[]).map(x=>[x.valid_utc,x]));
+ const matches=(fc.value.forecasts||[]).filter(x=>observed.has(x.valid_utc)&&Date.parse(x.run_utc)<Date.parse(x.valid_utc))
+  .sort((a,b)=>b.valid_utc.localeCompare(a.valid_utc));
+ if(!matches.length)throw Error('Ainda não existe um dia com previsão ECMWF arquivada antes das 12Z e radiossondagem real das mesmas 12Z. A comparação ficará disponível quando ambos os dados coincidirem.');
+ $('date').replaceChildren(...matches.map(x=>{const o=document.createElement('option');o.value=x.valid_utc;o.textContent=x.valid_utc.slice(0,10)+' · 12 UTC';return o}));
+ function show(valid){
+  const f=matches.find(x=>x.valid_utc===valid),o=observed.get(valid);
+  if(!f||!o)return;
+  $('forecastMeta').textContent='Run '+f.run_utc.replace('T',' ').replace(':00Z','Z')+' · +'+f.step_h+' h · válido '+valid;
+  $('observedMeta').textContent='TEMP FM35 · 08579 · '+o.levels.length+' níveis brutos selecionados · válido '+valid;
+  $('forecast').src='./laboratorio.html?embedded=1&verify=forecast&valid='+encodeURIComponent(valid);
+  $('observed').src='./laboratorio.html?embedded=1&verify=observed&valid='+encodeURIComponent(valid);
+  $('columns').hidden=false;$('state').hidden=true;
+ }
+ $('date').addEventListener('change',()=>show($('date').value));
+ show(matches[0].valid_utc);
+}).catch(err=>{$('state').textContent=err.message;$('date').replaceChildren(new Option('Sem par 12Z disponível',''));});
+</script></body></html>
