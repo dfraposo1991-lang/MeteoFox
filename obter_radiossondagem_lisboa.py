@@ -81,13 +81,13 @@ def get_sounding(day):
             "source_url": url, "source": "University of Wyoming, " + format_name,
             "dewpoint_method": "Calculado a partir de T e HR observadas (Magnus)"}
         except Exception as exc:
-            errors.append(f"{format_name}: {exc}")
+            errors.append(f"{format_name}: {exc} ({url})")
     raise ValueError("; ".join(errors))
 
 def main():
     now = datetime.now(timezone.utc)
     # A sondagem 12Z do próprio dia pode demorar a ser publicada.
-    days = [(now - timedelta(days=i)).date() for i in range(0, 5)]
+    days = [(now - timedelta(days=i)).date() for i in range(0, 10)]
     previous = {}
     if OUTPUT.exists():
         try:
@@ -104,10 +104,10 @@ def main():
             found[key] = sounding
             print(f"OBSERVADO {key}: {len(sounding['levels'])} níveis")
         except Exception as exc:
-            print(f"INDISPONÍVEL {key}: {exc}")
+            print(f"INDISPONÍVEL {key}: {exc}", flush=True)
     soundings = sorted(found.values(), key=lambda x: x["valid_utc"], reverse=True)[:14]
     if not soundings:
-        raise SystemExit("Nenhuma radiossondagem real disponível. Não criar dados fictícios.")
+        raise SystemExit("Nenhuma radiossondagem real disponível nos últimos 10 dias para 08579. Verificar se a estação publica TEMP/BUFR no arquivo Wyoming; não criar dados fictícios.")
     payload = {"station": STATION, "name": "Lisboa / Gago Coutinho",
                "updated_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
                "source": "University of Wyoming radiosonde archive, TEMP FM35",
