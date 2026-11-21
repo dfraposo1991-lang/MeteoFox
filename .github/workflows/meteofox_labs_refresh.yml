@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'gerar_produtos_experimentais.py'
+      - 'arquivar_previsoes_skewt_12z.py'
       - '.github/workflows/meteofox_labs_refresh.yml'
   schedule:
     # IFS Open Data 0p25. Começar a verificar depois do início da disseminação.
@@ -78,12 +79,15 @@ jobs:
           assert all(set(x["cities"])=={"Porto","Lisboa","Beja"} for x in data["soundings"])
           print("Validado:",data["run_utc"],"30 períodos; 16 sondagens por cidade")
           PY
+      - name: Preservar previsão ECMWF de Lisboa para comparação 12Z
+        if: steps.verificar.outputs.changed == 'true'
+        run: python arquivar_previsoes_skewt_12z.py
       - name: Guardar apenas os dados validados no repositório
         if: steps.verificar.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add produtos_experimentais/previsao_ecmwf.json
+          git add produtos_experimentais/previsao_ecmwf.json produtos_experimentais/fox_verified_skewt_previsoes.json
           if git diff --cached --quiet; then
             echo "Sem novos dados. Versão existente mantida."
             exit 0
