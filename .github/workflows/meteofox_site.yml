@@ -19,6 +19,7 @@ on:
       - 'meteofox_meteograma.js'
       - 'meteofox_meteograma.css'
       - 'mapa.html'
+      - 'meteofox-logo.png'
       - 'meteofox_satelite.js'
       - 'meteofox_fog_mask.js'
       - 'meteofox_ru_aviation.js'
@@ -65,6 +66,12 @@ jobs:
                   assert source.stat().st_size > 1000, f'{name} demasiado pequeno'
               shutil.copy2(source, public / name)
               print('Incluido no site:', name)
+
+          # Ícone oficial MeteoFox: raposa e nuvem no fundo azul do site.
+          logo = Path('meteofox-logo.png')
+          assert logo.is_file() and logo.stat().st_size > 1000, 'Logótipo MeteoFox em falta'
+          shutil.copy2(logo, public / logo.name)
+          print('Incluído: meteofox-logo.png')
 
           # Observações necessárias ao Fox Verified.
           observations = public / 'data'
