@@ -44,7 +44,9 @@ def parse_csv(raw):
         direction = number(row.get("wind direction_degree"))
         speed = number(row.get("wind speed_m/s"))
         height = number(row.get("geopotential height_m"))
-        if p is None or t is None or rh is None or not 100 <= p <= 1050 or not -110 <= t <= 60 or not 0 <= rh <= 110:
+        if (p is None or t is None or rh is None or direction is None or speed is None
+                or not 100 <= p <= 1050 or not -110 <= t <= 60 or not 0 <= rh <= 110
+                or not 0 <= direction <= 360 or not 0 <= speed <= 150):
             continue
         td = dewpoint_from_rh(t, rh)
         if td > t + 0.1:
