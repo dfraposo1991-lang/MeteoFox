@@ -219,7 +219,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="card" style="margin-bottom:14px">
   <h3>Ferramentas de previsão ECMWF</h3>
   <div class="maptools" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-   <a class="action" href="./laboratorio.html?embedded=1&v=20261121-skew-run-valid4" id="openSkewT" role="button" aria-haspopup="dialog" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" title="Ampliar sondagens previstas ECMWF e hodógrafo para Porto, Lisboa e Beja">Skew-T + Hodógrafo</a>
+   <a class="action" href="./laboratorio.html?embedded=1&v=20261121-skew-run-valid5" id="openSkewT" role="button" aria-haspopup="dialog" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" title="Ampliar sondagens previstas ECMWF e hodógrafo para Porto, Lisboa e Beja">Skew-T + Hodógrafo</a>
   </div>
   <p class="note" style="margin-top:10px">Skew-T: Porto, Lisboa e Beja · previsão ECMWF IFS Open Data.</p>
  </div>
@@ -354,7 +354,7 @@ let previousFocus=null;
 function openSkew(event){
  if(event)event.preventDefault();
  previousFocus=document.activeElement;
- if(!frame.getAttribute('src'))frame.setAttribute('src','./laboratorio.html?embedded=1&v=20261121-skew-run-valid4');
+ frame.setAttribute('src','./laboratorio.html?embedded=1&v=20261121-skew-run-valid5&t='+Date.now());
  dialog.hidden=false;document.body.classList.add('skew-dialog-open');close.focus();
 }
 function closeSkew(){
