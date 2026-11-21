@@ -220,6 +220,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
   <h3>Ferramentas de previsão ECMWF</h3>
   <div class="maptools" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
    <a class="action" href="./laboratorio.html?embedded=1&v=20261121-thermo-audit11" id="openSkewT" role="button" aria-haspopup="dialog" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" title="Ampliar sondagens previstas ECMWF e hodógrafo para Porto, Lisboa e Beja">Skew-T + Hodógrafo</a>
+   <a class="action" href="./fox-verified-skewt.html" id="openSkewVerified" role="button" aria-haspopup="dialog" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" title="Comparar Skew-T ECMWF das 12Z com radiossondagem real de Lisboa às mesmas 12Z">Fox Verified</a>
   </div>
   <p class="note" style="margin-top:10px">Skew-T: Porto, Lisboa e Beja · previsão ECMWF IFS Open Data.</p>
  </div>
@@ -347,6 +348,8 @@ body.skew-dialog-open{overflow:hidden}
 (function(){
 'use strict';
 const trigger=document.getElementById('openSkewT');
+const verifyTrigger=document.getElementById('openSkewVerified');
+const title=document.getElementById('skewModalTitle');
 const dialog=document.getElementById('skewDialog');
 const frame=document.getElementById('skewFrame');
 const close=document.getElementById('skewClose');
@@ -354,7 +357,9 @@ let previousFocus=null;
 function openSkew(event){
  if(event)event.preventDefault();
  previousFocus=document.activeElement;
- frame.setAttribute('src','./laboratorio.html?embedded=1&v=20261121-thermo-audit11&t='+Date.now());
+ const verified=event&&event.currentTarget===verifyTrigger;
+ title.textContent=verified?'Fox Verified · Skew-T 12Z · Lisboa':'Skew-T + Hodógrafo';
+ frame.setAttribute('src',verified?'./fox-verified-skewt.html?v=20261121-fox-verified-12z&t='+Date.now():'./laboratorio.html?embedded=1&v=20261121-thermo-audit11&t='+Date.now());
  dialog.hidden=false;document.body.classList.add('skew-dialog-open');close.focus();
 }
 function closeSkew(){
@@ -363,6 +368,7 @@ function closeSkew(){
  if(previousFocus&&previousFocus.isConnected)previousFocus.focus();
 }
 trigger.addEventListener('click',openSkew);
+verifyTrigger.addEventListener('click',openSkew);
 trigger.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();openSkew(event)}});
 close.addEventListener('click',closeSkew);
 dialog.addEventListener('click',event=>{if(event.target===dialog)closeSkew()});
