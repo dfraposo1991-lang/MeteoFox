@@ -61,7 +61,7 @@ class MeteoFoxSatellite{
   // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
   this.bordersLayer=null;this.bordersRequest=null;
   this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
-  this.bordersPane.style.zIndex='650';
+  this.bordersPane.style.zIndex='550';
   this.bordersPane.style.pointerEvents='none';
   this.sat=add('button',host,'🌗 VIS / FOG Auto: desligado',{'type':'button','aria-pressed':'false','title':'Satélite automático: GeoColour de dia e Fog RGB à noite; GeoColour de segurança'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
@@ -138,8 +138,8 @@ class MeteoFoxSatellite{
   }
   if(this.bordersLayer){if(!this.map.hasLayer(this.bordersLayer))this.bordersLayer.addTo(this.map);return;}
   if(this.bordersRequest)return;
-  // Natural Earth 1:110m: limites nacionais e linhas de costa, não fronteiras inventadas.
-  const url='https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson';
+  // Natural Earth 1:50m: maior detalhe costeiro e fronteiriço que 1:110m.
+  const url='https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
   this.bordersRequest=fetch(url,{cache:'force-cache'}).then(r=>{
    if(!r.ok)throw Error('Natural Earth HTTP '+r.status);
    return r.json();
@@ -150,7 +150,7 @@ class MeteoFoxSatellite{
    const borderRenderer=L.svg({pane:'meteofoxCountryBorders',padding:.5});
    this.bordersLayer=L.geoJSON(data,{
     pane:'meteofoxCountryBorders',renderer:borderRenderer,interactive:false,
-    style:{color:'#303942',weight:1.45,opacity:.82,fill:false,lineCap:'round',lineJoin:'round'}
+    style:{color:'#69717a',weight:1.05,opacity:.57,fill:false,lineCap:'round',lineJoin:'round'}
    });
    if(this.satOn)this.bordersLayer.addTo(this.map);
   }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
