@@ -21,7 +21,7 @@ footer{font-size:11px;color:var(--muted);line-height:1.6;margin-top:13px;padding
 @media(max-width:1100px){.columns{grid-template-columns:1fr}iframe{height:1070px}}
 @media(max-width:600px){body{padding:9px}header{align-items:flex-start}h1{width:100%}select{max-width:100%}.panel h2{font-size:12px}}
 </style></head><body>
-<header><h1>Fox Verified · Skew-T 12Z · Lisboa</h1><span class="spacer"></span><label for="date">Validade observada (UTC)</label><select id="date" aria-label="Selecionar dia com previsão e observação coincidentes"><option>A verificar…</option></select></header>
+<header><span class="spacer"></span><label for="date">Validade observada (UTC)</label><select id="date" aria-label="Selecionar dia com previsão e observação coincidentes"><option>A verificar…</option></select></header>
 <div id="state" role="status">A procurar pares de previsão ECMWF e radiossondagem observada às 12 UTC…</div>
 <div class="columns" id="columns" hidden>
 <section class="panel"><h2>Previsão ECMWF · 12Z</h2><p id="forecastMeta">Run e validade UTC</p><iframe id="forecast" title="Skew-T previsto ECMWF Lisboa às 12 UTC"></iframe></section>
