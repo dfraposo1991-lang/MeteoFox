@@ -62,17 +62,45 @@ async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)th
 function time(s){const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' UTC':'Hora indisponível'}
 function valid(v){return v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))}
 async function load(){
-$('status').textContent='A atualizar indicadores NOAA…';let successes=0;
+$('status').textContent='A atualizar indicadores NOAA…';
+for(const id of ['kp','xray','speed','bz'])$(id).textContent='—';
+$('kpTime').textContent='NOAA SWPC · índice planetário';
+$('xrayTime').textContent='GOES · classificação indicativa';
+$('speedTime').textContent='Velocidade · km/s';
+$('bzTime').textContent='Componente magnética · nT';
+let successes=0;
 const results=await Promise.allSettled([
 json('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
 json('https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json'),
-json('https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json'),
-json('https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json')]);
-if(results[0].status==='fulfilled'){const a=results[0].value.slice(1).filter(r=>valid(r[1]));if(a.length){const x=a[a.length-1];$('kp').textContent=Number(x[1]).toFixed(1);$('kpTime').textContent=time(x[0]);successes++}}
-if(results[1].status==='fulfilled'){const a=results[1].value.filter(r=>r.energy==='0.1-0.8nm'&&valid(r.flux));if(a.length){const x=a[a.length-1],f=Number(x.flux);$('xray').textContent=f>=1e-4?'X'+(f/1e-4).toFixed(1):f>=1e-5?'M'+(f/1e-5).toFixed(1):f>=1e-6?'C'+(f/1e-6).toFixed(1):f>=1e-7?'B'+(f/1e-7).toFixed(1):'A'+(f/1e-8).toFixed(1);$('xrayTime').textContent=time(x.time_tag);successes++}}
-if(results[2].status==='fulfilled'){const a=results[2].value.slice(1).filter(r=>valid(r[2]));if(a.length){const x=a[a.length-1];$('speed').textContent=Math.round(Number(x[2]))+' km/s';$('speedTime').textContent=time(x[0]);successes++;const sample=a.filter((_,i)=>i%Math.max(1,Math.floor(a.length/65))===0).slice(-65),max=Math.max(700,...sample.map(x=>Number(x[2])));$('speedChart').replaceChildren(...sample.map(x=>{const b=document.createElement('div');b.className='bar';b.style.height=(Number(x[2])/max*100)+'%';b.title=time(x[0])+' · '+x[2]+' km/s';return b}));$('chartCaption').textContent='Velocidade do vento solar · últimas observações disponíveis (UTC)'}}
-if(results[3].status==='fulfilled'){const a=results[3].value.slice(1).filter(r=>valid(r[3]));if(a.length){const x=a[a.length-1];$('bz').textContent=Number(x[3]).toFixed(1)+' nT';$('bzTime').textContent=time(x[0]);successes++}}
-$('status').textContent=successes===4?'Dados NOAA atualizados · '+new Date().toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC':successes?'Atualização parcial ('+successes+'/4 produtos) · verificar fontes':'Fontes NOAA indisponíveis neste momento · consultar ligações oficiais';
+json('https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json'),
+json('https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json'),
+json('https://services.swpc.noaa.gov/products/geospace/propagated-solar-wind-1-hour.json')]);
+if(results[0].status==='fulfilled'){
+const data=results[0].value;
+const a=(Array.isArray(data)?data:[]).map(r=>Array.isArray(r)?{time_tag:r[0],Kp:r[1]}:r).filter(r=>r&&valid(r.Kp));
+if(a.length){const x=a[a.length-1];$('kp').textContent=Number(x.Kp).toFixed(1);$('kpTime').textContent=time(x.time_tag);successes++}
+}
+if(results[1].status==='fulfilled'){
+const a=results[1].value.filter(r=>r.energy==='0.1-0.8nm'&&valid(r.flux));
+if(a.length){const x=a[a.length-1],f=Number(x.flux);$('xray').textContent=f>=1e-4?'X'+(f/1e-4).toFixed(1):f>=1e-5?'M'+(f/1e-5).toFixed(1):f>=1e-6?'C'+(f/1e-6).toFixed(1):f>=1e-7?'B'+(f/1e-7).toFixed(1):'A'+(f/1e-8).toFixed(1);$('xrayTime').textContent=time(x.time_tag);successes++}
+}
+if(results[2].status==='fulfilled'){
+const a=results[2].value.filter(r=>r&&valid(r.proton_speed));
+if(a.length){const x=a[a.length-1];$('speed').textContent=Math.round(Number(x.proton_speed))+' km/s';$('speedTime').textContent=time(x.time_tag);successes++}
+}
+if(results[3].status==='fulfilled'){
+const a=results[3].value.filter(r=>r&&valid(r.bz_gsm));
+if(a.length){const x=a[a.length-1];$('bz').textContent=Number(x.bz_gsm).toFixed(1)+' nT';$('bzTime').textContent=time(x.time_tag);successes++}
+}
+if(results[4].status==='fulfilled'){
+const a=results[4].value;
+const header=Array.isArray(a[0])?a[0]:[];
+const ti=header.indexOf('propagated_time_tag'),si=header.indexOf('speed');
+const rows=a.slice(1).filter(r=>Array.isArray(r)&&si>=0&&valid(r[si]));
+const sample=rows.filter((_,i)=>i%Math.max(1,Math.floor(rows.length/60))===0).slice(-60);
+if(sample.length){const max=Math.max(700,...sample.map(r=>Number(r[si])));$('speedChart').replaceChildren(...sample.map(r=>{const b=document.createElement('div');b.className='bar';b.style.height=(Number(r[si])/max*100)+'%';b.title=time(r[ti>=0?ti:0])+' · '+r[si]+' km/s';return b}));$('chartCaption').textContent='Vento solar propagado · série NOAA da última hora (UTC)'}
+}
+$('status').textContent=successes===4?'4/4 indicadores NOAA disponíveis · '+new Date().toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC':successes?'Atualização parcial ('+successes+'/4 indicadores) · verificar fontes':'Fontes NOAA indisponíveis neste momento · consultar ligações oficiais';
 }
 $('reload').onclick=load;load();
 </script></body></html>
