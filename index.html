@@ -400,7 +400,7 @@ async function getForecast(lat,lon,model=null,windUnit='kn'){const hourly='tempe
 function weatherIcon(code){if(code===0)return'☀️';if([1,2].includes(code))return'🌤️';if(code===3)return'☁️';if([45,48].includes(code))return'🌫️';if([51,53,55,56,57].includes(code))return'🌦️';if([61,63,65,66,67,80,81,82].includes(code))return'🌧️';if([71,73,75,77,85,86].includes(code))return'🌨️';if([95,96,99].includes(code))return'⛈️';return'🌡️'}
 function setOverviewLocale(ru){
  const note=document.querySelector('#overview > p.note');
- if(note)note.textContent=ru?'ОСНОВНАЯ МОДЕЛЬ · ECMWF IFS · Прогнозные данные, не инструментальные наблюдения. Ветер в км/ч.':'MODELO PRINCIPAL · ECMWF IFS · Dados de previsão, não observações instrumentais. Vento em kt.';
+ if(note)note.textContent=ru?'ОСНОВНАЯ МОДЕЛЬ · ECMWF IFS · Прогнозные данные.':'MODELO PRINCIPAL · ECMWF IFS · Dados de previsão.';
  const labels=document.querySelectorAll('#overview .metrics .metric .k');
  (ru?['Температура','Относительная влажность','Осадки','Ветер']:['Temperatura','Humidade relativa','Precipitação','Vento']).forEach((name,i)=>{if(labels[i])labels[i].textContent=name;});
  const units=document.querySelectorAll('#overview .metrics .metric .u');
