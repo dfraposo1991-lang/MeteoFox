@@ -1,10 +1,10 @@
 {
-  "checked_utc": "2026-11-21T07:17:34.360894Z",
+  "checked_utc": "2026-11-21T08:56:17.557107Z",
   "ready": true,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
   "fog_layer": "mtg_fd:rgb_fog",
-  "matching_time_utc": "2026-11-21T06:00:00Z",
+  "matching_time_utc": "2026-11-21T08:30:00Z",
   "reason": "Fog WMS returned differing PNGs for two GeoColour UTC times; exact source acquisition stamps remain unproven",
   "candidate_layers": [
     {
@@ -32,7 +32,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-21T06:50:00.000Z/PT10M"
+        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-21T08:30:00.000Z/PT10M"
       }
     ],
     "mtg_fd:rgb_geocolour": [
@@ -42,21 +42,21 @@
       },
       {
         "name": "time",
-        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-21T06:50:00.000Z/PT10M"
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-21T08:30:00.000Z/PT10M"
       }
     ]
   },
   "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME",
   "sample_test": {
-    "time_utc": "2026-11-21T06:00:00Z",
-    "bytes": 37884,
-    "sha256": "0cccda61ee928a50b13f53824dd80c599383c951f49f69af94f69945270c279c"
+    "time_utc": "2026-11-21T08:30:00Z",
+    "bytes": 33919,
+    "sha256": "418a9c27d8f3659b50a6ed7dadec9be7f835d3f56b1c98abda8662d9765e10a3"
   },
   "time_pair_test": {
-    "earlier_utc": "2026-11-21T05:50:00Z",
-    "later_utc": "2026-11-21T06:00:00Z",
+    "earlier_utc": "2026-11-21T08:20:00Z",
+    "later_utc": "2026-11-21T08:30:00Z",
     "earlier_is_png": true,
-    "earlier_bytes": 37942,
+    "earlier_bytes": 33936,
     "different_pixels": true,
     "later_is_png": true
   }
