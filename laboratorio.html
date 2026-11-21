@@ -400,6 +400,7 @@ function initializeVerification(data){
  document.querySelector('.toolbar').hidden=true;
  $('city').value='Lisboa';
  const observed=verificationMode==='observed';
+ showAdvancedThermo(observed?null:entry.run_utc,entry.valid_utc,'Lisboa');
  $('soundingRun').textContent=observed?'Observação TEMP FM35 · WMO 08579':'ECMWF IFS · run '+formatStamp(entry.run_utc);
  $('soundingValid').textContent='válido '+formatStamp(entry.valid_utc);
  const full=entry.levels;
@@ -421,7 +422,7 @@ function initializeVerification(data){
  window.MeteoFoxSevere?.display(full,thermodynamics(full));
  const hodoTitle=document.querySelector('.sounding-layout > div:nth-child(2) h3');
  if(hodoTitle)hodoTitle.textContent=observed?'Hodógrafo · vento observado (kt)':'Hodógrafo · vento previsto (kt)';
- const cloudTitle=document.querySelector('.cloud-panel h3');
+ const cloudTitle=document.querySelector('.cloud-panel:not(#thermoAdvanced) h3');
  if(cloudTitle)cloudTitle.textContent=observed?'Diagnósticos calculados da radiossondagem observada':'Diagnósticos calculados da previsão ECMWF';
  if(observed){
   $('cloudNote').textContent='Observação real de Lisboa 12Z · University of Wyoming, TEMP FM35. Ponto de orvalho derivado de temperatura e humidade relativa; índices recalculados pelo motor experimental MeteoFox. Não são índices oficiais da estação.';
@@ -430,6 +431,6 @@ function initializeVerification(data){
 const verificationPath=verificationMode==='observed'?'./produtos_experimentais/radiossondagem_lisboa.json':'./produtos_experimentais/fox_verified_skewt_previsoes.json';
 const sourcePath=verificationMode==='observed'||verificationMode==='forecast'?verificationPath:'./produtos_experimentais/previsao_ecmwf.json';
 fetch(sourcePath,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Dados não publicados (HTTP '+r.status+')');return r.json()})
-.then(data=>verificationMode==='observed'||verificationMode==='forecast'?initializeVerification(data):initialize(data))
+.then(async data=>{await loadAdvancedThermo();return verificationMode==='observed'||verificationMode==='forecast'?initializeVerification(data):initialize(data)})
 .catch(e=>{$('status').hidden=false;$('status').classList.add('error');$('status').textContent='Perfil indisponível: '+e.message+'. Não são apresentados dados simulados.'});
 </script><script src="./meteofox_keyboard.js"></script></body></html>
