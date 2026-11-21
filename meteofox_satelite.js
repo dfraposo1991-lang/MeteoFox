@@ -150,7 +150,7 @@ class MeteoFoxSatellite{
    const borderRenderer=L.svg({pane:'meteofoxCountryBorders',padding:.5});
    this.bordersLayer=L.geoJSON(data,{
     pane:'meteofoxCountryBorders',renderer:borderRenderer,interactive:false,
-    style:{color:'#ffffff',weight:1.45,opacity:.9,fill:false,lineCap:'round',lineJoin:'round'}
+    style:{color:'#303942',weight:1.45,opacity:.82,fill:false,lineCap:'round',lineJoin:'round'}
    });
    if(this.satOn)this.bordersLayer.addTo(this.map);
   }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
