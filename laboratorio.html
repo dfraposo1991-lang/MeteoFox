@@ -52,6 +52,17 @@ body.embedded .top,body.embedded .tabs,body.embedded .footer{display:none}
 .sounding-times span:first-child{text-align:left}
 .sounding-times span:last-child{text-align:right;margin-left:auto}
 @media(max-width:550px){.sounding-times{gap:8px;font-size:10px;padding:7px 9px}}
+.instability-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0 0 12px;border:1px solid #cbdce9;border-radius:10px;background:#f1f7fc;color:#294d6a}
+.instability-strip span{display:flex;align-items:center;justify-content:center;gap:9px;padding:12px 8px;min-width:0;border-right:1px solid #cbdce9}
+.instability-strip span:last-child{border-right:0}
+.instability-strip b{font-size:12px}.instability-strip strong{font-size:13px;color:#184f7e;font-weight:600}
+.cloud-panel{border:1px solid var(--line);border-radius:11px;background:#fff;padding:13px;margin-top:13px}
+.cloud-panel h3{margin:0 0 12px;font-size:13px}
+.cloud-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cloud-grid>div{background:#f8fafc;border:1px solid #dbe4ec;border-radius:8px;padding:11px;display:flex;flex-direction:column;gap:7px}
+.cloud-grid span{font-size:11px;color:#60768a}.cloud-grid strong{font-size:13px;color:#244b70}
+.cloud-panel .muted{margin:10px 0 0}
+@media(max-width:680px){.instability-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.instability-strip span:nth-child(2){border-right:0}.instability-strip span:nth-child(-n+2){border-bottom:1px solid #cbdce9}.cloud-grid{grid-template-columns:1fr}}
 body.embedded .heading{display:none}
 body.embedded .heading h2{color:#173e5c}
 body.embedded .heading .sub{color:#617c90}
@@ -80,13 +91,15 @@ body.embedded .heading .sub{color:#617c90}
 
 
 <div class="sounding-times" aria-label="Run e validade da sondagem"><span id="soundingRun">run —</span><span id="soundingValid">válido —</span></div>
+<div class="instability-strip" aria-label="Índices termodinâmicos"><span><b>LI</b> <strong id="idxLI">—</strong></span><span><b>CAPE</b> <strong id="idxCAPE">—</strong></span><span><b>CIN</b> <strong id="idxCIN">—</strong></span><span><b>LCL</b> <strong id="idxLCL">—</strong></span></div>
 <div class="sounding-layout">
 <div><h3>Skew-T / log-P</h3><div class="skew-scroll" role="region" aria-label="Diagrama de sondagem deslocável horizontalmente"><svg id="skew" class="skew" viewBox="0 0 900 570" role="img" aria-label="Diagrama de temperatura e ponto de orvalho com escala logarítmica de pressão"></svg></div></div>
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
+<div class="cloud-panel"><h3>Base das nuvens e convecção profunda</h3><div class="cloud-grid"><div><span>Base estimada (LCL)</span><strong id="cloudBase">—</strong></div><div><span>TCU · base / topo</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · base / topo</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">O LCL é uma estimativa termodinâmica da base de nuvens convectivas; não determina por si só a presença de TCU ou CB. A identificação e os topos requerem dados verticais mais completos e/ou observação.</p></div>
 <div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
-<p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). Não inclui CAPE/CIN/LCL nem representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
+<p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI não são calculados com os níveis atualmente disponíveis; o LCL é apenas uma estimativa de superfície. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
 </div></section>
 <div class="card"><p class="muted">Fonte: ECMWF IFS Open Data · licença CC BY 4.0. Produto experimental: os dados são gerados e validados por um processo separado. Se a atualização falhar, o portal principal mantém-se independente.</p></div>
 </main><footer class="footer"><span>MeteoFox · Ferramenta de apoio à análise meteorológica</span><span>Fonte: ECMWF IFS Open Data · sondagens previstas, não observadas</span></footer></div>
@@ -156,6 +169,27 @@ function formatStamp(iso){
  if(!Number.isFinite(d.getTime()))return '—';
  return new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(d).replace(',','')+' UTC';
 }
+function estimatedLCL(group){
+ // Aproximação de Bolton (1980) para a parcela de superfície, sem correção de altitude do terreno.
+ const levels=group.filter(r=>Number.isFinite(Number(r.hpa))&&Number.isFinite(Number(r.temp_c))&&Number.isFinite(Number(r.dewpoint_c))).sort((a,b)=>b.hpa-a.hpa);
+ if(!levels.length)return null;
+ const r=levels[0],p=Number(r.hpa),t=Number(r.temp_c)+273.15,td=Number(r.dewpoint_c)+273.15;
+ if(td>t||td<180||p<400)return null;
+ const tlcl=1/(1/(td-56)+Math.log(t/td)/800)+56;
+ const plcl=p*Math.pow(tlcl/t,1/0.2854);
+ const dz=287.05*((t+tlcl)/2)/9.80665*Math.log(p/plcl);
+ return {p:plcl,agl:dz};
+}
+function updateInstability(group){
+ const lcl=estimatedLCL(group);
+ $('idxLI').textContent='—';
+ $('idxCAPE').textContent='— J/kg';
+ $('idxCIN').textContent='— J/kg';
+ $('idxLCL').textContent=lcl?Math.round(lcl.p)+' hPa':'—';
+ $('cloudBase').textContent=lcl?Math.round(lcl.agl/10)*10+' m AGL · '+Math.round(lcl.p)+' hPa':'Indisponível';
+ $('cloudTCU').textContent='Não determinável';
+ $('cloudCB').textContent='Não determinável';
+}
 function initialize(data){
  if(!data||!Array.isArray(data.soundings)||data.soundings.length!==16)throw Error('Sondagens incompletas');
  const steps=data.soundings;
@@ -169,6 +203,7 @@ function initialize(data){
   const record=steps[index],city=$('city').value;
   $('soundingRun').textContent='run '+formatStamp(data.run_utc);
   $('soundingValid').textContent='válido '+formatStamp(record.valid_utc);
+  updateInstability(record.cities[city]);
   drawSkew(record.cities[city],city);
    drawHodograph(record.cities[city]);
 
