@@ -41,7 +41,7 @@ body.embedded .top,body.embedded .tabs,body.embedded .footer{display:none}
 .hodo-scroll{background:#fff;border:1px solid #dae1e8;border-radius:12px;padding:12px;overflow:auto}
 .hodo{display:block;width:100%;max-width:620px;min-width:320px;margin:auto;background:#fff}
 .hodo-caption{margin:9px 0;font-size:12px;color:#475569;line-height:1.5}
-@media(max-width:980px){.sounding-layout{grid-template-columns:1fr}}
+@media(max-width:980px){.sounding-layout{grid-template-columns:1fr}}\n@media(max-width:680px){.convective-factors{gap:6px}.convective-factors span{flex:1 1 auto;justify-content:space-between;max-width:100%;white-space:normal}.cloud-panel{padding:11px}.sounding-layout{gap:10px}}
 .hodo-legend{display:flex;align-items:center;flex-wrap:wrap;gap:9px 17px;margin:12px 2px 0;font-size:11px;color:#526b7e}
 .hodo-legend span:not(.hodo-legend-note){display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .hodo-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
@@ -101,7 +101,7 @@ body.embedded .heading .sub{color:#617c90}
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
 <section class="cloud-panel" id="thermoAdvanced" aria-label="Termodinâmica convectiva experimental"><h3>Termodinâmica convectiva · MetPy / ECMWF</h3><div class="convective-factors"><span>MLCAPE <strong id="advMLCAPE">—</strong></span><span>MLCIN <strong id="advMLCIN">—</strong></span><span>MUCAPE <strong id="advMUCAPE">—</strong></span><span>MUCIN <strong id="advMUCIN">—</strong></span><span>ML LCL <strong id="advMLLCL">—</strong></span></div><p class="muted" id="advThermoNote">A aguardar dados MetPy da mesma execução ECMWF. MLCAPE/MLCIN: camada média de 100 hPa; MUCAPE/MUCIN: parcela mais instável nos primeiros 300 hPa. Valores experimentais, não observações.</p></section>
-<section class="cloud-panel" id="compositeAdvanced" aria-label="Índices compostos de convecção severa"><h3>Convecção severa · Índices compostos experimentais</h3><div class="convective-factors"><span>SCP (aprox. camadas fixas) <strong id="advSCP">—</strong></span><span>STP (aprox. camadas fixas) <strong id="advSTP">—</strong></span></div><p class="muted" id="advCompositeNote">A aguardar parâmetros termodinâmicos e cinemáticos do mesmo perfil. Aproximações de camadas fixas, não SCP/STP operacionais: não substituem SRH e shear efetivos nem constituem previsão de supercélulas ou tornados.</p></section>
+<section class="cloud-panel" id="compositeAdvanced" aria-label="Índices compostos de convecção severa"><h3>Convecção severa · Índices compostos experimentais</h3><div class="convective-factors"><span>SCP · camadas fixas <strong id="advSCP">—</strong></span><span>STP · camadas fixas <strong id="advSTP">—</strong></span></div><p class="muted" id="advCompositeNote">A aguardar parâmetros termodinâmicos e cinemáticos do mesmo perfil. Aproximações de camadas fixas, não SCP/STP operacionais: não substituem SRH e shear efetivos nem constituem previsão de supercélulas ou tornados.</p></section>
 <div class="cloud-panel"><h3>Base das nuvens e potencial convectivo previsto</h3><div class="convective-factors" aria-label="Diagnósticos complementares"><span>Profundidade LFC–EL <strong id="cloudDepth">—</strong></span><span>HR 700–500 hPa <strong id="cloudRH">—</strong></span><span>Topo termodinâmico <strong id="cloudTopTemp">—</strong></span><span>Inibição CIN <strong id="cloudInhibition">—</strong></span></div><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · potencial previsto · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · potencial previsto · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
 <div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span><i style="background:#a855f7"></i>Parcela de superfície</span><span><i style="background:#f59e0b;height:9px;opacity:.5"></i>CAPE</span><span><i style="background:#3b82f6;height:9px;opacity:.35"></i>CIN</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
 <p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI, LCL/LFC/EL e trajetória da parcela são estimativas de superfície calculadas com interpolação dos níveis disponíveis; a resolução vertical limitada pode afetar significativamente os resultados. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
@@ -336,40 +336,43 @@ function showComposite(run,valid,city){
  const record=advancedThermo?.run_utc===run?advancedThermo.soundings?.find(x=>x.valid_utc===valid)?.cities?.[city]:null;
  const group=window.currentSoundingGroup;
  if(!record||record.status!=='ok'||!group||window.currentSoundingValid!==valid||window.currentSoundingCity!==city){
-  note.textContent='Índices indisponíveis: falta correspondência entre previsão, MetPy e perfil cinemático.';
+  note.textContent='Indisponível: previsão ECMWF, diagnóstico MetPy e perfil cinemático não correspondem à mesma validade.';
   return;
  }
- const therm=thermodynamics(group);
- const kin=window.MeteoFoxSevere?.analyze(group,therm);
+ const thermo=thermodynamics(group),kin=window.MeteoFoxSevere?.analyze(group,thermo);
  const finite=v=>typeof v==='number'&&Number.isFinite(v);
- const cape=record.mucape_jkg,mlcape=record.mlcape_jkg,mlcin=record.mlcin_jkg;
- const srh03=kin?.srh3,srh01=kin?.srh1,shear06=kin?.shear6;
- const shearMs=finite(shear06)?shear06*0.514444444:null;
- // Proxies de camadas fixas: NÃO usar a designação SCP/STP efetivo operacional.
+ const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+ const shearMs=finite(kin?.shear6)?kin.shear6*0.514444444:null;
+ // SCP de camadas fixas: MUCAPE/1000 * SRH03/50 * shear06-factor.
+ // Cisalhamento em m/s: fator 0 abaixo de 10, linear 10–20, máximo 1 acima de 20.
+ // Não é o SCP operacional com SRH/cisalhamento da camada de alimentação efetiva.
+ const cape=record.mucape_jkg,srh03=kin?.srh3;
  if([cape,srh03,shearMs].every(finite)){
-  const shearFactor=Math.max(0,Math.min(shearMs,20))/20;
-  const scpValue=Math.max(0,cape)/1000*Math.max(0,srh03)/50*shearFactor;
-  scp.textContent=scpValue.toFixed(2);
+  const shearFactor=clamp((shearMs-10)/10,0,1);
+  scp.textContent=(Math.max(0,cape)/1000*Math.max(0,srh03)/50*shearFactor).toFixed(2);
  }
- let lclHeight=null;
- if(finite(record.ml_lcl_hpa)&&therm?.samples?.length){
-  const points=therm.samples;
+ // STP de camadas fixas (STP fixed-layer, CIN): MLCAPE, SRH01, shear06,
+ // altura ML-LCL em metros AGL e MLCIN. Não utilizar altura absoluta.
+ const mlcape=record.mlcape_jkg,mlcin=record.mlcin_jkg,srh01=kin?.srh1;
+ let lclAgl=null;
+ if(finite(record.ml_lcl_hpa)&&thermo?.samples?.length){
+  const points=thermo.samples.filter(x=>finite(x.p)&&finite(x.z)).sort((a,b)=>b.p-a.p);
   for(let i=1;i<points.length;i++){
    const a=points[i-1],b=points[i];
-   if(a.p>=record.ml_lcl_hpa&&b.p<=record.ml_lcl_hpa){
+   if(a.p>=record.ml_lcl_hpa&&b.p<=record.ml_lcl_hpa&&a.p>b.p){
     const w=Math.log(a.p/record.ml_lcl_hpa)/Math.log(a.p/b.p);
-    lclHeight=a.z+(b.z-a.z)*w;break;
+    lclAgl=a.z+(b.z-a.z)*w-points[0].z;
+    break;
    }
   }
  }
- if([mlcape,mlcin,srh01,shearMs,lclHeight].every(finite)){
-  const shearFactor=shearMs<12.5?0:Math.min(shearMs,30)/20;
-  const lclFactor=lclHeight<=1000?1:lclHeight>=2000?0:(2000-lclHeight)/1000;
-  const cinFactor=mlcin>=-50?1:mlcin<=-200?0:(200+mlcin)/150;
-  const stpValue=Math.max(0,mlcape)/1500*Math.max(0,srh01)/150*shearFactor*lclFactor*cinFactor;
-  stp.textContent=stpValue.toFixed(2);
+ if([mlcape,mlcin,srh01,shearMs,lclAgl].every(finite)&&lclAgl>=0){
+  const shearFactor=shearMs<12.5?0:clamp(shearMs/20,0,1.5);
+  const lclFactor=clamp((2000-lclAgl)/1000,0,1);
+  const cinFactor=clamp((200+mlcin)/150,0,1);
+  stp.textContent=(Math.max(0,mlcape)/1500*Math.max(0,srh01)/150*shearFactor*lclFactor*cinFactor).toFixed(2);
  }
- note.textContent='Proxies experimentais de camadas fixas: SCP usa MUCAPE, SRH 0–3 km e shear 0–6 km; STP usa MLCAPE, SRH 0–1 km, shear 0–6 km, ML LCL e MLCIN. Não equivalem aos índices operacionais com camadas efetivas. — significa dados insuficientes. Não são avisos meteorológicos.';
+ note.textContent='Índices experimentais de camadas fixas: SCP = MUCAPE × SRH 0–3 km × shear 0–6 km; STP = MLCAPE × SRH 0–1 km × shear 0–6 km × ML-LCL (AGL) × MLCIN, com normalizações e limites próprios. Shear convertido de kt para m/s; LCL em metros AGL aproximados. Não são índices de camada efetiva nem previsões determinísticas de supercélulas/tornados. — indica dados insuficientes.';
 }
 function showAdvancedThermo(run,valid,city){
  const note=$('advThermoNote');
