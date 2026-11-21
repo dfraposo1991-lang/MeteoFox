@@ -97,9 +97,9 @@ body.embedded .heading .sub{color:#617c90}
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
-<div class="cloud-panel"><h3>Base das nuvens e convecção profunda</h3><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · base / topo · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · base / topo · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
-<div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
-<p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI não são calculados com os níveis atualmente disponíveis; o LCL é apenas uma estimativa de superfície. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
+<div class="cloud-panel"><h3>Base das nuvens e convecção profunda</h3><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · potencial previsto · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · potencial previsto · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
+<div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span><i style="background:#a855f7"></i>Parcela de superfície</span><span><i style="background:#f59e0b;height:9px;opacity:.5"></i>CAPE</span><span><i style="background:#3b82f6;height:9px;opacity:.35"></i>CIN</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
+<p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI, LCL/LFC/EL e trajetória da parcela são estimativas de superfície calculadas com interpolação dos níveis disponíveis; a resolução vertical limitada pode afetar significativamente os resultados. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
 </div></section>
 <div class="card"><p class="muted">Fonte: ECMWF IFS Open Data · licença CC BY 4.0. Produto experimental: os dados são gerados e validados por um processo separado. Se a atualização falhar, o portal principal mantém-se independente.</p></div>
 </main><footer class="footer"><span>MeteoFox · Ferramenta de apoio à análise meteorológica</span><span>Fonte: ECMWF IFS Open Data · sondagens previstas, não observadas</span></footer></div>
@@ -109,7 +109,7 @@ const $=id=>document.getElementById(id);
 const ns='http://www.w3.org/2000/svg';
 const el=(name,attrs={},text='')=>{const n=document.createElementNS(ns,name);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(text)n.textContent=text;return n};
 const add=(parent,name,attrs={},text='')=>{const n=el(name,attrs,text);parent.append(n);return n};
-function drawSkew(group,city){
+function drawSkew(group,city,diagnostics){
  const svg=$('skew');svg.replaceChildren();const X=73,Y=30,W=598,H=490,pTop=200,pBottom=1000;
  const y=p=>Y+Math.log(p/pTop)/Math.log(pBottom/pTop)*H;
  const x=(t,p)=>X+(t+80)*4.3 + 55*Math.log(pBottom/p);
@@ -118,6 +118,24 @@ function drawSkew(group,city){
  add(svg,'text',{x:20,y:17},'hPa');add(svg,'text',{x:250,y:564},'Temperatura °C · linhas inclinadas: isotérmicas');
  const lines=[['temp_c','#ff826f'],['dewpoint_c','#67e3bb']];
  for(const [key,color] of lines){const points=group.map(r=>x(r[key],r.hpa)+','+y(r.hpa)).join(' ');add(svg,'polyline',{points,fill:'none',stroke:color,'stroke-width':3,'stroke-linejoin':'round'});for(const r of group)add(svg,'circle',{cx:x(r[key],r.hpa),cy:y(r.hpa),r:3,fill:color})}
+ if(diagnostics?.samples?.length){
+  const pts=diagnostics.samples.filter(r=>r.p>=pTop&&r.p<=pBottom);
+  for(let i=1;i<pts.length;i++){
+   const a=pts[i-1],b=pts[i],positive=(a.buoy+b.buoy)>0;
+   if((diagnostics.lfc&&a.p<=diagnostics.lfc.p)&&(!diagnostics.el||a.p>=diagnostics.el.p)&&positive){
+    add(svg,'polygon',{points:[x(a.env,a.p)+','+y(a.p),x(a.t,a.p)+','+y(a.p),x(b.t,b.p)+','+y(b.p),x(b.env,b.p)+','+y(b.p)].join(' '),fill:'#f59e0b','fill-opacity':'.18'});
+   }else if(!positive&&(!diagnostics.lfc||a.p>=diagnostics.lfc.p)){
+    add(svg,'polygon',{points:[x(a.env,a.p)+','+y(a.p),x(a.t,a.p)+','+y(a.p),x(b.t,b.p)+','+y(b.p),x(b.env,b.p)+','+y(b.p)].join(' '),fill:'#3b82f6','fill-opacity':'.12'});
+   }
+  }
+  add(svg,'polyline',{points:pts.map(r=>x(r.t,r.p)+','+y(r.p)).join(' '),fill:'none',stroke:'#a855f7','stroke-width':2.4,'stroke-dasharray':'7 4'});
+  for(const [label,point] of [['LCL',diagnostics.lcl],['LFC',diagnostics.lfc],['EL',diagnostics.el]]){
+   if(!point||point.p<pTop||point.p>pBottom)continue;
+   const yy=y(point.p);
+   add(svg,'line',{x1:X,y1:yy,x2:X+W,y2:yy,stroke:'#8b5cf6','stroke-width':1,'stroke-dasharray':'3 6','stroke-opacity':'.65'});
+   add(svg,'text',{x:X+W-6,y:yy-5,'text-anchor':'end','font-size':10,fill:'#7c3aed'},label+' '+Math.round(point.p)+' hPa');
+  }
+ }
  add(svg,'text',{x:705,y:18},'VENTO (kt)');
  for(const r of group){const yy=y(r.hpa);const deg=r.wind_dir_deg;add(svg,'text',{x:707,y:yy+4},r.hpa+'  '+String(Math.round(deg)).padStart(3,'0')+'° / '+r.wind_kt.toFixed(0)+' kt')}
 }
@@ -169,26 +187,91 @@ function formatStamp(iso){
  if(!Number.isFinite(d.getTime()))return '—';
  return new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(d).replace(',','')+' UTC';
 }
-function estimatedLCL(group){
- // Aproximação de Bolton (1980) para a parcela de superfície, sem correção de altitude do terreno.
- const levels=group.filter(r=>Number.isFinite(Number(r.hpa))&&Number.isFinite(Number(r.temp_c))&&Number.isFinite(Number(r.dewpoint_c))).sort((a,b)=>b.hpa-a.hpa);
- if(!levels.length)return null;
- const r=levels[0],p=Number(r.hpa),t=Number(r.temp_c)+273.15,td=Number(r.dewpoint_c)+273.15;
- if(td>t||td<180||p<400)return null;
- const tlcl=1/(1/(td-56)+Math.log(t/td)/800)+56;
- const plcl=p*Math.pow(tlcl/t,1/0.2854);
- const dz=287.05*((t+tlcl)/2)/9.80665*Math.log(p/plcl);
- return {p:plcl,agl:dz};
+
+/* Diagnóstico de parcela de superfície: integração pseudoadiabática e
+   flutuabilidade virtual, com interpolação log-p do perfil ECMWF.
+   Resultados estimativos, dependentes da resolução vertical do modelo. */
+function thermodynamics(group){
+ const lev=group.map(r=>({p:+r.hpa,t:+r.temp_c+273.15,td:+r.dewpoint_c+273.15}))
+  .filter(r=>Number.isFinite(r.p)&&Number.isFinite(r.t)&&Number.isFinite(r.td)&&r.p>=200&&r.p<=1050)
+  .sort((a,b)=>b.p-a.p);
+ if(lev.length<8||lev[0].td>lev[0].t||lev[0].t<180)return null;
+ const Rd=287.05,cp=1004,eps=0.622,Lv=2.5e6,g=9.80665,k=Rd/cp;
+ const es=t=>6.112*Math.exp(17.67*(t-273.15)/(t-29.65));
+ const mix=(p,t)=>{const e=Math.min(es(t),p*.95);return eps*e/(p-e)};
+ const tv=(t,r)=>t*(1+0.61*r/(1+r));
+ const p0=lev[0].p,t0=lev[0].t,td0=lev[0].td;
+ const tlcl=1/(1/(td0-56)+Math.log(t0/td0)/800)+56;
+ const plcl=p0*Math.pow(tlcl/t0,1/k);
+ const r0=mix(p0,td0);
+ const interpolate=(p,key)=>{
+  for(let i=1;i<lev.length;i++)if(lev[i-1].p>=p&&p>=lev[i].p){
+   const a=lev[i-1],b=lev[i],w=Math.log(a.p/p)/Math.log(a.p/b.p);
+   return a[key]+(b[key]-a[key])*w;
+  }
+  return null;
+ };
+ const moistSlope=(p,t)=>{
+  const rs=mix(p,t);
+  return k*t*(1+Lv*rs/(Rd*t))/(1+Lv*Lv*rs*eps/(cp*Rd*t*t));
+ };
+ let parcel=t0,z=0,prev=null,cape=0,cin=0,lfc=null,el=null;
+ const samples=[],step=.009;
+ for(let lp=Math.log(p0);lp>=Math.log(lev[lev.length-1].p)-1e-8;lp-=step){
+  const p=Math.max(lev[lev.length-1].p,Math.exp(lp));
+  const ta=interpolate(p,'t'),tda=interpolate(p,'td');
+  if(ta===null||tda===null)break;
+  const envR=mix(p,tda),parcelR=p>=plcl?r0:mix(p,parcel);
+  const buoy=g*(tv(parcel,parcelR)-tv(ta,envR))/tv(ta,envR);
+  const point={p,t:parcel-273.15,env:ta-273.15,z,buoy};
+  if(prev){
+   const dz=z-prev.z,energy=(prev.buoy+buoy)*dz/2;
+   if(lfc===null){
+    if(prev.buoy<=0&&buoy>0&&p<=plcl)lfc={p,z};
+    if(energy<0)cin+=energy;
+    else if(p<=plcl&&prev.buoy>0){lfc={p,z};cape+=energy}
+   }else if(el===null){
+    if(prev.buoy>=0&&buoy<0)el={p,z};
+    else if(energy>0)cape+=energy;
+   }
+  }else if(buoy>0&&p<=plcl)lfc={p,z};
+  samples.push(point);
+  prev=point;
+  if(p<=lev[lev.length-1].p)break;
+  const pNext=Math.max(lev[lev.length-1].p,p*Math.exp(-step));
+  const dlp=Math.log(pNext/p);
+  const nextParcel=p>plcl&&pNext>=plcl
+    ?parcel*Math.pow(pNext/p,k)
+    :p>plcl
+     ?(()=>{let t=parcel*Math.pow(plcl/p,k);const d=Math.log(pNext/plcl);return t+moistSlope(plcl,t)*d})()
+     :parcel+moistSlope(p,parcel)*dlp;
+  const envNext=interpolate(pNext,'t');
+  if(envNext===null)break;
+  z+=Rd*(ta+envNext)/2/g*Math.log(p/pNext);
+  parcel=nextParcel;
+ }
+ if(samples.length<25)return null;
+ const at500=samples.reduce((best,v)=>Math.abs(v.p-500)<Math.abs(best.p-500)?v:best,samples[0]);
+ const lclSample=samples.reduce((best,v)=>Math.abs(v.p-plcl)<Math.abs(best.p-plcl)?v:best,samples[0]);
+ return {samples,cape:Math.max(0,cape),cin:Math.min(0,cin),li:at500.env-at500.t,
+   lcl:{p:plcl,z:lclSample.z},lfc,el,top:lev[lev.length-1].p};
 }
+function fmtLevel(point){return point?Math.round(point.z*3.28084/100)*100+' ft AGL ('+Math.round(point.p)+' hPa)':'—'}
 function updateInstability(group){
- const lcl=estimatedLCL(group);
- $('idxLI').textContent='—';
- $('idxCAPE').textContent='— J/kg';
- $('idxCIN').textContent='— J/kg';
- $('idxLCL').textContent=lcl?Math.round(lcl.p)+' hPa':'—';
- $('cloudBase').textContent=lcl?Math.round(lcl.agl*3.28084/100)*100+' ft AGL ('+Math.round(lcl.p)+' hPa)':'Indisponível';
- $('cloudTCU').textContent='Base — / Topo —';
- $('cloudCB').textContent='Base — / Topo —';
+ const d=thermodynamics(group);
+ $('idxLI').textContent=d?d.li.toFixed(1)+' °C':'—';
+ $('idxCAPE').textContent=d?Math.round(d.cape)+' J/kg':'—';
+ $('idxCIN').textContent=d?Math.round(d.cin)+' J/kg':'—';
+ $('idxLCL').textContent=d?Math.round(d.lcl.p)+' hPa':'—';
+ $('cloudBase').textContent=d?fmtLevel(d.lcl):'Indisponível';
+ // CB/TCU são apenas potencial termodinâmico, nunca identificação observada.
+ const top=d?.el?fmtLevel(d.el):'—';
+ $('cloudTCU').textContent=d&&d.cape>=50&&d.lfc
+   ?'Potencial · base '+fmtLevel(d.lcl)+' / topo '+top:'Potencial não diagnosticado';
+ $('cloudCB').textContent=d&&d.cape>=500&&d.lfc
+   ?'Potencial · base '+fmtLevel(d.lcl)+' / topo '+top:'Potencial não diagnosticado';
+ $('cloudNote').textContent='Diagnóstico estimativo de parcela de superfície, com perfil ECMWF interpolado em log-p. Base LCL e topo EL (quando identificado) em pés acima do nível de partida, com pressão em hPa. CAPE e limiares são indicadores de potencial convectivo, não confirmam TCU/CB nem os respetivos limites reais. CIN/LFC/EL dependem da resolução vertical.';
+ return d;
 }
 function initialize(data){
  if(!data||!Array.isArray(data.soundings)||data.soundings.length!==16)throw Error('Sondagens incompletas');
@@ -203,8 +286,8 @@ function initialize(data){
   const record=steps[index],city=$('city').value;
   $('soundingRun').textContent='run '+formatStamp(data.run_utc);
   $('soundingValid').textContent='válido '+formatStamp(record.valid_utc);
-  updateInstability(record.cities[city]);
-  drawSkew(record.cities[city],city);
+  const diagnostics=updateInstability(record.cities[city]);
+  drawSkew(record.cities[city],city,diagnostics);
    drawHodograph(record.cities[city]);
 
 
