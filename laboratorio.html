@@ -355,5 +355,47 @@ function initialize(data){
 
 if(new URLSearchParams(location.search).get('embedded')==='1')document.body.classList.add('embedded');
 window.addEventListener('keydown',event=>{if(event.key==='Escape'&&window.parent!==window)window.parent.postMessage({type:'meteofox-skew-close'},location.origin)});
-fetch('./produtos_experimentais/previsao_ecmwf.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Ficheiro de previsão ainda não publicado (HTTP '+r.status+')');return r.json()}).then(initialize).catch(e=>{$('status').hidden=false;$('status').classList.add('error');$('status').textContent='Produtos experimentais ainda não disponíveis: '+e.message+'. O portal principal não é afetado.'});
+const verificationParams=new URLSearchParams(location.search);
+const verificationMode=verificationParams.get('verify');
+const verificationValid=verificationParams.get('valid');
+function initializeVerification(data){
+ if(!/^\\d{4}-\\d{2}-\\d{2}T12:00:00Z$/.test(verificationValid||''))throw Error('Validade 12Z inválida');
+ const records=verificationMode==='observed'?data.soundings:data.forecasts;
+ const entry=Array.isArray(records)?records.find(r=>r.valid_utc===verificationValid):null;
+ if(!entry||!Array.isArray(entry.levels)||entry.levels.length<8)throw Error('Não existem dados '+(verificationMode==='observed'?'observados':'previstos')+' para '+verificationValid);
+ $('status').hidden=true;
+ document.querySelector('.toolbar').hidden=true;
+ $('city').value='Lisboa';
+ const observed=verificationMode==='observed';
+ $('soundingRun').textContent=observed?'Observação TEMP FM35 · WMO 08579':'ECMWF IFS · run '+formatStamp(entry.run_utc);
+ $('soundingValid').textContent='válido '+formatStamp(entry.valid_utc);
+ const full=entry.levels;
+ const targets=[1000,975,950,925,900,850,800,700,600,500,400,300,250,200];
+ const selected=new Set();
+ for(const p of targets){
+  let best=null;
+  for(let i=0;i<full.length;i++)if(!selected.has(i)&&Number.isFinite(full[i].wind_kt)&&Number.isFinite(full[i].wind_dir_deg)){
+   const dist=Math.abs(Math.log(full[i].hpa/p));
+   if(!best||dist<best.dist)best={i,dist};
+  }
+  if(best&&best.dist<.085)selected.add(best.i);
+ }
+ const display=[...selected].map(i=>full[i]).sort((a,b)=>b.hpa-a.hpa);
+ if(display.length<8)throw Error('Perfil com vento insuficiente para apresentação comparável');
+ const diag=updateInstability(full);
+ drawSkew(display,'Lisboa',diag);
+ drawHodograph(display);
+ const hodoTitle=document.querySelector('.sounding-layout > div:nth-child(2) h3');
+ if(hodoTitle)hodoTitle.textContent=observed?'Hodógrafo · vento observado (kt)':'Hodógrafo · vento previsto (kt)';
+ const cloudTitle=document.querySelector('.cloud-panel h3');
+ if(cloudTitle)cloudTitle.textContent=observed?'Diagnósticos calculados da radiossondagem observada':'Diagnósticos calculados da previsão ECMWF';
+ if(observed){
+  $('cloudNote').textContent='Observação real de Lisboa 12Z · University of Wyoming, TEMP FM35. Ponto de orvalho derivado de temperatura e humidade relativa; índices recalculados pelo motor experimental MeteoFox. Não são índices oficiais da estação.';
+ }
+}
+const verificationPath=verificationMode==='observed'?'./produtos_experimentais/radiossondagem_lisboa.json':'./produtos_experimentais/fox_verified_skewt_previsoes.json';
+const sourcePath=verificationMode==='observed'||verificationMode==='forecast'?verificationPath:'./produtos_experimentais/previsao_ecmwf.json';
+fetch(sourcePath,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Dados não publicados (HTTP '+r.status+')');return r.json()})
+.then(data=>verificationMode==='observed'||verificationMode==='forecast'?initializeVerification(data):initialize(data))
+.catch(e=>{$('status').hidden=false;$('status').classList.add('error');$('status').textContent='Perfil indisponível: '+e.message+'. Não são apresentados dados simulados.'});
 </script><script src="./meteofox_keyboard.js"></script></body></html>
