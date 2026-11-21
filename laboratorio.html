@@ -386,6 +386,7 @@ function initializeVerification(data){
  const diag=updateInstability(full);
  drawSkew(display,'Lisboa',diag);
  drawHodograph(display);
+ window.MeteoFoxSevere?.display(full,thermodynamics(full));
  const hodoTitle=document.querySelector('.sounding-layout > div:nth-child(2) h3');
  if(hodoTitle)hodoTitle.textContent=observed?'Hodógrafo · vento observado (kt)':'Hodógrafo · vento previsto (kt)';
  const cloudTitle=document.querySelector('.cloud-panel h3');
