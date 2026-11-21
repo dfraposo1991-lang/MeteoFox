@@ -125,8 +125,9 @@ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:700 15px Inter,
 </tbody></table></section></div><p class="metar-caveat">Categoria determinada pela condição mais restritiva de visibilidade e teto. SM = milha terrestre. Classificação indicativa baseada no METAR disponível; não substitui informação aeronáutica oficial.</p>
 
 </aside>
-</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./meteofox_fog_mask.js"></script><script src="./meteofox_satelite.js?v=20261121-border-charcoal-2"></script><script src="./meteofox_ru_aviation.js"></script><script>
+</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./meteofox_fog_mask.js"></script><script src="./meteofox_satelite.js?v=20261121-border-50m-gray-3"></script><script src="./meteofox_ru_aviation.js"></script><script>
 const $=id=>document.getElementById(id);
+let airportRenderer=null;
 const DATA_URL='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/aviation.json';
 const VALENCIA_DATA_URL='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/aviation_valencia.json';
 function safe(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -259,7 +260,7 @@ function paintMarkers(){
  for(const a of AVIATION_AIRPORTS){
   const latlng=OBS_AIRPORT_POS[a.id];if(!latlng)continue;
   const c=obsClasses(data?.metar?.[a.id]);
-  const marker=L.circleMarker(latlng,{radius:9,weight:2,color:'#203a55',fillColor:c.color,fillOpacity:.96}).addTo(markers);
+  const marker=L.circleMarker(latlng,{pane:'meteofoxAirports',renderer:airportRenderer,radius:9,weight:2,color:'#203a55',fillColor:c.color,fillOpacity:.96}).addTo(markers);
   marker.bindTooltip(a.id+' · '+c.code+' · '+c.flight);
   marker.bindPopup(()=>{
    const m=data?.metar?.[a.id],t=data?.taf?.[a.id],s=data?.speci?.[a.id];
@@ -303,6 +304,11 @@ function initialize(){
  if(!window.L){$('count').textContent='Biblioteca cartográfica indisponível';return;}
  appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true,zoomControl:false}).setView([37.5,-14.8],5);L.control.zoom({position:'bottomright'}).addTo(appMap);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
+ // Pane dedicado acima das fronteiras (550), incluindo quando o mapa prefere Canvas.
+ const airportsPane=appMap.getPane('meteofoxAirports')||appMap.createPane('meteofoxAirports');
+ airportsPane.style.zIndex='680';
+ airportsPane.style.pointerEvents='auto';
+ airportRenderer=L.svg({pane:'meteofoxAirports',padding:.5});
  markers=L.layerGroup().addTo(appMap);
  if(window.MeteoFoxSatellite){
   sat=new MeteoFoxSatellite(appMap,$('satTools'));
