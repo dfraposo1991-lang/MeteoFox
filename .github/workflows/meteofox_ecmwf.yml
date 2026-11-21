@@ -173,6 +173,11 @@ jobs:
           name: meteofox-ecmwf-32-cartas
           path: mapas_ecmwf
 
+      - name: Instalar MetPy para diagnósticos do laboratório
+        run: python -m pip install 'metpy>=1.6,<2' 'numpy>=1.26,<3'
+      - name: Calcular termodinâmica do ECMWF versionado
+        run: python calcular_conveccao_metpy.py
+
       - name: Montar o site com cartas validadas e interface atual
         run: |
           start=$(date +%s)
@@ -198,7 +203,7 @@ jobs:
           shutil.copy2(main_site, out / "index.html")
           # O mapa interativo e a sincronização radar/Meteosat fazem parte
           # obrigatória do pacote, também nas publicações automáticas ECMWF.
-          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css", "fox-verified-skewt.html"):
+          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css", "fox-verified-skewt.html", "meteofox_conveccao.js"):
               source_file = Path(name)
               assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
               shutil.copy2(source_file, out / name)
@@ -226,6 +231,10 @@ jobs:
           shutil.copy2(Path("fox-verified-skewt.html"), out / "fox-verified-skewt.html")
           (out / "produtos_experimentais").mkdir(exist_ok=True)
           shutil.copy2(lab_data, out / "produtos_experimentais/previsao_ecmwf.json")
+          thermo = Path("produtos_experimentais/conveccao_termodinamica.json")
+          calculated = json.loads(thermo.read_text(encoding="utf-8"))
+          assert calculated["run_utc"] == payload["run_utc"] and len(calculated["soundings"]) == len(payload["soundings"])
+          shutil.copy2(thermo, out / "produtos_experimentais/conveccao_termodinamica.json")
           for name in ("fox_verified_skewt_previsoes.json", "radiossondagem_lisboa.json"):
               source = Path("produtos_experimentais") / name
               if source.is_file():
