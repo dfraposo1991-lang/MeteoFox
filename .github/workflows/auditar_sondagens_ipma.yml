@@ -1,0 +1,29 @@
+name: MeteoFox | Investigar fonte IPMA sondagens
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'auditar_sondagens_ipma.py'
+      - '.github/workflows/auditar_sondagens_ipma.yml'
+permissions:
+  contents: read
+jobs:
+  investigar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspecionar pagina e scripts IPMA
+        run: python auditar_sondagens_ipma.py
+      - name: Guardar diagnostico mesmo em caso de erro
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipma-sondagens-fontes
+          path: auditoria_skewt/ipma_fontes.json
+          if-no-files-found: warn
+          retention-days: 30
