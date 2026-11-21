@@ -321,10 +321,17 @@ try{
   const oldStillMounted=sat.map.hasLayer(previous);
   // O fade de 280 ms termina após o Promise da troca e dois RAF.
   // Verificar a opacidade final só depois do fade, não no seu início.
-  await new Promise(resolve=>setTimeout(resolve,460));
+  // CI pode atrasar os RAF: esperar pelo estado final, sem aliviar critérios.
+  const deadline=performance.now()+3000;
+  while(performance.now()<deadline){
+   if(newContainer&&getComputedStyle(newContainer).opacity==='1'&&!sat.map.hasLayer(previous))break;
+   await new Promise(resolve=>setTimeout(resolve,60));
+  }
   return {available:true,ok,oldStillOpaque,oldStillMounted,
    newOpaque:!!newContainer&&getComputedStyle(newContainer).opacity==='1',
-   oldRemoved:!sat.map.hasLayer(previous)};
+   oldRemoved:!sat.map.hasLayer(previous),
+   currentOpacity:newContainer?getComputedStyle(newContainer).opacity:null,
+   pendingFade:!!sat.fadeTimer};
  });
  assert.equal(fadeCheck.available,true,'Camada Meteosat indisponível para teste');
  assert.equal(fadeCheck.ok,true,'Troca de fotograma falhou: '+JSON.stringify(fadeCheck));
