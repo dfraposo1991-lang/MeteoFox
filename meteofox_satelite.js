@@ -58,6 +58,11 @@ async function actualSatelliteTimes(){
 }
 class MeteoFoxSatellite{
  constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=.8;this.radarOpacity=.66;this.satMode='auto';this.satRenderedMode=null;this.fogLayer=null;this.fogRenderedTime=null;this.fogStatus=null;
+  // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
+  this.bordersLayer=null;this.bordersRequest=null;
+  this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
+  this.bordersPane.style.zIndex='450';
+  this.bordersPane.style.pointerEvents='none';
   this.sat=add('button',host,'🌗 VIS / FOG Auto: desligado',{'type':'button','aria-pressed':'false','title':'Satélite automático: GeoColour de dia e Fog RGB à noite; GeoColour de segurança'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
@@ -126,7 +131,29 @@ class MeteoFoxSatellite{
   this.state('Fog RGB indisponível ('+reason+'). Reposição segura do GeoColour.');
   if(this.satOn&&this.timeline.length)this.select(this.index);
  }
- async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='🌗 VIS / FOG Auto: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));
+ async syncSatelliteBorders(){
+  if(!this.satOn){
+   if(this.bordersLayer&&this.map.hasLayer(this.bordersLayer))this.map.removeLayer(this.bordersLayer);
+   return;
+  }
+  if(this.bordersLayer){if(!this.map.hasLayer(this.bordersLayer))this.bordersLayer.addTo(this.map);return;}
+  if(this.bordersRequest)return;
+  // Natural Earth 1:110m: limites nacionais e linhas de costa, não fronteiras inventadas.
+  const url='https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson';
+  this.bordersRequest=fetch(url,{cache:'force-cache'}).then(r=>{
+   if(!r.ok)throw Error('Natural Earth HTTP '+r.status);
+   return r.json();
+  }).then(data=>{
+   if(!data||data.type!=='FeatureCollection'||!Array.isArray(data.features))throw Error('GeoJSON inválido');
+   this.bordersLayer=L.geoJSON(data,{
+    pane:'meteofoxCountryBorders',interactive:false,
+    style:{color:'#f2f7fa',weight:1.05,opacity:.72,fill:false,lineCap:'round',lineJoin:'round'}
+   });
+   if(this.satOn)this.bordersLayer.addTo(this.map);
+  }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
+  .finally(()=>{this.bordersRequest=null});
+ }
+ async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='🌗 VIS / FOG Auto: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));this.syncSatelliteBorders();
   if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satRenderedMode=null;this.fogRenderedTime=null;if(this.fogLayer&&this.map.hasLayer(this.fogLayer))this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
   // A camada é criada com TIME explícito após obter horários publicados.
   // Opacidade configurável nos controlos, com valores iniciais 80% e 66%.
