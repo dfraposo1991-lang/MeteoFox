@@ -183,7 +183,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
 </header>
 <nav class="tabs">
  <button class="tab active" data-tab="overview">▦ Síntese</button><button class="tab" data-tab="precipGust">▤ Produtos</button><button class="tab" data-tab="models">⌁ Comparação de modelos</button><button class="tab" data-tab="aerodromes">✈ Aeródromos</button><button class="tab" data-tab="synop">◈ Precipitação SYNOP</button>
- <a class="tab" href="./space-weather.html" style="display:inline-flex;align-items:center;text-decoration:none">☀ Space Weather</a>
+ <button class="tab" data-tab="spaceWeather">☀ Space Weather</button>
 </nav>
 <section id="overview" class="section active">
  <div class="heading"><div><h2 id="placeTitle">Previsão ECMWF IFS — Lisboa</h2><div class="sub" id="summary">A obter previsão ECMWF IFS…</div></div><span class="status" id="coords"></span></div>
@@ -302,6 +302,10 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
   <div id="airportReports" class="aviation-results" aria-live="polite"><p class="note">Seleciona o separador para consultar os boletins.</p></div>
   <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR e TAF da NOAA; SPECI apenas se existir. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
  </div>
+</section>
+<section id="spaceWeather" class="section" aria-label="Space Weather">
+ <div class="heading"><div><h2>Space Weather</h2><div class="sub">Monitorização solar e geomagnética · NOAA SWPC · Horas UTC</div></div></div>
+ <iframe id="spaceWeatherFrame" title="Space Weather · monitorização solar e geomagnética" loading="lazy" style="display:block;width:100%;min-height:1150px;border:0;background:#f3f7fc;border-radius:12px" src="about:blank"></iframe>
 </section>
 <section id="synop" class="section">
  <div class="heading"><div><h2>Precipitação observada · SYNOP</h2><div class="sub">Estações civis e militares · PT e Ilhas · horas UTC</div></div><span class="status" id="synopStatus">Por consultar</span></div>
@@ -730,11 +734,11 @@ $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
 async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
 function showRadar(i){if(!radarFrames.length||!map)return;radarIndex=Math.max(0,Math.min(i,radarFrames.length-1));if(radarLayer)map.removeLayer(radarLayer);let frame=radarFrames[radarIndex];radarLayer=L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.72,zIndex:10,attribution:'Radar © RainViewer'});if(radarOn)radarLayer.addTo(map);let d=new Date(frame.time*1000);$('radarTime').textContent=d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function selectTab(id,writeURL=false){if(writeURL){const url=new URL(location.href);if(id==='overview')url.searchParams.delete('tab');else url.searchParams.set('tab',id);history.replaceState(history.state,'',url.pathname+url.search+url.hash);}document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust'){visLoad();ecmwfInit();}if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}}
+function selectTab(id,writeURL=false){if(writeURL){const url=new URL(location.href);if(id==='overview')url.searchParams.delete('tab');else url.searchParams.set('tab',id);history.replaceState(history.state,'',url.pathname+url.search+url.hash);}document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));if(id==='satRadar'&&map&&$('radarPane').style.display!=='none')setTimeout(()=>map.invalidateSize(),100);if(id==='precipGust'){visLoad();ecmwfInit();}if(id==='models'&&!modelData.loaded)loadModels();if(id==='aerodromes'){loadAerodromes();setTimeout(renderAviationMap,120)}if(id==='synop'){loadSynop();setTimeout(renderSynopMap,120)}if(id==='spaceWeather'){const frame=$('spaceWeatherFrame');if(frame&&frame.getAttribute('src')==='about:blank')frame.src='./space-weather.html?embedded=1';}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>selectTab(b.dataset.tab,true)));
 // Links da página Skew-T regressam à secção escolhida do portal.
 const requestedTab=new URLSearchParams(location.search).get('tab');
-if(['overview','precipGust','models','aerodromes','synop'].includes(requestedTab))window.addEventListener('DOMContentLoaded',()=>selectTab(requestedTab),{once:true});
+if(['overview','precipGust','models','aerodromes','synop','spaceWeather'].includes(requestedTab))window.addEventListener('DOMContentLoaded',()=>selectTab(requestedTab),{once:true});
 // Voltar/avançar no navegador também restaura o separador da URL.
 window.addEventListener('popstate',()=>{const tab=new URLSearchParams(location.search).get('tab');selectTab(['overview','precipGust','models','aerodromes','synop'].includes(tab)?tab:'overview');});
 
