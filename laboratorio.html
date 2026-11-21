@@ -95,12 +95,13 @@ body.embedded .heading .sub{color:#617c90}
 
 <div class="sounding-times" aria-label="Run e validade da sondagem"><span id="soundingRun">run —</span><span id="soundingValid">válido —</span></div>
 <div class="instability-strip" aria-label="Índices termodinâmicos"><span><b>LI</b> <strong id="idxLI">—</strong></span><span><b>CAPE</b> <strong id="idxCAPE">—</strong></span><span><b>CIN</b> <strong id="idxCIN">—</strong></span><span><b>Base nuvens</b> <strong id="idxLCL">—</strong></span></div>
-<section class="cloud-panel" id="thermoAdvanced" aria-label="Termodinâmica convectiva experimental"><h3>Termodinâmica convectiva · MetPy / ECMWF</h3><div class="convective-factors"><span>MLCAPE <strong id="advMLCAPE">—</strong></span><span>MLCIN <strong id="advMLCIN">—</strong></span><span>MUCAPE <strong id="advMUCAPE">—</strong></span><span>MUCIN <strong id="advMUCIN">—</strong></span><span>ML LCL <strong id="advMLLCL">—</strong></span></div><p class="muted" id="advThermoNote">A aguardar dados MetPy da mesma execução ECMWF. MLCAPE/MLCIN: camada média de 100 hPa; MUCAPE/MUCIN: parcela mais instável nos primeiros 300 hPa. Valores experimentais, não observações.</p></section>
 <div class="sounding-layout">
 <div><h3>Skew-T / log-P</h3><div class="skew-scroll" role="region" aria-label="Diagrama de sondagem deslocável horizontalmente"><svg id="skew" class="skew" viewBox="0 0 900 570" role="img" aria-label="Diagrama de temperatura e ponto de orvalho com escala logarítmica de pressão"></svg></div></div>
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
+<section class="cloud-panel" id="thermoAdvanced" aria-label="Termodinâmica convectiva experimental"><h3>Termodinâmica convectiva · MetPy / ECMWF</h3><div class="convective-factors"><span>MLCAPE <strong id="advMLCAPE">—</strong></span><span>MLCIN <strong id="advMLCIN">—</strong></span><span>MUCAPE <strong id="advMUCAPE">—</strong></span><span>MUCIN <strong id="advMUCIN">—</strong></span><span>ML LCL <strong id="advMLLCL">—</strong></span></div><p class="muted" id="advThermoNote">A aguardar dados MetPy da mesma execução ECMWF. MLCAPE/MLCIN: camada média de 100 hPa; MUCAPE/MUCIN: parcela mais instável nos primeiros 300 hPa. Valores experimentais, não observações.</p></section>
+<section class="cloud-panel" id="compositeAdvanced" aria-label="Índices compostos de convecção severa"><h3>Convecção severa · Índices compostos experimentais</h3><div class="convective-factors"><span>SCP (aprox. camadas fixas) <strong id="advSCP">—</strong></span><span>STP (aprox. camadas fixas) <strong id="advSTP">—</strong></span></div><p class="muted" id="advCompositeNote">A aguardar parâmetros termodinâmicos e cinemáticos do mesmo perfil. Aproximações de camadas fixas, não SCP/STP operacionais: não substituem SRH e shear efetivos nem constituem previsão de supercélulas ou tornados.</p></section>
 <div class="cloud-panel"><h3>Base das nuvens e potencial convectivo previsto</h3><div class="convective-factors" aria-label="Diagnósticos complementares"><span>Profundidade LFC–EL <strong id="cloudDepth">—</strong></span><span>HR 700–500 hPa <strong id="cloudRH">—</strong></span><span>Topo termodinâmico <strong id="cloudTopTemp">—</strong></span><span>Inibição CIN <strong id="cloudInhibition">—</strong></span></div><div class="cloud-grid"><div><span>Base estimada (LCL) · ft AGL (hPa)</span><strong id="cloudBase">—</strong></div><div><span>TCU · potencial previsto · ft AGL (hPa)</span><strong id="cloudTCU">Indeterminado</strong></div><div><span>CB · potencial previsto · ft AGL (hPa)</span><strong id="cloudCB">Indeterminado</strong></div></div><p class="muted" id="cloudNote">Altitudes em pés acima do nível de partida da parcela (AGL aproximado); pressão entre parênteses. O LCL é uma estimativa de base convectiva, não uma observação de nuvens. TCU e CB não podem ser identificados nem ter os topos determinados apenas com estes perfis.</p></div>
 <div class="legend"><span><i style="background:#ff826f"></i>Temperatura</span><span><i style="background:#67e3bb"></i>Ponto de orvalho calculado a partir da humidade relativa</span><span><i style="background:#a855f7"></i>Parcela de superfície</span><span><i style="background:#f59e0b;height:9px;opacity:.5"></i>CAPE</span><span><i style="background:#3b82f6;height:9px;opacity:.35"></i>CIN</span><span>Vento: direção de origem e velocidade (kt) por nível</span></div>
 <p class="muted">Diagrama Skew-T de níveis de pressão selecionados (1000–200 hPa). CAPE/CIN/LI, LCL/LFC/EL e trajetória da parcela são estimativas de superfície calculadas com interpolação dos níveis disponíveis; a resolução vertical limitada pode afetar significativamente os resultados. Não representa uma radiossondagem observada; os valores são retirados do ponto de grelha ECMWF mais próximo.</p>
@@ -329,8 +330,50 @@ function updateInstability(group){
 }
 let advancedThermo=null;
 const advancedFields={mlcape_jkg:['advMLCAPE',' J/kg'],mlcin_jkg:['advMLCIN',' J/kg'],mucape_jkg:['advMUCAPE',' J/kg'],mucin_jkg:['advMUCIN',' J/kg'],ml_lcl_hpa:['advMLLCL',' hPa']};
+function showComposite(run,valid,city){
+ const note=$('advCompositeNote'),scp=$('advSCP'),stp=$('advSTP');
+ scp.textContent='—';stp.textContent='—';
+ const record=advancedThermo?.run_utc===run?advancedThermo.soundings?.find(x=>x.valid_utc===valid)?.cities?.[city]:null;
+ const group=window.currentSoundingGroup;
+ if(!record||record.status!=='ok'||!group||window.currentSoundingValid!==valid||window.currentSoundingCity!==city){
+  note.textContent='Índices indisponíveis: falta correspondência entre previsão, MetPy e perfil cinemático.';
+  return;
+ }
+ const therm=thermodynamics(group);
+ const kin=window.MeteoFoxSevere?.analyze(group,therm);
+ const finite=v=>typeof v==='number'&&Number.isFinite(v);
+ const cape=record.mucape_jkg,mlcape=record.mlcape_jkg,mlcin=record.mlcin_jkg;
+ const srh03=kin?.srh3,srh01=kin?.srh1,shear06=kin?.shear6;
+ const shearMs=finite(shear06)?shear06*0.514444444:null;
+ // Proxies de camadas fixas: NÃO usar a designação SCP/STP efetivo operacional.
+ if([cape,srh03,shearMs].every(finite)){
+  const shearFactor=Math.max(0,Math.min(shearMs,20))/20;
+  const scpValue=Math.max(0,cape)/1000*Math.max(0,srh03)/50*shearFactor;
+  scp.textContent=scpValue.toFixed(2);
+ }
+ let lclHeight=null;
+ if(finite(record.ml_lcl_hpa)&&therm?.samples?.length){
+  const points=therm.samples;
+  for(let i=1;i<points.length;i++){
+   const a=points[i-1],b=points[i];
+   if(a.p>=record.ml_lcl_hpa&&b.p<=record.ml_lcl_hpa){
+    const w=Math.log(a.p/record.ml_lcl_hpa)/Math.log(a.p/b.p);
+    lclHeight=a.z+(b.z-a.z)*w;break;
+   }
+  }
+ }
+ if([mlcape,mlcin,srh01,shearMs,lclHeight].every(finite)){
+  const shearFactor=shearMs<12.5?0:Math.min(shearMs,30)/20;
+  const lclFactor=lclHeight<=1000?1:lclHeight>=2000?0:(2000-lclHeight)/1000;
+  const cinFactor=mlcin>=-50?1:mlcin<=-200?0:(200+mlcin)/150;
+  const stpValue=Math.max(0,mlcape)/1500*Math.max(0,srh01)/150*shearFactor*lclFactor*cinFactor;
+  stp.textContent=stpValue.toFixed(2);
+ }
+ note.textContent='Proxies experimentais de camadas fixas: SCP usa MUCAPE, SRH 0–3 km e shear 0–6 km; STP usa MLCAPE, SRH 0–1 km, shear 0–6 km, ML LCL e MLCIN. Não equivalem aos índices operacionais com camadas efetivas. — significa dados insuficientes. Não são avisos meteorológicos.';
+}
 function showAdvancedThermo(run,valid,city){
  const note=$('advThermoNote');
+ showComposite(run,valid,city);
  for(const [key,[id]] of Object.entries(advancedFields))$(id).textContent='—';
  if(!advancedThermo||advancedThermo.run_utc!==run){
   note.textContent='Índices indisponíveis: dados MetPy não publicados ou execução ECMWF diferente. Não são reutilizados valores de outro ciclo.';
@@ -370,6 +413,7 @@ function initialize(data){
   const record=steps[index],city=$('city').value;
   $('soundingRun').textContent='run '+formatStamp(data.run_utc);
   $('soundingValid').textContent='válido '+formatStamp(record.valid_utc);
+  window.currentSoundingGroup=record.cities[city];window.currentSoundingValid=record.valid_utc;window.currentSoundingCity=city;
   showAdvancedThermo(data.run_utc,record.valid_utc,city);
   const diagnostics=updateInstability(record.cities[city]);
   drawSkew(record.cities[city],city,diagnostics);
@@ -400,6 +444,7 @@ function initializeVerification(data){
  document.querySelector('.toolbar').hidden=true;
  $('city').value='Lisboa';
  const observed=verificationMode==='observed';
+ window.currentSoundingGroup=entry.levels;window.currentSoundingValid=entry.valid_utc;window.currentSoundingCity='Lisboa';
  showAdvancedThermo(observed?null:entry.run_utc,entry.valid_utc,'Lisboa');
  $('soundingRun').textContent=observed?'Observação TEMP FM35 · WMO 08579':'ECMWF IFS · run '+formatStamp(entry.run_utc);
  $('soundingValid').textContent='válido '+formatStamp(entry.valid_utc);
@@ -422,7 +467,7 @@ function initializeVerification(data){
  window.MeteoFoxSevere?.display(full,thermodynamics(full));
  const hodoTitle=document.querySelector('.sounding-layout > div:nth-child(2) h3');
  if(hodoTitle)hodoTitle.textContent=observed?'Hodógrafo · vento observado (kt)':'Hodógrafo · vento previsto (kt)';
- const cloudTitle=document.querySelector('.cloud-panel:not(#thermoAdvanced) h3');
+ const cloudTitle=document.querySelector('.cloud-panel:not(#thermoAdvanced):not(#compositeAdvanced) h3');
  if(cloudTitle)cloudTitle.textContent=observed?'Diagnósticos calculados da radiossondagem observada':'Diagnósticos calculados da previsão ECMWF';
  if(observed){
   $('cloudNote').textContent='Observação real de Lisboa 12Z · University of Wyoming, TEMP FM35. Ponto de orvalho derivado de temperatura e humidade relativa; índices recalculados pelo motor experimental MeteoFox. Não são índices oficiais da estação.';
