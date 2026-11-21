@@ -16,6 +16,7 @@ on:
       - '.github/workflows/meteofox_site.yml'
       - '.github/workflows/meteofox_ecmwf.yml'
       - 'tests/meteofox_4_smoke.mjs'
+      - 'tests/meteofox_skewt_responsive.mjs'
       - 'tests/meteofox_performance.mjs'
       - '.github/workflows/meteofox_4_smoke.yml'
       - '.github/workflows/meteofox_performance.yml'
@@ -63,3 +64,12 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/meteofox_http.log 2>&1 &
           sleep 2
           node tests/meteofox_4_smoke.mjs
+          node tests/meteofox_skewt_responsive.mjs
+      - name: Guardar capturas Skew-T desktop e telemóvel
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skewt-paineis-responsivos
+          path: capturas/skewt-*.png
+          if-no-files-found: ignore
+          retention-days: 7
