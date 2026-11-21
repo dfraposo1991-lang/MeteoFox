@@ -67,15 +67,22 @@ def parse_csv(raw):
 
 def get_sounding(day):
     nominal = day.strftime("%Y-%m-%dT12:00:00Z")
-    query = urlencode({"datetime": day.strftime("%Y-%m-%d 12:00:00"), "id": STATION,
-                       "type": "TEXT:CSV", "src": "FM35"})
-    request = Request(BASE + "?" + query, headers={"User-Agent": "MeteoFox/1.0 (meteorological verification)"})
-    with urlopen(request, timeout=35) as response:
-        raw = response.read(3_000_000).decode("utf-8", errors="replace")
-    levels = parse_csv(raw)
-    return {"valid_utc": nominal, "station": STATION, "levels": levels,
-            "source_url": BASE + "?" + query, "source": "University of Wyoming, TEMP FM35",
+    errors = []
+    for format_name in ("FM35", "BUFR"):
+        query = urlencode({"datetime": day.strftime("%Y-%m-%d 12:00:00"), "id": STATION,
+                           "type": "TEXT:CSV", "src": format_name})
+        url = BASE + "?" + query
+        try:
+            request = Request(url, headers={"User-Agent": "MeteoFox/1.0 (meteorological verification)"})
+            with urlopen(request, timeout=35) as response:
+                raw = response.read(3_000_000).decode("utf-8", errors="replace")
+            levels = parse_csv(raw)
+            return {"valid_utc": nominal, "station": STATION, "levels": levels,
+            "source_url": url, "source": "University of Wyoming, " + format_name,
             "dewpoint_method": "Calculado a partir de T e HR observadas (Magnus)"}
+        except Exception as exc:
+            errors.append(f"{format_name}: {exc}")
+    raise ValueError("; ".join(errors))
 
 def main():
     now = datetime.now(timezone.utc)
