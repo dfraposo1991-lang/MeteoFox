@@ -123,12 +123,27 @@ function drawSkew(group,city,diagnostics){
  for(const [key,color] of lines){const points=group.map(r=>x(r[key],r.hpa)+','+y(r.hpa)).join(' ');add(svg,'polyline',{points,fill:'none',stroke:color,'stroke-width':3,'stroke-linejoin':'round'});for(const r of group)add(svg,'circle',{cx:x(r[key],r.hpa),cy:y(r.hpa),r:3,fill:color})}
  if(diagnostics?.samples?.length){
   const pts=diagnostics.samples.filter(r=>r.p>=pTop&&r.p<=pBottom);
-  for(let i=1;i<pts.length;i++){
-   const a=pts[i-1],b=pts[i],positive=(a.buoy+b.buoy)>0;
-   if((diagnostics.lfc&&a.p<=diagnostics.lfc.p)&&(!diagnostics.el||a.p>=diagnostics.el.p)&&positive){
-    add(svg,'polygon',{points:[x(a.env,a.p)+','+y(a.p),x(a.t,a.p)+','+y(a.p),x(b.t,b.p)+','+y(b.p),x(b.env,b.p)+','+y(b.p)].join(' '),fill:'#f59e0b','fill-opacity':'.18'});
-   }else if(!positive&&(!diagnostics.lfc||a.p>=diagnostics.lfc.p)){
-    add(svg,'polygon',{points:[x(a.env,a.p)+','+y(a.p),x(a.t,a.p)+','+y(a.p),x(b.t,b.p)+','+y(b.p),x(b.env,b.p)+','+y(b.p)].join(' '),fill:'#3b82f6','fill-opacity':'.12'});
+  // Sombrear apenas regiões com diagnóstico completo e dentro de LFC/EL.
+  // Cortar os polígonos nos cruzamentos de flutuabilidade para evitar
+  // pintar CAPE como CIN (ou vice-versa).
+  if(diagnostics.complete){
+   const crossing=(a,b)=>{const w=-a.buoy/(b.buoy-a.buoy);return {
+    p:Math.exp(Math.log(a.p)+(Math.log(b.p)-Math.log(a.p))*w),
+    t:a.t+(b.t-a.t)*w,env:a.env+(b.env-a.env)*w,buoy:0
+   }};
+   const paint=(a,b,color,opacity)=>{
+    add(svg,'polygon',{points:[x(a.env,a.p)+','+y(a.p),x(a.t,a.p)+','+y(a.p),x(b.t,b.p)+','+y(b.p),x(b.env,b.p)+','+y(b.p)].join(' '),fill:color,'fill-opacity':opacity});
+   };
+   for(let i=1;i<pts.length;i++){
+    const a=pts[i-1],b=pts[i];
+    const segments=a.buoy*b.buoy<0?[[a,crossing(a,b)],[crossing(a,b),b]]:[[a,b]];
+    for(const [u,v] of segments){
+     const midP=Math.sqrt(u.p*v.p),positive=(u.buoy+v.buoy)>0;
+     if(positive&&midP<=diagnostics.lfc.p&&midP>=diagnostics.el.p)
+       paint(u,v,'#f59e0b','.18');
+     else if(!positive&&midP>=diagnostics.lfc.p)
+       paint(u,v,'#3b82f6','.12');
+    }
    }
   }
   add(svg,'polyline',{points:pts.map(r=>x(r.t,r.p)+','+y(r.p)).join(' '),fill:'none',stroke:'#a855f7','stroke-width':2.4,'stroke-dasharray':'7 4'});
