@@ -7,6 +7,8 @@ on:
     paths:
       - 'laboratorio.html'
       - 'validar_skewt_metpy.py'
+      - 'validar_conveccao_metpy.py'
+      - 'meteofox_conveccao.js'
       - 'produtos_experimentais/previsao_ecmwf.json'
       - '.github/workflows/validar_skewt_metpy.yml'
 
@@ -26,6 +28,8 @@ jobs:
         run: python -m pip install 'metpy>=1.6,<2' 'numpy>=1.26,<3'
       - name: Comparar motor MeteoFox com MetPy
         run: python validar_skewt_metpy.py
+      - name: Comparar shear, SRH e Bunkers com MetPy
+        run: python validar_conveccao_metpy.py
       - name: Guardar relatório de validação
         if: always()
         uses: actions/upload-artifact@v4
