@@ -19,7 +19,8 @@ LOCATIONS = {
     "Porto": (41.15, -8.61),
     "Beja": (38.02, -7.86),
 }
-LEVELS = (1000, 925, 850, 700, 600, 500, 400, 300, 250, 200)
+LEVELS = (1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200)
+FALLBACK_LEVELS = (1000, 925, 850, 700, 600, 500, 400, 300, 250, 200)
 METEOGRAM_STEPS = tuple(range(3, 91, 3))
 SOUNDING_STEPS = tuple(range(9, 55, 3))
 SURFACE_PARAMS = ("2t", "2d", "msl", "tcc", "tp", "10u", "10v", "10fg")
@@ -145,11 +146,11 @@ def build_surface_row(data, step, cycle, prev_tp):
     return row, tp
 
 
-def build_sounding(data, step, cycle):
+def build_sounding(data, step, cycle, levels):
     by_city = {}
     for name in LOCATIONS:
         layers = []
-        for level in LEVELS:
+        for level in levels:
             t = checked_value(data, f"t@{level}", name, {"K"})
             rh = checked_value(data, f"r@{level}", name, {"%"})
             u = checked_value(data, f"u@{level}", name, {"m s**-1", "m s-1", "m/s", "m s^-1"})
@@ -185,7 +186,6 @@ def produce(cycle, output):
     from ecmwf.opendata import Client
     client = Client(source="ecmwf", model="ifs", resol="0p25")
     surface_required = {p: {p} for p in SURFACE_PARAMS}
-    level_required = {p: {f"{p}@{level}" for level in LEVELS} for p in PRESSURE_PARAMS}
     result = {
         "model": "ECMWF IFS Open Data", "resolution": "0p25",
         "run_utc": cycle.isoformat().replace("+00:00", "Z"),
@@ -204,11 +204,22 @@ def produce(cycle, output):
             row, previous = build_surface_row(fields, step, cycle, previous)
             result["meteogram_lisboa"].append(row)
             if step in SOUNDING_STEPS:
-                print(f"ECMWF +{step:03d} h | 10 níveis de pressão", flush=True)
+                print(f"ECMWF +{step:03d} h | perfil vertical expandido", flush=True)
                 path = scratch / "pressure.grib2"
-                request(client, cycle, step, PRESSURE_PARAMS, path, levtype="pl", levels=LEVELS)
-                fields = extract_grib(path, step, cycle, level_required, LOCATIONS)
-                result["soundings"].append(build_sounding(fields, step, cycle))
+                try:
+                    request(client, cycle, step, PRESSURE_PARAMS, path, levtype="pl", levels=LEVELS)
+                    required = {p: {f"{p}@{level}" for level in LEVELS} for p in PRESSURE_PARAMS}
+                    fields = extract_grib(path, step, cycle, required, LOCATIONS)
+                    selected_levels = LEVELS
+                except Exception as exc:
+                    # Se os níveis adicionais não estiverem disponíveis, preservar
+                    # a atualização operacional com os 10 níveis comprovados.
+                    print(f"Perfil expandido indisponível: {exc}; fallback seguro", flush=True)
+                    request(client, cycle, step, PRESSURE_PARAMS, path, levtype="pl", levels=FALLBACK_LEVELS)
+                    required = {p: {f"{p}@{level}" for level in FALLBACK_LEVELS} for p in PRESSURE_PARAMS}
+                    fields = extract_grib(path, step, cycle, required, LOCATIONS)
+                    selected_levels = FALLBACK_LEVELS
+                result["soundings"].append(build_sounding(fields, step, cycle, selected_levels))
         # A sondagem e o hodógrafo usam os 16 prazos +9..+54 h.
         # O meteograma +3..+90 h permanece integralmente inalterado.
     if len(result["meteogram_lisboa"]) != 30 or len(result["soundings"]) != len(SOUNDING_STEPS):
