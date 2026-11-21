@@ -47,6 +47,11 @@ body.embedded .top,body.embedded .tabs,body.embedded .footer{display:none}
 .hodo-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
 .hodo-legend-note{flex-basis:100%;font-size:10px;color:#617c90}
 #status[hidden]{display:none!important}
+.sounding-times{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:0 0 10px;padding:8px 14px;min-height:30px;background:#fff;border:0;border-radius:0;box-shadow:none;color:#52677a;font:400 11px/1.4 Inter,system-ui,sans-serif;letter-spacing:0}
+.sounding-times span{min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none;white-space:normal}
+.sounding-times span:first-child{text-align:left}
+.sounding-times span:last-child{text-align:right;margin-left:auto}
+@media(max-width:550px){.sounding-times{gap:8px;font-size:10px;padding:7px 9px}}
 body.embedded .heading{display:none}
 body.embedded .heading h2{color:#173e5c}
 body.embedded .heading .sub{color:#617c90}
@@ -71,9 +76,10 @@ body.embedded .heading .sub{color:#617c90}
 <section id="panelS" class="panel active">
 <div class="card">
 <div class="toolbar"><label for="city">Localidade</label><select id="city"><option>Porto</option><option selected>Lisboa</option><option>Beja</option></select>
-<label for="step">Prazo de previsão</label><button type="button" id="skewPrev" aria-label="Prazo anterior">◀</button><input type="range" min="0" max="15" value="0" step="1" id="skewSlider" aria-label="Prazo de previsão Skew-T"><button type="button" id="skewNext" aria-label="Prazo seguinte">▶</button></div>
+<label for="skewSlider">Prazo de previsão</label><button type="button" id="skewPrev" aria-label="Prazo anterior">◀</button><input type="range" min="0" max="15" value="0" step="1" id="skewSlider" aria-label="Prazo de previsão Skew-T"><button type="button" id="skewNext" aria-label="Prazo seguinte">▶</button></div>
 
 
+<div class="sounding-times" aria-label="Run e validade da sondagem"><span id="soundingRun">run —</span><span id="soundingValid">válido —</span></div>
 <div class="sounding-layout">
 <div><h3>Skew-T / log-P</h3><div class="skew-scroll" role="region" aria-label="Diagrama de sondagem deslocável horizontalmente"><svg id="skew" class="skew" viewBox="0 0 900 570" role="img" aria-label="Diagrama de temperatura e ponto de orvalho com escala logarítmica de pressão"></svg></div></div>
 <div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
@@ -145,6 +151,11 @@ function formatValid(iso){
   hour:'2-digit',minute:'2-digit',hourCycle:'h23'
  }).format(date)+' UTC';
 }
+function formatStamp(iso){
+ const d=new Date(iso);
+ if(!Number.isFinite(d.getTime()))return '—';
+ return new Intl.DateTimeFormat('pt-PT',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(d).replace(',','')+' UTC';
+}
 function initialize(data){
  if(!data||!Array.isArray(data.soundings)||data.soundings.length!==16)throw Error('Sondagens incompletas');
  const steps=data.soundings;
@@ -156,6 +167,8 @@ function initialize(data){
   index=Math.max(0,Math.min(steps.length-1,index));
   $('skewSlider').value=String(index);
   const record=steps[index],city=$('city').value;
+  $('soundingRun').textContent='run '+formatStamp(data.run_utc);
+  $('soundingValid').textContent='válido '+formatStamp(record.valid_utc);
   drawSkew(record.cities[city],city);
    drawHodograph(record.cities[city]);
 
