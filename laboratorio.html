@@ -359,7 +359,7 @@ const verificationParams=new URLSearchParams(location.search);
 const verificationMode=verificationParams.get('verify');
 const verificationValid=verificationParams.get('valid');
 function initializeVerification(data){
- if(!/^\\d{4}-\\d{2}-\\d{2}T12:00:00Z$/.test(verificationValid||''))throw Error('Validade 12Z inválida');
+ if(!/^\d{4}-\d{2}-\d{2}T12:00:00Z$/.test(verificationValid||''))throw Error('Validade 12Z inválida');
  const records=verificationMode==='observed'?data.soundings:data.forecasts;
  const entry=Array.isArray(records)?records.find(r=>r.valid_utc===verificationValid):null;
  if(!entry||!Array.isArray(entry.levels)||entry.levels.length<8)throw Error('Não existem dados '+(verificationMode==='observed'?'observados':'previstos')+' para '+verificationValid);
