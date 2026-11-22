@@ -76,7 +76,7 @@ def main():
          'ready':False, 'source':'EUMETSAT EUMETView WMS GetCapabilities',
          'geo_layer':'mtg_fd:rgb_geocolour','fog_layer':None,
          'matching_time_utc':None,'reason':'Validation has not finished',
-         'candidate_layers':[], 'request_budget':{'capabilities':1,'sample_tiles':1}}
+         'candidate_layers':[], 'request_budget':{'capabilities':1,'sample_tiles':2}}
     try:
         params=urlencode({'service':'WMS','version':'1.1.1','request':'GetCapabilities'})
         root=ET.fromstring(fetch(WMS+'?'+params,timeout=35))
@@ -99,7 +99,7 @@ def main():
             if not ('fog' in name_low or 'night' in name_low or
                     'low cloud' in title_low or 'night microphysics' in title_low): continue
             dimension=next((x for x in node if local(x.tag) in ('Extent','Dimension') and
-                            (x.get('name','').lower() == 'time')),None)
+                            (x.get('name','').lower() == 'time') and (x.text or '').strip()),None)
             times=parse_time(dimension.text if dimension is not None else '')
             last=max(times) if times else None
             candidates.append({'name':name,'title':title,
@@ -114,12 +114,12 @@ def main():
             mtg=[x for x in candidates if x['is_mtg']]
             reference=load_reference()
             matching=reference[-1] if reference else None
+            selected=next((c for c in mtg if 'fog' in c['name'].lower()),None)
             # O Fog pode ter um atraso de publicação diferente do GeoColour.
             # Escolher um instante realmente anunciado por ambos os produtos.
             if selected and selected['last_listed_utc'] and reference:
                 fog_end=datetime.fromisoformat(selected['last_listed_utc'].replace('Z','+00:00'))
                 matching=next((t for t in reversed(reference) if t<=fog_end),None)
-            selected=next((c for c in mtg if 'fog' in c['name'].lower()),None)
             out['time_basis']='GeoColour reference time; Fog WMS tested with explicit TIME'
             if not mtg:
                 out['reason']='Fog found only on another satellite generation; not aligned with MTG GeoColour'
@@ -150,8 +150,8 @@ def main():
                     # Compare actual image bytes for two requested UTC instants.
                     # Distinct hashes show that Fog WMS responds to TIME;
                     # identical hashes remain inconclusive (e.g. slow evolution).
-                    previous=reference[-2] if len(reference)>1 else None
-                    if previous is not None and (matching-previous).total_seconds()<=20*60:
+                    previous=next((t for t in reversed(reference) if t<matching),None)
+                    if previous is not None and 0<(matching-previous).total_seconds()<=20*60:
                         p2=dict(params)
                         p2['time']=previous.isoformat().replace('+00:00','Z')
                         other=fetch(WMS+'?'+urlencode(p2),limit=650_000,timeout=25)
