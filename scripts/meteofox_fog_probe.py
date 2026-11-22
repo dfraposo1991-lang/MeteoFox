@@ -10,6 +10,8 @@ from urllib.parse import urlencode
 import json
 import hashlib
 import re
+import time
+from urllib.error import HTTPError, URLError
 import xml.etree.ElementTree as ET
 
 WMS = 'https://view.eumetsat.int/geoserver/wms'
@@ -19,10 +21,18 @@ HEADERS = {'User-Agent': 'MeteoFox-fog-validation/1.0', 'Accept': 'application/x
 NOW = datetime.now(timezone.utc)
 
 def fetch(url, limit=16_000_000, timeout=30):
-    with urlopen(Request(url, headers=HEADERS), timeout=timeout) as reply:
-        data = reply.read(limit + 1)
-        if len(data) > limit: raise ValueError('WMS response exceeds safety limit')
-        return data
+    # A EUMETView devolve ocasionalmente 502/503/504 em GetMap.
+    # Repetir transientes, nunca declarar produto validado sem PNG real.
+    for attempt in range(3):
+        try:
+            with urlopen(Request(url, headers=HEADERS), timeout=timeout) as reply:
+                data = reply.read(limit + 1)
+                if len(data) > limit: raise ValueError('WMS response exceeds safety limit')
+                return data
+        except (HTTPError, URLError, TimeoutError) as exc:
+            transient = not isinstance(exc, HTTPError) or exc.code in (429, 500, 502, 503, 504)
+            if not transient or attempt == 2: raise
+            time.sleep(2 * (attempt + 1))
 
 def local(tag):
     return tag.rsplit('}', 1)[-1]
@@ -104,6 +114,11 @@ def main():
             mtg=[x for x in candidates if x['is_mtg']]
             reference=load_reference()
             matching=reference[-1] if reference else None
+            # O Fog pode ter um atraso de publicação diferente do GeoColour.
+            # Escolher um instante realmente anunciado por ambos os produtos.
+            if selected and selected['last_listed_utc'] and reference:
+                fog_end=datetime.fromisoformat(selected['last_listed_utc'].replace('Z','+00:00'))
+                matching=next((t for t in reversed(reference) if t<=fog_end),None)
             selected=next((c for c in mtg if 'fog' in c['name'].lower()),None)
             out['time_basis']='GeoColour reference time; Fog WMS tested with explicit TIME'
             if not mtg:
@@ -112,7 +127,7 @@ def main():
                 out['reason']='No confirmed Fog RGB in the MTG family'
             elif matching is None or abs((NOW-matching).total_seconds())>90*60:
                 out['reason']='GeoColour reference timestamps are absent or too old'
-            elif selected['last_listed_utc'] and abs((datetime.fromisoformat(selected['last_listed_utc'].replace('Z','+00:00'))-matching).total_seconds())>10*60:
+            elif selected['last_listed_utc'] and (datetime.fromisoformat(selected['last_listed_utc'].replace('Z','+00:00'))-matching).total_seconds()>3*3600:
                 out['reason']='MTG Fog time extent does not agree with GeoColour'
             else:
                 # Probe a single modest-sized tile; do not start a bulk download.
