@@ -1,7 +1,7 @@
 {
-  "created_utc": "2026-11-21T22:26:06Z",
+  "created_utc": "2026-11-22T03:29:11Z",
   "product": "medium-simulated-vis",
-  "requested_run_utc": "2026-11-21T12:00:00Z",
+  "requested_run_utc": "2026-11-21T18:00:00Z",
   "projection": "opencharts_south_west_europe",
   "layer_name": "sim_image_vis_ch2",
   "target_steps_h": [
@@ -28,20 +28,20 @@
       "step_h": 9,
       "format": "iso",
       "layer_name_included": true,
-      "query_url": "https://charts.ecmwf.int/opencharts-api/v1/products/medium-simulated-vis/?base_time=2026-11-21T12%3A00%3A00Z&valid_time=2026-11-21T21%3A00%3A00Z&projection=opencharts_south_west_europe&layer_name=sim_image_vis_ch2"
+      "query_url": "https://charts.ecmwf.int/opencharts-api/v1/products/medium-simulated-vis/?base_time=2026-11-21T18%3A00%3A00Z&valid_time=2026-11-22T03%3A00%3A00Z&projection=opencharts_south_west_europe&layer_name=sim_image_vis_ch2"
     }
   ],
   "frames": [
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-21T21:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T03:00:00Z",
       "step_h": 9,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sat 21 Nov 2026 21 UTC (+9h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222619-b38add227da9aabfb0326ca244a877c802e65ea8.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 03 UTC (+9h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122032918-ac1995f311cdc1a954b9d2b62c606be723a54f74.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_009.png",
-      "original_sha256": "38c57fe97a70d6fbe7b0a991bda4a456a91f0c6261df3c56a75bf0cd9ed25929",
+      "original_sha256": "9bae58be6ecb500bfaa981b0d3bc9990f6ed707376fc4f79d1b7b0790ed69c38",
       "original_dimensions": [
         2000,
         1800
@@ -52,18 +52,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1150882
+      "cropped_bytes": 1219128
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T00:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T06:00:00Z",
       "step_h": 12,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 00 UTC (+12h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222641-0441e66000f2fdbd3731118f0a41fe73e3d99992.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 06 UTC (+12h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122032940-dafd82cf7c68180cd9b5fba3a22cac59d15e2cf9.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_012.png",
-      "original_sha256": "d3a781b65438ca2bd566a35b76d80e4fbffbd98e1ccefe894933ce18650d767e",
+      "original_sha256": "6e499272c9e70bdc6103c9cc4f84951cbbd2e98b776e3a42901c4d51f905ec3a",
       "original_dimensions": [
         2000,
         1800
@@ -74,18 +74,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1180038
+      "cropped_bytes": 1238410
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T03:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T09:00:00Z",
       "step_h": 15,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 03 UTC (+15h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222702-1dbba01a05c3f988e17e000bb22ec3aeb210b3c5.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 09 UTC (+15h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033000-5fd76bdbab1b75e7cda36d911cebdbfa364c8429.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_015.png",
-      "original_sha256": "d379e235464ebaed3802153f3b09d76a81faef978a521739949d3969982e4e0a",
+      "original_sha256": "0b09e645a3949b210ebef35774546ff4968cf967573e88499280ad08cea777a9",
       "original_dimensions": [
         2000,
         1800
@@ -96,18 +96,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1217320
+      "cropped_bytes": 1242606
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T06:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T12:00:00Z",
       "step_h": 18,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 06 UTC (+18h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222723-b3d75e0e8dbdfce626759fe00b8b6bbc2ac4c42a.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 12 UTC (+18h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033019-e37511d9ee99fb10f501a06c1a12b185ef62022d.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_018.png",
-      "original_sha256": "a76adbd9b49774e23b1f1636659013c9b068f86b75c94ae738a215f3581f1652",
+      "original_sha256": "9b6884dcd1d72e3f09d30a876768bba743a6c533acbec002373bacb4b735337b",
       "original_dimensions": [
         2000,
         1800
@@ -118,18 +118,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1235634
+      "cropped_bytes": 1224746
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T09:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T15:00:00Z",
       "step_h": 21,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 09 UTC (+21h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222744-93e1f52eabbcd877f0c6812b64b98125e21a3da8.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 15 UTC (+21h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033037-441f02705694be6680c41266e28e58c121abc4fe.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_021.png",
-      "original_sha256": "9f85d130b1c5528ad86880a2a45fddae423f6d768a713bb0dc24da5c1273bfc4",
+      "original_sha256": "85de31cfe639d216178ee62054f7cb2444826c167c58cb7f1cf1adb0bcfba843",
       "original_dimensions": [
         2000,
         1800
@@ -140,18 +140,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1238580
+      "cropped_bytes": 1211185
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T12:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T18:00:00Z",
       "step_h": 24,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 12 UTC (+24h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222806-cb0f5fa3db10b37dfbe9bf3d9a9e4a3ef456bf51.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 18 UTC (+24h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033055-d66d1b8b1e1bad60d6067e2c0643de6b8f299276.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_024.png",
-      "original_sha256": "c0a94668de235ca372ed5a70fac97cf32a764a3e01718b8e315185568d1902b3",
+      "original_sha256": "755705aa83ef9a32b652c3f2fd6b37b81169d40a4431bc6c3e171fd13278e08f",
       "original_dimensions": [
         2000,
         1800
@@ -162,18 +162,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1223812
+      "cropped_bytes": 1190884
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T15:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-22T21:00:00Z",
       "step_h": 27,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 15 UTC (+27h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222830-76908ae0cb69f97bc450d7c161bdad9e3351fbbd.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Sun 22 Nov 2026 21 UTC (+27h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033129-9294fdf4f814d7b40f0dba94739870b5854aa2db.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_027.png",
-      "original_sha256": "0fb61fe0f05750dd351015803efb4d1a29ecfdebb5ef8ba6b753f9cface0be8f",
+      "original_sha256": "513fa3307258ac859a481e8be251ed62802bee9ebb8f9e2384ca0cec0e454db2",
       "original_dimensions": [
         2000,
         1800
@@ -184,18 +184,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1213039
+      "cropped_bytes": 1181374
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T18:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T00:00:00Z",
       "step_h": 30,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 18 UTC (+30h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222850-e70f377a3850c42615ca218575950195a284ec59.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 00 UTC (+30h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033215-596aaab9b970dc75930817423588e16cf1170ff4.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_030.png",
-      "original_sha256": "2007b93f772ab95dcfdd560fa77260b58a4bc0438c30e327419a5f9f19f325d3",
+      "original_sha256": "045f5f4132dcabdca31facc34bc8b9e666d5b026a09f0038525afec54077a23c",
       "original_dimensions": [
         2000,
         1800
@@ -206,18 +206,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1193056
+      "cropped_bytes": 1180475
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-22T21:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T03:00:00Z",
       "step_h": 33,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Sun 22 Nov 2026 21 UTC (+33h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222911-8bab77f2473217e0fe3f53137ed9c29769cd6ca4.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 03 UTC (+33h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033244-c008f9fbc4a4051edeaf1320da4735c2385ee560.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_033.png",
-      "original_sha256": "170b0a2f362164874cb0d24aba1ddec27b7629ec1c0e7fc1a240924caea69a18",
+      "original_sha256": "b0dcece08b69cc2d2598726bc617a343780d6cf3f386737cdc082896b3d93bf6",
       "original_dimensions": [
         2000,
         1800
@@ -228,18 +228,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1186470
+      "cropped_bytes": 1176813
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T00:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T06:00:00Z",
       "step_h": 36,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 00 UTC (+36h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222932-d32f0d5d91dd1a78278d2a3c58ac4c0436106f85.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 06 UTC (+36h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033317-f9c7b910cc33a25fd58cded09708275aff0f2d8f.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_036.png",
-      "original_sha256": "13a36b3dcabbdc185811b9aaf4242463e50e8e01e4c1012e24d90a5d54d53507",
+      "original_sha256": "bc249045695b87be6d1071289a18332da0f2a5aec565a187ec9de0960db198db",
       "original_dimensions": [
         2000,
         1800
@@ -250,18 +250,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1180969
+      "cropped_bytes": 1177416
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T03:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T09:00:00Z",
       "step_h": 39,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 03 UTC (+39h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121222954-088eca247323e0fafe7f94d807a4c4868fd3248e.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 09 UTC (+39h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033349-5c67291facd3606c5b0304d4a4eadc8c82574689.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_039.png",
-      "original_sha256": "1e54447e7a5d53f0a071fdd302a338bce8fbe8752ee14f9468cde252afa5acac",
+      "original_sha256": "f05b2424b44da89535f94d0954c6755126458eabd205044f9a20bbf60f6c3bcb",
       "original_dimensions": [
         2000,
         1800
@@ -272,18 +272,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1172257
+      "cropped_bytes": 1173335
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T06:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T12:00:00Z",
       "step_h": 42,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 06 UTC (+42h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121223018-ed94635d42af3e2b1606c5d970930a9c45f4da80.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 12 UTC (+42h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033423-68dfb9b6e28ac81c26caee5327c63517fa8efcc8.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_042.png",
-      "original_sha256": "dd97ea3471c59a9f57c5c29a41b1395bbc8022c8c985b8928e4fc58cc165a217",
+      "original_sha256": "f533993eecef9f7bb9cbf9f3f59e85da602ac8e8c2dbc54969e5d34a8464a12d",
       "original_dimensions": [
         2000,
         1800
@@ -294,18 +294,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1182780
+      "cropped_bytes": 1167516
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T09:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T15:00:00Z",
       "step_h": 45,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 09 UTC (+45h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121223040-45dd409f6fb91e1035cb6d29a22ed42d08da5790.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 15 UTC (+45h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033453-5bd106eb20b9280c1d5c2bd0961ddbed02430cfe.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_045.png",
-      "original_sha256": "6978eb85fafb4cc18c214734fa09eac20c6c1e1eadc538f94e47e227016e8eba",
+      "original_sha256": "912edd7f74375c6712589a8b4ba2f4e265511ca688b24871895b2e46d7e24a6e",
       "original_dimensions": [
         2000,
         1800
@@ -316,18 +316,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1183941
+      "cropped_bytes": 1163494
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T12:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T18:00:00Z",
       "step_h": 48,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 12 UTC (+48h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121223101-3704e8e51dd8ffc62795a4997c35ca10b25f9b39.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 18 UTC (+48h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033542-6d66f321d154db875dec2b6fb0b95eaa1b9d904c.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_048.png",
-      "original_sha256": "8b515737dae1e679c0bc318fc921b08a59fb8ce60e7b378fbc2495cdb44b7df0",
+      "original_sha256": "dd86e4a6d7f8c7450cabc8475ca7849b6c5c373781c948ba14dbed91dc0bab94",
       "original_dimensions": [
         2000,
         1800
@@ -338,18 +338,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1170267
+      "cropped_bytes": 1153626
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T15:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-23T21:00:00Z",
       "step_h": 51,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 15 UTC (+51h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121223122-0ccd26b14d84da7dc5fd74d8669f6276b3cd5254.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Mon 23 Nov 2026 21 UTC (+51h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033617-0ff977be06fe54e20146dc2ff7bbfa92cda72b82.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_051.png",
-      "original_sha256": "21a58942006471d59510bc61ed2dc9a3ec2555e03f97d366e0f605a751950c3d",
+      "original_sha256": "bce42b3d515a87b2556a74965bf549c69d190aaaf98dc339d22bf71efd148764",
       "original_dimensions": [
         2000,
         1800
@@ -360,18 +360,18 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1155390
+      "cropped_bytes": 1156797
     },
     {
-      "run_utc": "2026-11-21T12:00:00Z",
-      "valid_utc": "2026-11-23T18:00:00Z",
+      "run_utc": "2026-11-21T18:00:00Z",
+      "valid_utc": "2026-11-24T00:00:00Z",
       "step_h": 54,
       "area": "South West Europe",
-      "description": "Base time: Sat 21 Nov 2026 12 UTC Valid time: Mon 23 Nov 2026 18 UTC (+54h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
-      "png_url": "https://charts.ecmwf.int/content/20261121223143-d27550c632537fb91e13e392c521907695ff3cff.png",
+      "description": "Base time: Sat 21 Nov 2026 18 UTC Valid time: Tue 24 Nov 2026 00 UTC (+54h) Area : South West Europe Channel : Visible reflectance at 0.810 microns",
+      "png_url": "https://charts.ecmwf.int/content/20261122033649-022ff21a5473c2505c5d3680686a043c80252cf1.png",
       "licence": "CC-BY-4.0",
       "file": "VIS_054.png",
-      "original_sha256": "33a6d838f490ef02f2cd87b8fee2cfb44c5624adadf0b1fd3b6b91301729d902",
+      "original_sha256": "4eb2c4607f2584107281004c11146de5e0b561e5810fda9eb69f2ed818b0d042",
       "original_dimensions": [
         2000,
         1800
@@ -382,7 +382,7 @@
         1989,
         1237
       ],
-      "cropped_bytes": 1150170
+      "cropped_bytes": 1180314
     }
   ],
   "completed": true,
