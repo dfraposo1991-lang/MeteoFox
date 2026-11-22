@@ -121,6 +121,8 @@ class MeteoFoxSatellite{
   if(!d.ready||d.geo_layer!==LAYER||d.fog_layer!==FOG_LAYER||
      timestamp===null||Math.abs(Date.now()-timestamp)>2*3600000)
    throw Error('Fog MTG sem validação recente de imagens e horário UTC');
+  const verified=DATE(d.matching_time_utc);
+  if(verified===null||verified>Date.now()+120000)throw Error('Fog sem instante UTC validado');
   this.fogStatus=d;return d;
  }
  fallbackToGeoColour(reason){
@@ -186,7 +188,16 @@ class MeteoFoxSatellite{
    :'Fog RGB temporariamente indisponível; a utilizar GeoColour de segurança. A verificar horários UTC…');
   try{const confirmed=await actualSatelliteTimes();if(this.satRequest!==satRequest)return;this.satTimes=confirmed;this.satKnown=true;this.state('Horários Meteosat confirmados: '+this.satTimes.length+' imagens.');}
   catch(e){if(this.satRequest!==satRequest)return;this.satKnown=false;this.satTimes=[];this.state('Satélite disponível sem horários confirmados ('+e.message+'). Não será animado com horas inventadas.');}
-  if(this.satRequest===satRequest)this.refreshTimeline();
+  if(this.satRequest===satRequest){
+   // Não pedir ao Fog imagens posteriores ao último instante efetivamente validado.
+   if(this.satMode==='auto'&&this.fogStatus?.matching_time_utc){
+    const fogLimit=DATE(this.fogStatus.matching_time_utc);
+    const common=this.satTimes.filter(t=>t<=fogLimit);
+    if(common.length>=2){this.satTimes=common;this.state('VIS / FOG Auto: instantes UTC comuns validados até '+fmt(fogLimit));}
+    else this.fallbackToGeoColour('sem horários UTC comuns confirmados');
+   }
+   this.refreshTimeline();
+  }
  }
  async setRadar(on){this.stop();this.dropPrefetch();this.cancelTransition();this.clearRadar();this.radarOn=on;this.radar.textContent='🌧 Radar: '+(on?'ligado':'desligado');this.radar.setAttribute('aria-pressed',String(on));
   if(!on){this.radarRequest=null;this.radarFrames=[];this.clearRadar();this.refreshTimeline();return;}
