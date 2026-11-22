@@ -312,6 +312,8 @@ function initialize(){
  markers=L.layerGroup().addTo(appMap);
  if(window.MeteoFoxSatellite){
   sat=new MeteoFoxSatellite(appMap,$('satTools'));
+  // Restaurar a camada VIS / FOG Auto na abertura; os contornos (pane 550) ficam abaixo dos aeródromos (pane 680).
+  sat.setSatellite(true).catch(error=>console.warn('MeteoFox: falha ao iniciar satélite:',error));
   const sync=()=>syncMiniTimeline();
   new MutationObserver(sync).observe(sat.back,{attributes:true,attributeFilter:['disabled']});
   new MutationObserver(sync).observe(sat.forward,{attributes:true,attributeFilter:['disabled']});
