@@ -1,11 +1,11 @@
 {
-  "checked_utc": "2026-11-22T11:50:25.097276Z",
+  "checked_utc": "2026-11-22T11:52:34.629788Z",
   "ready": false,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
   "fog_layer": null,
   "matching_time_utc": null,
-  "reason": "Fog WMS validation unavailable: HTTP Error 502: Bad Gateway",
+  "reason": "Fog WMS validation unavailable: cannot access local variable 'selected' where it is not associated with a value",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
@@ -45,6 +45,5 @@
         "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-22T11:20:00.000Z/PT10M"
       }
     ]
-  },
-  "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME"
+  }
 }
