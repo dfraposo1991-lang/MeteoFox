@@ -1,5 +1,5 @@
 {
-  "checked_utc": "2026-11-22T13:00:40.101321Z",
+  "checked_utc": "2026-11-22T14:03:46.131989Z",
   "ready": false,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
@@ -42,7 +42,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-22T12:30:00.000Z/PT10M"
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-22T13:40:00.000Z/PT10M"
       }
     ]
   }
