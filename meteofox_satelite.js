@@ -127,7 +127,8 @@ class MeteoFoxSatellite{
   if(this.satMode==='geo')return;
   this.stop();this.dropPrefetch();
   this.satMode='geo';this.satRenderedMode=null;
-  this.sat.title='VIS / FOG Auto temporariamente em GeoColour de segurança';
+  this.sat.textContent='☁ GeoColour (Fog indisponível)';
+  this.sat.title='Fog RGB não validado; apenas GeoColour, sem mistura VIS / FOG';
   this.state('Fog RGB indisponível ('+reason+'). Reposição segura do GeoColour.');
   if(this.satOn&&this.timeline.length)this.select(this.index);
  }
@@ -164,15 +165,18 @@ class MeteoFoxSatellite{
   // A escolha automática é a única exposta. Ao voltar a ligar, repetir
   // a validação Fog e recuperar o modo híbrido se o serviço voltou.
   this.satMode='auto';this.satRenderedMode=null;
+  this.sat.textContent='🌗 VIS / FOG Auto: ligado';
   this.sat.title='VIS / FOG Auto: GeoColour de dia, Fog RGB à noite';
   if(!window.MeteoFoxFogMask){
    this.satMode='geo';
+   this.sat.textContent='☁ GeoColour (máscara indisponível)';
    this.sat.title='GeoColour de segurança: máscara solar indisponível';
   }else{
    try{await this.readFogStatus();}
    catch(error){
     if(this.satRequest!==satRequest)return;
     this.satMode='geo';
+    this.sat.textContent='☁ GeoColour (Fog indisponível)';
     this.sat.title='GeoColour de segurança: Fog RGB indisponível';
    }
   }
@@ -456,7 +460,7 @@ class MeteoFoxSatellite{
       // quando o utilizador salta rapidamente para outro instante.
       this.fadeTimer=setTimeout(()=>this.clearFades(),340);
      });
-     this.state(info.join(' · '));
+     this.state(info.join(' · ')+(this.satOn?' · Produto: '+(this.satMode==='auto'?'GeoColour + Fog RGB':'GeoColour apenas (Fog RGB indisponível)'):''));
      // Uma preparação em segundo plano só após estabilizar o fotograma atual.
      this.schedulePrefetch();
      resolve(true);
