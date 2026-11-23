@@ -37,6 +37,7 @@ on:
       - 'produtos_experimentais/radiossondagem_lisboa.json'
       - 'produtos_experimentais/previsao_ecmwf.json'
       - '.github/workflows/meteofox_site.yml'
+      - 'scripts/validate_pages_assets.py'
       - '.github/workflows/meteofox_ecmwf.yml'
 
 permissions:
@@ -206,6 +207,9 @@ jobs:
           assert len([p for p in public.glob('*.png') if p.name.startswith(('chuva_', 'rajadas_'))]) == 32, 'Faltam mapas ECMWF'
           print('Site pronto: index.html, mapa.html, meteofox_satelite.js, animacao e 32 mapas ECMWF')
           PY
+
+      - name: Validar e completar recursos obrigatórios do site
+        run: python3 scripts/validate_pages_assets.py public
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
