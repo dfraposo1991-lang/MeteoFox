@@ -235,5 +235,7 @@ jobs:
       - name: Atualizar o site
         id: deploy
         uses: actions/deploy-pages@v4
+      - name: Obter código para validação pós-publicação
+        uses: actions/checkout@v4
       - name: Confirmar recursos publicados no site público
         run: python3 scripts/check_published_assets.py
