@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/meteofox_ecmwf.yml'
       - 'scripts/validate_pages_assets.py'
+      - 'scripts/check_published_assets.py'
       - 'descarregar_meteofox_48h.py'
       - 'gerar_meteofox_48h.py'
       - 'verificar_ecmwf_48h.py'
@@ -313,3 +314,5 @@ jobs:
       - name: Publicar site completo com novos mapas
         id: deploy
         uses: actions/deploy-pages@v4
+      - name: Confirmar recursos publicados no site público
+        run: python3 scripts/check_published_assets.py
