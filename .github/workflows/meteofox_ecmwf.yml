@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/meteofox_ecmwf.yml'
+      - 'scripts/validate_pages_assets.py'
       - 'descarregar_meteofox_48h.py'
       - 'gerar_meteofox_48h.py'
       - 'verificar_ecmwf_48h.py'
@@ -282,6 +283,9 @@ jobs:
           print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
           PY
           echo "- Validar interface e preparar Pages: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validar e completar recursos obrigatórios do site
+        run: python3 scripts/validate_pages_assets.py public
 
       - name: Preparar GitHub Pages
         uses: actions/configure-pages@v5
