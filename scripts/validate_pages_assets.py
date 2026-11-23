@@ -11,7 +11,7 @@ REQUIRED = (
     "meteofox_fog_mask.js", "meteofox_ru_aviation.js",
     "meteofox_meteograma.js", "meteofox_meteograma.css",
     "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css",
-    "meteofox_conveccao.js", "fox-verified-skewt.html",
+    "meteofox_conveccao.js", "meteofox_analysis.js", "fox-verified-skewt.html",
 )
 OPTIONAL = ("favicon.ico", "MeteoFox_logo_v1.svg")
 
