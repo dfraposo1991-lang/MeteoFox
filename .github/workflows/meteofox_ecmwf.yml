@@ -203,10 +203,22 @@ jobs:
           shutil.copy2(main_site, out / "index.html")
           # O mapa interativo e a sincronização radar/Meteosat fazem parte
           # obrigatória do pacote, também nas publicações automáticas ECMWF.
-          for name in ("mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css", "fox-verified-skewt.html", "meteofox_conveccao.js"):
+          for name in ("mapa.html", "space-weather.html", "meteofox_satelite.js", "meteofox_fog_mask.js", "meteofox_ru_aviation.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css", "fox-verified-skewt.html", "meteofox_conveccao.js"):
               source_file = Path(name)
               assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
               shutil.copy2(source_file, out / name)
+          # Recursos permanentes da marca. Nunca publicar uma versão sem estes
+          # ficheiros: Pages substitui integralmente o artefacto anterior.
+          for name in ("meteofox-logo.png", "MeteoFox_icon_v1_solid.svg", "meteofox-favicon-32.png"):
+              asset = Path(name)
+              assert asset.is_file() and asset.stat().st_size > 1000, f"Recurso visual obrigatório em falta: {name}"
+              shutil.copy2(asset, out / name)
+          # Verificar dependências locais críticas antes de substituir o site.
+          for html_name in ("index.html", "mapa.html"):
+              html = (out / html_name).read_text(encoding="utf-8")
+              assert "meteofox-favicon-32.png" in html, f"Favicon ausente de {html_name}"
+              assert "MeteoFox_icon_v1_solid.svg" in html, f"Logótipo ausente de {html_name}"
+          assert (out / "meteofox_fog_mask.js").stat().st_size > 1000
           # Preservar observações utilizadas pelo Fox Verified em todas as publicações.
           obs_target = out / "data"
           obs_target.mkdir(exist_ok=True)
