@@ -40,7 +40,6 @@ function update(group,thermo,run,valid,city){
  // The diagnostics use the SAME selected profile as the two diagrams.
  const kin=window.MeteoFoxSevere?.analyze(group,thermo)||{};
  const severe=$('severePanel');if(severe&&!severe.dataset.foxGroup){severe.dataset.foxGroup='kin';const active=document.querySelector('[data-fox-tab][aria-selected="true"]')?.dataset.foxTab||'thermo';activate(active);}
- const record=window.advancedThermo?.run_utc===run?window.advancedThermo.soundings?.find(x=>x.valid_utc===valid)?.cities?.[city]:null;
  // advancedThermo is lexical in laboratorio.html; use rendered MetPy fields only if they have valid numbers.
  const read=id=>{const v=$(id)?.textContent?.trim();return v&&v!=='—'&&/^-?\d+(\.\d+)?\s/.test(v)?Number.parseFloat(v):null;};
  const ml=read('advMLCAPE'),mu=read('advMUCAPE');
