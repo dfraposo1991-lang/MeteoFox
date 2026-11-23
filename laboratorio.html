@@ -438,6 +438,7 @@ function initialize(data){
    drawHodograph(record.cities[city]);
    window.MeteoFoxSevere?.decorateHodograph(record.cities[city],diagnostics);
   window.MeteoFoxSevere?.display(record.cities[city],thermodynamics(record.cities[city]));
+  window.MeteoFoxAnalysis?.update(record.cities[city],diagnostics,data.run_utc,record.valid_utc,city);
 
 
  }
