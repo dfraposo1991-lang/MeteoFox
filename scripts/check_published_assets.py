@@ -18,7 +18,7 @@ def check(name):
         data = response.read(1_000_000)
         if response.status != 200 or len(data) < 100:
             raise RuntimeError(f"{name}: empty or HTTP {response.status}")
-        if name.endswith(".png") and not data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+        if name.endswith(".png") and not data.startswith(bytes((137,80,78,71,13,10,26,10))):
             raise RuntimeError(f"{name}: invalid PNG")
         if name.endswith(".svg") and b"<svg" not in data[:5000]:
             raise RuntimeError(f"{name}: invalid SVG")
