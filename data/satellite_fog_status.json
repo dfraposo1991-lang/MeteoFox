@@ -1,5 +1,5 @@
 {
-  "checked_utc": "2026-11-23T12:01:09.566378Z",
+  "checked_utc": "2026-11-23T13:28:40.217457Z",
   "ready": false,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
@@ -16,7 +16,7 @@
     {
       "name": "msg_fes:rgb_fog",
       "title": "Fog / Low Clouds RGB - MSG - 0 degree",
-      "last_listed_utc": "2026-11-23T11:30:00Z",
+      "last_listed_utc": "2026-11-23T13:00:00Z",
       "is_mtg": false
     }
   ],
@@ -42,7 +42,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-23T11:30:00.000Z/PT10M"
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-23T13:00:00.000Z/PT10M"
       }
     ]
   },
