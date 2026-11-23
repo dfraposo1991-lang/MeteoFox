@@ -69,7 +69,7 @@ body.embedded .top,body.embedded .tabs,body.embedded .footer{display:none}
 body.embedded .heading{display:none}
 body.embedded .heading h2{color:#173e5c}
 body.embedded .heading .sub{color:#617c90}
-</style><script defer src="./meteofox_conveccao.js?v=20261121-2"></script></head><body>
+</style><script defer src="./meteofox_conveccao.js?v=20261123-hodo-interactive-1"></script></head><body>
 <div class="wrap">
 <header class="top">
  <a class="brand" id="brandProdutos" href="./index.html?tab=precipGust" title="Voltar ao MeteoFox · Produtos">
@@ -97,7 +97,7 @@ body.embedded .heading .sub{color:#617c90}
 <div class="instability-strip" aria-label="Índices termodinâmicos"><span><b>LI</b> <strong id="idxLI">—</strong></span><span><b>CAPE</b> <strong id="idxCAPE">—</strong></span><span><b>CIN</b> <strong id="idxCIN">—</strong></span><span><b>Base nuvens</b> <strong id="idxLCL">—</strong></span></div>
 <div class="sounding-layout">
 <div><h3>Skew-T / log-P</h3><div class="skew-scroll" role="region" aria-label="Diagrama de sondagem deslocável horizontalmente"><svg id="skew" class="skew" viewBox="0 0 900 570" role="img" aria-label="Diagrama de temperatura e ponto de orvalho com escala logarítmica de pressão"></svg></div></div>
-<div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div>
+<div><h3>Hodógrafo · vento previsto (kt)</h3><div class="hodo-scroll"><svg id="hodograph" class="hodo" viewBox="0 0 580 580" role="img" aria-label="Hodógrafo das componentes horizontais do vento, em nós, por nível de pressão"></svg></div><p id="hodoInteractiveInfo" class="hodo-caption" aria-live="polite">Seleciona um ponto para consultar o vento; R/L indicam os movimentos Bunkers quando disponíveis.</p>
 <div class="hodo-legend" aria-label="Legenda do hodógrafo"><span><i style="background:#0d9488"></i>1000–850 hPa</span><span><i style="background:#2563eb"></i>850–500 hPa</span><span><i style="background:#b45309"></i>500–200 hPa</span><span class="hodo-legend-note">Vento em kt · eixos U/V · níveis de pressão, não camadas de altitude fixa</span></div></div>
 </div>
 <section class="cloud-panel" id="thermoAdvanced" aria-label="Termodinâmica convectiva experimental"><h3>Termodinâmica convectiva · MetPy / ECMWF</h3><div class="convective-factors"><span>MLCAPE <strong id="advMLCAPE">—</strong></span><span>MLCIN <strong id="advMLCIN">—</strong></span><span>MUCAPE <strong id="advMUCAPE">—</strong></span><span>MUCIN <strong id="advMUCIN">—</strong></span><span>ML LCL <strong id="advMLLCL">—</strong></span></div><p class="muted" id="advThermoNote">A aguardar dados MetPy da mesma execução ECMWF. MLCAPE/MLCIN: camada média de 100 hPa; MUCAPE/MUCIN: parcela mais instável nos primeiros 300 hPa. Valores experimentais, não observações.</p></section>
@@ -421,6 +421,7 @@ function initialize(data){
   const diagnostics=updateInstability(record.cities[city]);
   drawSkew(record.cities[city],city,diagnostics);
    drawHodograph(record.cities[city]);
+   window.MeteoFoxSevere?.decorateHodograph(record.cities[city],diagnostics);
   window.MeteoFoxSevere?.display(record.cities[city],thermodynamics(record.cities[city]));
 
 
@@ -467,6 +468,7 @@ function initializeVerification(data){
  const diag=updateInstability(full);
  drawSkew(display,'Lisboa',diag);
  drawHodograph(display);
+ window.MeteoFoxSevere?.decorateHodograph(display,thermodynamics(full));
  window.MeteoFoxSevere?.display(full,thermodynamics(full));
  const hodoTitle=document.querySelector('.sounding-layout > div:nth-child(2) h3');
  if(hodoTitle)hodoTitle.textContent=observed?'Hodógrafo · vento observado (kt)':'Hodógrafo · vento previsto (kt)';
