@@ -1,22 +1,22 @@
 {
-  "checked_utc": "2026-11-23T10:21:17.064532Z",
-  "ready": true,
+  "checked_utc": "2026-11-23T12:01:09.566378Z",
+  "ready": false,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
-  "fog_layer": "mtg_fd:rgb_fog",
-  "matching_time_utc": "2026-11-23T09:30:00Z",
-  "reason": "Fog WMS returned differing PNGs for two GeoColour UTC times; exact source acquisition stamps remain unproven",
+  "fog_layer": null,
+  "matching_time_utc": null,
+  "reason": "GeoColour reference timestamps are absent or too old",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
       "title": "Fog / Low Clouds RGB - MTG-I - 0 degree",
-      "last_listed_utc": "2026-11-23T09:40:00Z",
+      "last_listed_utc": "2026-11-23T09:50:00Z",
       "is_mtg": true
     },
     {
       "name": "msg_fes:rgb_fog",
       "title": "Fog / Low Clouds RGB - MSG - 0 degree",
-      "last_listed_utc": "2026-11-23T09:45:00Z",
+      "last_listed_utc": "2026-11-23T11:30:00Z",
       "is_mtg": false
     }
   ],
@@ -32,7 +32,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-23T09:40:00.000Z/PT10M"
+        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-23T09:50:00.000Z/PT10M"
       }
     ],
     "mtg_fd:rgb_geocolour": [
@@ -42,22 +42,9 @@
       },
       {
         "name": "time",
-        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-23T09:40:00.000Z/PT10M"
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-23T11:30:00.000Z/PT10M"
       }
     ]
   },
-  "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME",
-  "sample_test": {
-    "time_utc": "2026-11-23T09:30:00Z",
-    "bytes": 36835,
-    "sha256": "d8583bb5644a86b23cb6921432e5596afa071d2dbf66cb43536e97dc032e7830"
-  },
-  "time_pair_test": {
-    "earlier_utc": "2026-11-23T09:20:00Z",
-    "later_utc": "2026-11-23T09:30:00Z",
-    "earlier_is_png": true,
-    "earlier_bytes": 36936,
-    "different_pixels": true,
-    "later_is_png": true
-  }
+  "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME"
 }
