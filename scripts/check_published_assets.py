@@ -10,6 +10,7 @@ FILES = (
     "index.html", "mapa.html", "meteofox-logo.png",
     "MeteoFox_icon_v1_solid.svg", "meteofox-favicon-32.png",
     "meteofox_satelite.js", "meteofox_fog_mask.js",
+    "laboratorio.html", "meteofox_analysis.js",
 )
 def check(name):
     req = Request(BASE + name + "?health=" + str(int(time.time())),
@@ -22,6 +23,10 @@ def check(name):
             raise RuntimeError(f"{name}: invalid PNG")
         if name.endswith(".svg") and b"<svg" not in data[:5000]:
             raise RuntimeError(f"{name}: invalid SVG")
+        if name == "laboratorio.html" and b"meteofox_analysis.js" not in data:
+            raise RuntimeError("laboratorio.html: Fox Analysis reference missing")
+        if name == "meteofox_analysis.js" and b"MeteoFoxAnalysis" not in data:
+            raise RuntimeError("meteofox_analysis.js: Fox Analysis code missing")
         if name.endswith(".js") and b"<html" in data[:200].lower():
             raise RuntimeError(f"{name}: HTML returned instead of JS")
         return len(data)
