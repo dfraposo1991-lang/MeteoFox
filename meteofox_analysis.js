@@ -21,6 +21,8 @@ function install(){
  const cloud=[...document.querySelectorAll('.cloud-panel')].find(p=>p.querySelector('#cloudDepth'));
  if(cloud)cloud.dataset.foxGroup='conv';
  for(const p of panels){const el=$(p.id);if(el)el.dataset.foxGroup=p.group;}
+ // Cinematic panel is created by the severe module on the first sounding render.
+ const severe=$('severePanel');if(severe)severe.dataset.foxGroup='kin';
  const nav=document.createElement('div');nav.id='foxTabs';nav.className='fox-tabs';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','Parâmetros de análise');
  for(const [group,label] of [['thermo','Termodinâmica'],['kin','Cinemática'],['conv','Convecção']]){
   const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.foxTab=group;b.setAttribute('role','tab');b.addEventListener('click',()=>activate(group));nav.appendChild(b);
@@ -37,6 +39,7 @@ function update(group,thermo,run,valid,city){
  if(!$('foxAnalysis'))return;
  // The diagnostics use the SAME selected profile as the two diagrams.
  const kin=window.MeteoFoxSevere?.analyze(group,thermo)||{};
+ const severe=$('severePanel');if(severe&&!severe.dataset.foxGroup){severe.dataset.foxGroup='kin';const active=document.querySelector('[data-fox-tab][aria-selected="true"]')?.dataset.foxTab||'thermo';activate(active);}
  const record=window.advancedThermo?.run_utc===run?window.advancedThermo.soundings?.find(x=>x.valid_utc===valid)?.cities?.[city]:null;
  // advancedThermo is lexical in laboratorio.html; use rendered MetPy fields only if they have valid numbers.
  const read=id=>{const v=$(id)?.textContent?.trim();return v&&v!=='—'&&/^-?\d+(\.\d+)?\s/.test(v)?Number.parseFloat(v):null;};
