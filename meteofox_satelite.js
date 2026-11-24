@@ -234,10 +234,11 @@ class MeteoFoxSatellite{
   const mode=this.modeForTime(time);
   const layer=L.tileLayer.wms(WMS,{
    layers:mode==='fog'?FOG_LAYER:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',detectRetina:false,
-   time:new Date(time).toISOString(),opacity:this.satOpacity,zIndex:300,maxZoom:16,
+   time:new Date(time).toISOString().replace('.000Z','Z'),opacity:this.satOpacity,zIndex:300,maxZoom:16,
    keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
-  layer.setParams({width:512,height:512},true);
+  const originalUrl=layer.getTileUrl.bind(layer);
+  layer.getTileUrl=coords=>{const url=new URL(originalUrl(coords));url.searchParams.set('time',new Date(time).toISOString().replace('.000Z','Z'));url.searchParams.set('width','512');url.searchParams.set('height','512');return url.toString();};
   if(mode==='auto'){
    const original=layer.getTileUrl.bind(layer);
    layer.getTileUrl=coords=>window.MeteoFoxFogMask?.tileLighting(time,coords)==='night'?BLANK_TILE:original(coords);
@@ -337,7 +338,7 @@ class MeteoFoxSatellite{
   this.transitionSeq++;
   const job=this.transition;this.transition=null;
   if(!job)return;
-  clearTimeout(job.timeout);
+  clearTimeout(job.timeout);job.abort?.();
   for(const layer of job.layers){
    layer.off('load');layer.off('tileerror');
    if(this.map.hasLayer(layer))this.map.removeLayer(layer);
@@ -354,141 +355,55 @@ class MeteoFoxSatellite{
   if(this.radarLayer&&this.map.hasLayer(this.radarLayer))this.radarLayer.setZIndex(350);
  }
  stageFrame(time){
-  this.cancelTransition();
+  this.dropPrefetch();this.cancelTransition();
   const seq=this.transitionSeq;
   const satTime=this.satOn?this.nearestSat(time):null;
   const radFrame=this.radarOn?this.nearestRadar(time):null;
-  const both=this.satOn&&this.radarOn;
-  const info=['Referência '+fmt(time)];
-  if(this.satOn){
-   if(satTime===null){this.state('Sem imagem Meteosat confirmada para '+fmt(time));return Promise.resolve(false);}
-   info.push('Meteosat '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
-  }
-  if(this.radarOn){
-   if(!radFrame){this.state('Sem imagem de radar confirmada para '+fmt(time));return Promise.resolve(false);}
-   info.push('Radar '+fmt(radFrame.time*1000));
-  }
-  if(both)info.push('diferença '+Math.round(Math.abs(satTime-radFrame.time*1000)/60000)+' min');
-  if(!this.satOn&&!this.radarOn)return Promise.resolve(false);
-  this.state('A preparar imagens · '+info.join(' · '));
+  if((this.satOn&&satTime===null)||(this.radarOn&&!radFrame)){this.state('Sem imagem confirmada para '+fmt(time));return Promise.resolve(false);}
+  // Remove the previous frame before requesting the next. No hidden layers,
+  // prefetch, crossfade or reuse across timestamps.
+  for(const layer of [this.satLayer,this.fogLayer])if(layer&&this.map.hasLayer(layer))this.map.removeLayer(layer);
+  this.satLayer=null;this.fogLayer=null;this.satRenderedTime=null;this.satRenderedMode=null;
+  this.clearRadar();
   const jobs=[];
-  if(this.satOn){
-   if(this.satLayer&&this.satRenderedTime===satTime&&this.satRenderedMode===this.modeForTime(satTime)&&this.map.hasLayer(this.satLayer))jobs.push({kind:'sat',layer:this.satLayer,reuse:true});
-   else {
-    const cached=this.prefetchSat?.time===satTime&&this.prefetchSat?.mode===this.modeForTime(satTime)?this.prefetchSat:null;
-    if(cached)this.dropPrefetch(cached.layer);
-    else this.dropPrefetch();
-    if(cached&&!cached.error)jobs.push({kind:'sat',layer:cached.layer,preloaded:cached});
-    else{
-     if(cached&&this.map.hasLayer(cached.layer))this.map.removeLayer(cached.layer);
-     jobs.push({kind:'sat',layer:this.createSatLayer(satTime)});
-    }
-   }
-  }
-  if(this.satOn&&this.modeForTime(satTime)==='auto'){
-   if(this.fogLayer&&this.fogRenderedTime===satTime&&this.map.hasLayer(this.fogLayer))
-    jobs.push({kind:'fog',layer:this.fogLayer,reuse:true});
-   else jobs.push({kind:'fog',layer:this.createFogOverlay(satTime)});
-  }
+  if(this.satOn)jobs.push({kind:'sat',layer:this.createSatLayer(satTime)});
   if(this.radarOn){
    const url=this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png';
-   if(this.radarLayer?.meteofoxUrl===url&&this.map.hasLayer(this.radarLayer))jobs.push({kind:'radar',layer:this.radarLayer,reuse:true});
-   else {const layer=L.tileLayer(url,{
-    opacity:this.radarOpacity,zIndex:350,maxNativeZoom:10,maxZoom:18,
-    attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true
-   });layer.meteofoxUrl=url;jobs.push({kind:'radar',layer});}
+   jobs.push({kind:'radar',layer:L.tileLayer(url,{opacity:this.radarOpacity,zIndex:350,maxNativeZoom:10,maxZoom:18,attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true})});
   }
-  const pending=jobs.filter(x=>!x.reuse);
+  this.state('A carregar '+fmt(time)+' · nenhuma imagem anterior mantida');
   return new Promise(resolve=>{
-   let settled=false;
-   const job={layers:pending.map(x=>x.layer),timeout:null};
+   let remaining=jobs.length,settled=false;
+   const job={layers:jobs.map(x=>x.layer),timeout:null,abort:()=>{if(!settled){settled=true;resolve(false);}}};
    this.transition=job;
-   const finish=(success)=>{
-    if(settled)return;
-    settled=true;
-    clearTimeout(job.timeout);
+   const finish=ok=>{
+    if(settled)return;settled=true;clearTimeout(job.timeout);
     if(seq!==this.transitionSeq||this.transition!==job){resolve(false);return;}
     this.transition=null;
-    if(!success){
-     for(const x of pending){x.layer.off('load');x.layer.off('tileerror');if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);}
-     this.state('Não foi possível carregar todas as imagens de '+fmt(time)+'. Mantidas as anteriores.');
-     // Se o produto experimental não devolver mosaicos, não imobilizar o mapa.
-     
-     resolve(false);return;
+    for(const x of jobs){x.layer.off('load');x.layer.off('tileerror');}
+    if(!ok){
+     for(const x of jobs)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);
+     this.state('Falha ao carregar '+fmt(time)+' · imagem não apresentada');resolve(false);return;
     }
-    // O problema do piscar vinha da soma de dois fades por mosaico.
-    // Mantemos a imagem anterior INTACTA; a seguinte surge sobre ela.
-    // O fade é aplicado só ao container Leaflet, nunca a cada tile.
-    requestAnimationFrame(()=>{
-     if(seq!==this.transitionSeq){
-      for(const x of pending)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);
-      resolve(false);return;
-     }
-     const oldSat=this.satLayer,oldFog=this.fogLayer,oldRadar=this.radarLayer;
-     const previous=[];
-     for(const x of jobs){
-      if(x.kind==='sat'){
-       x.layer.setZIndex(300);this.satLayer=x.layer;this.satRenderedTime=satTime;this.satRenderedMode=this.modeForTime(satTime);
-      }
-      if(x.kind==='fog'){
-       x.layer.setZIndex(325);this.fogLayer=x.layer;this.fogRenderedTime=satTime;
-      }
-      if(x.kind==='radar'){
-       x.layer.setZIndex(350);this.radarLayer=x.layer;this.radarLayers.add(x.layer);
-      }
-     }
-     if(!jobs.some(x=>x.kind==='fog')){this.fogLayer=null;this.fogRenderedTime=null;}
-     for(const old of [oldSat,oldFog,oldRadar]){
-      if(old&&old!==this.satLayer&&old!==this.fogLayer&&old!==this.radarLayer&&this.map.hasLayer(old))
-       previous.push(old);
-     }
-     this.fadeOutLayers=previous;
-     // As novas camadas estão por cima das anteriores (mesmo z-index e
-     // inseridas mais tarde), com opacidade intrínseca final desde o início.
-     // Nunca diminuir a opacidade da imagem que o utilizador já vê.
-     requestAnimationFrame(()=>{
-      if(seq!==this.transitionSeq)return;
-      for(const x of pending){
-       const container=x.layer.getContainer();
-       if(container){
-        container.style.transition='opacity 280ms ease-out';
-        container.style.opacity='1';
-       }
-      }
-      // Limpar só depois de terminar o fade. O temporizador é cancelável
-      // quando o utilizador salta rapidamente para outro instante.
-      this.fadeTimer=setTimeout(()=>this.clearFades(),340);
-     });
-     this.state(info.join(' · ')+(this.satOn?' · Produto: '+(this.modeForTime(satTime)==='fog'?'RGB Fog':'GeoColour RGB'):''));
-     // Uma preparação em segundo plano só após estabilizar o fotograma atual.
-     this.schedulePrefetch();
-     resolve(true);
-    });
+    for(const x of jobs){
+     if(x.kind==='sat'){this.satLayer=x.layer;this.satRenderedTime=satTime;this.satRenderedMode=this.satMode;}
+     else{this.radarLayer=x.layer;this.radarLayers.add(x.layer);}
+    }
+    this.syncSatelliteBorders();
+    const info=[];
+    if(this.satOn)info.push((this.satMode==='fog'?'RGB Fog':'GeoColour RGB')+' · '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
+    if(this.radarOn)info.push('Radar '+fmt(radFrame.time*1000));
+    this.state(info.join(' · ')+' · carregado');resolve(true);
    };
-   if(!pending.length){finish(true);return;}
-   let remaining=pending.filter(x=>!x.preloaded?.ready).length;
-   for(const x of pending){
-    if(x.preloaded?.ready)continue;
-    let errors=0;
-    x.layer.on('tileerror',()=>{errors++;});
-    x.layer.once('load',()=>{
-     if(errors){finish(false);return;}
-     remaining--;if(remaining===0)finish(true);
-    });
+   if(!remaining){finish(true);return;}
+   job.timeout=setTimeout(()=>finish(false),20000);
+   for(const x of jobs){
+    let loaded=0,errors=0;
+    x.layer.on('tileload',()=>loaded++);
+    x.layer.on('tileerror',()=>errors++);
+    x.layer.once('load',()=>{if(!loaded||errors){finish(false);return;}if(--remaining===0)finish(true);});
    }
-   if(remaining===0){finish(true);return;}
-   job.timeout=setTimeout(()=>finish(false),18000);
-   for(const x of pending){
-    if(x.preloaded)continue;
-    // Preparar o container invisível ANTES do primeiro mosaico aparecer.
-    // O Leaflet gere o carregamento de cada tile com a opacidade habitual,
-    // mas essa fragmentação fica totalmente oculta até o conjunto estar pronto.
-    x.layer.once('add',()=>{
-     const container=x.layer.getContainer();
-     if(container){container.style.transition='none';container.style.opacity='0';}
-    });
-    x.layer.addTo(this.map);
-   }
+   for(const x of jobs){if(settled)break;x.layer.addTo(this.map);}
   });
  }
  select(i){
