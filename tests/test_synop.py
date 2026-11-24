@@ -41,3 +41,13 @@ class SynopTests(unittest.TestCase):
         result=accumulate([(end,{"hours":h,"mm":v,"trace":False}) for h,v in [(6,56),(12,0.4)]])
         self.assertTrue(result["6"]["suspect"])
         self.assertTrue(result["12"]["suspect"])
+
+    def test_common_reference(self):
+        end=datetime(2026,11,24,12,tzinfo=timezone.utc)
+        p={"hours":6,"mm":2,"trace":False}
+        self.assertEqual(accumulate([(end,p)],end)["6"]["mm"],2)
+        self.assertEqual(accumulate([(end-timedelta(hours=3),p)],end),{})
+    def test_reference_no_fallback(self):
+        end=datetime(2026,11,24,12,tzinfo=timezone.utc)
+        records=[(end,{"hours":6,"mm":0,"trace":False}),(end-timedelta(hours=1),{"hours":12,"mm":3,"trace":False})]
+        self.assertNotIn("12",accumulate(records,end))
