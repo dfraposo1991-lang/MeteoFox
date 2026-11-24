@@ -1,0 +1,36 @@
+name: MeteoFox | Auditoria de fotogramas WMS
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/meteofox_satellite_frame_audit.yml'
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pillow requests
+      - name: Compare decoded pixels
+        run: |
+          python - <<'PY'
+          import json, requests, io, hashlib
+          from PIL import Image, ImageChops
+          times=json.load(open('data/satellite_times.json'))['times_utc']
+          for layer in ('mtg_fd:rgb_geocolour','mtg_fd:rgb_fog'):
+              images=[]
+              for t in (times[0],times[len(times)//2],times[-1]):
+                  try:
+                      r=requests.get('https://view.eumetsat.int/geoserver/wms',params=dict(service='WMS',version='1.1.1',request='GetMap',layers=layer,styles='',format='image/png',transparent='true',srs='EPSG:4326',bbox='-11,35,4,45',width=512,height=512,time=t),timeout=25)
+                      r.raise_for_status()
+                      im=Image.open(io.BytesIO(r.content)).convert('RGBA')
+                      print(layer,t,im.size,hashlib.sha256(im.tobytes()).hexdigest(),flush=True)
+                      images.append((t,im))
+                  except Exception as e: print(layer,t,'ERROR',e,flush=True)
+              for i,(a,x) in enumerate(images):
+                  for b,y in images[i+1:]:
+                      n=sum(p!=q for p,q in zip(x.getdata(),y.getdata()))
+                      print(layer,a,b,'changed_pixels_pct',round(100*n/(x.width*x.height),3),flush=True)
+          PY
