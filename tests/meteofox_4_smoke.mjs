@@ -272,8 +272,10 @@ try{
  await speedControl.click();
  assert.equal(await speedControl.innerText(),'Velocidade: 1×');
  assert.equal(await page.locator('#satTools button').filter({hasText:'RGB: GeoColour'}).count(),0,'Não deve existir seletor separado de RGB');
- assert.equal(await page.locator('#satTools button').filter({hasText:'🌗 VIS / FOG Auto: desligado'}).count(),1,'Auto é o único botão de satélite');
- await page.getByRole('button',{name:/VIS \/ FOG Auto: desligado/}).click();
+ const autoButton=page.locator('#satTools button').filter({hasText:'🌗 VIS / FOG Auto:'});
+ assert.equal(await autoButton.count(),1,'Auto é o único botão de satélite');
+ assert.equal(await autoButton.getAttribute('aria-pressed'),'true','Satélite Auto deve iniciar ligado');
+ assert.ok((await autoButton.innerText()).includes('Auto: ligado'),'Botão Auto indica estado ligado');
  await page.getByRole('button',{name:/Radar: desligado/}).click();
  await page.waitForFunction(()=>{const slider=document.querySelector('#satTools input[aria-label="Navegação temporal UTC"]');return slider&&!slider.disabled&&Number(slider.max)>=1;},{timeout:15000});
  // Esperar a conclusão de ambas as consultas e da transição inicial;
