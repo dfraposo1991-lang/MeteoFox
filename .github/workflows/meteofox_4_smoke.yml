@@ -5,6 +5,10 @@ on:
     branches: [main, meteofox-4-dev, meteofox-map-fullscreen, meteofox-header-controls-v2, meteofox-meteograma-skewt-dev, meteofox-skewt-produtos-timeline, meteofox-region-meteograms-keyboard-fix, meteofox-white-charts-global-keys, meteofox-skewt-portal-consistency, meteofox-skewt-white-entire-page]
     paths:
       - 'index.html'
+      - 'server.py'
+      - 'recolher_observacoes.py'
+      - 'tests/test_synop.py'
+      - 'meteofox_analysis.js'
       - 'meteofox_keyboard.js'
       - 'meteofox_meteograma.js'
       - 'meteofox_meteograma.css'
@@ -27,7 +31,11 @@ permissions:
 
 jobs:
   smoke:
-    name: Verificar Produtos, METAR e Radar/Meteosat
+    name: Testes · ${{ matrix.module }}
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [produtos, aerodromos, mapa, skewt]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -63,13 +71,23 @@ jobs:
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/meteofox_http.log 2>&1 &
           sleep 2
-          node tests/meteofox_4_smoke.mjs
-          node tests/meteofox_skewt_responsive.mjs
+          if [ '${{ matrix.module }}' = skewt ]; then
+            node tests/meteofox_skewt_responsive.mjs
+          else
+            node tests/meteofox_4_smoke.mjs '${{ matrix.module }}'
+          fi
       - name: Guardar capturas Skew-T desktop e telemóvel
-        if: always()
+        if: always() && matrix.module == 'skewt'
         uses: actions/upload-artifact@v4
         with:
           name: skewt-paineis-responsivos
           path: capturas/skewt-*.png
           if-no-files-found: ignore
           retention-days: 7
+
+  synop:
+    name: Testes · SYNOP
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p test_synop.py -v
