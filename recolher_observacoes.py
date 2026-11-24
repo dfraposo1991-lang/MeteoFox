@@ -102,11 +102,13 @@ def update_synop():
             merged.update({'station':code,'name':incoming_st.get('name') or previous.get('name')})
             if incoming_st.get('latest_utc') and incoming_st['latest_utc'] >= (previous.get('latest_utc') or ''):
                 merged['latest_utc']=incoming_st['latest_utc']
-                periods=dict(previous.get('periods') or {})
+                periods={}
                 for period,val in incoming_st.get('periods',{}).items():
                     if val.get('utc','') >= periods.get(period,{}).get('utc',''):
                         periods[period]=val
                 merged['periods']=periods
+                merged['reports']=incoming_st.get('reports',0)
+                merged['dry_reports']=incoming_st.get('dry_reports',0)
             stations[code]=merged
         existing.update({'source':'OGIMET getsynop','stations':list(stations.values()),'checked_utc':stamp()})
         save('synop.json',existing)
