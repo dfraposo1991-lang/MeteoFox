@@ -1,22 +1,22 @@
 {
-  "checked_utc": "2026-11-24T20:30:44.811254Z",
+  "checked_utc": "2026-11-24T21:37:30.796532Z",
   "ready": true,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
   "fog_layer": "mtg_fd:rgb_fog",
-  "matching_time_utc": "2026-11-24T19:30:00Z",
+  "matching_time_utc": "2026-11-24T20:30:00Z",
   "reason": "Fog WMS returned differing PNGs for two GeoColour UTC times; exact source acquisition stamps remain unproven",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
       "title": "Fog / Low Clouds RGB - MTG-I - 0 degree",
-      "last_listed_utc": "2026-11-24T20:00:00Z",
+      "last_listed_utc": "2026-11-24T21:10:00Z",
       "is_mtg": true
     },
     {
       "name": "msg_fes:rgb_fog",
       "title": "Fog / Low Clouds RGB - MSG - 0 degree",
-      "last_listed_utc": "2026-11-24T20:00:00Z",
+      "last_listed_utc": "2026-11-24T21:15:00Z",
       "is_mtg": false
     }
   ],
@@ -32,7 +32,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-24T20:00:00.000Z/PT10M"
+        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-24T21:10:00.000Z/PT10M"
       }
     ],
     "mtg_fd:rgb_geocolour": [
@@ -42,21 +42,21 @@
       },
       {
         "name": "time",
-        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-24T20:00:00.000Z/PT10M"
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-24T21:10:00.000Z/PT10M"
       }
     ]
   },
   "time_basis": "GeoColour reference time; Fog WMS tested with explicit TIME",
   "sample_test": {
-    "time_utc": "2026-11-24T19:30:00Z",
-    "bytes": 46170,
-    "sha256": "619b7e89f971a0d0596832fbce4eaf8842c5ba74067035ab0d6800fc0ada8260"
+    "time_utc": "2026-11-24T20:30:00Z",
+    "bytes": 46198,
+    "sha256": "bf1eac23f02990e5b4f1948e98ff22fde50173f76e5e867bd27830f44c7fd0ef"
   },
   "time_pair_test": {
-    "earlier_utc": "2026-11-24T19:20:00Z",
-    "later_utc": "2026-11-24T19:30:00Z",
+    "earlier_utc": "2026-11-24T20:20:00Z",
+    "later_utc": "2026-11-24T20:30:00Z",
     "earlier_is_png": true,
-    "earlier_bytes": 46121,
+    "earlier_bytes": 46230,
     "different_pixels": true,
     "later_is_png": true
   }
