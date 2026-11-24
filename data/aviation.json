@@ -172,7 +172,7 @@
   "metar_source": "OGIMET getmetar",
   "speci_source": "OGIMET getmetar",
   "taf_source": "NOAA Aviation Weather Center",
-  "metar_checked_utc": "2026-11-24T17:05:21.591768Z",
-  "speci_checked_utc": "2026-11-24T17:05:21.591768Z",
-  "taf_checked_utc": "2026-11-24T17:05:25.943065Z"
+  "metar_checked_utc": "2026-11-24T17:07:11.709925Z",
+  "speci_checked_utc": "2026-11-24T17:07:11.709925Z",
+  "taf_checked_utc": "2026-11-24T17:07:12.949956Z"
 }
