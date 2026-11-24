@@ -123,7 +123,7 @@ def accumulate(records, reference=None):
     return result
 
 def synop_data():
-    records=parse_csv(ogimet('synop',hours=48))
+    records=parse_csv(ogimet('synop',hours=75))
     out={s:{'station':s,'name':n,'periods':{},'latest_utc':None,'reports':0,'dry_reports':0} for s,n in STATIONS.items()}
     intervals={s:[] for s in out}
     for r in sorted(records,key=lambda x:x['utc'],reverse=True):
@@ -140,8 +140,12 @@ def synop_data():
     # Common UTC reference: latest observed whole hour across the network.
     latest=max((st['latest_utc'] for st in out.values() if st['latest_utc']),default=None)
     reference=datetime.fromisoformat(latest.replace('Z','+00:00')).replace(minute=0,second=0,microsecond=0) if latest else None
-    for s,st in out.items():st['periods']=accumulate(intervals[s],reference) if reference else {}
-    return {'source':'OGIMET getsynop','reference_utc':reference.isoformat().replace('+00:00','Z') if reference else None,'retrieved_utc':datetime.now(timezone.utc).isoformat(),'stations':list(out.values())}
+    if reference:reference=reference.replace(hour=reference.hour//3*3)
+    refs=[reference-timedelta(hours=3*i) for i in range(17)] if reference else []
+    for s,st in out.items():
+        st['history']={t.isoformat().replace('+00:00','Z'):accumulate(intervals[s],t) for t in refs}
+        st['periods']=st['history'].get(reference.isoformat().replace('+00:00','Z'),{}) if reference else {}
+    return {'source':'OGIMET getsynop','references_utc':[t.isoformat().replace('+00:00','Z') for t in refs],'reference_utc':reference.isoformat().replace('+00:00','Z') if reference else None,'retrieved_utc':datetime.now(timezone.utc).isoformat(),'stations':list(out.values())}
 
 def metar_data():
     records=parse_csv(ogimet('metar',hours=12))
