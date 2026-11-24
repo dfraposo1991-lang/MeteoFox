@@ -14,19 +14,37 @@ try{
   await page.route('**/produtos_experimentais/conveccao_termodinamica.json',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(mock)}));
   await page.goto(base+'/laboratorio.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#advMLCAPE')?.textContent.includes('750'),{timeout:20000});
-  const positions=await page.evaluate(()=>{
-   const rect=id=>{const e=document.getElementById(id);const r=e.getBoundingClientRect();return {top:r.top+window.scrollY,bottom:r.bottom+window.scrollY,width:r.width}};
-   const layout=document.querySelector('.sounding-layout').getBoundingClientRect();
-   return {layoutBottom:layout.bottom+window.scrollY,thermo:rect('thermoAdvanced'),composite:rect('compositeAdvanced'),severe:rect('severePanel'),scrollWidth:document.documentElement.scrollWidth,viewport:innerWidth};
-  });
-  assert.ok(positions.thermo.top>=positions.layoutBottom-1,'Termodinâmica deve ficar abaixo dos diagramas');
-  assert.ok(positions.composite.top>=positions.thermo.bottom-1,'SCP/STP deve ficar abaixo da termodinâmica');
-  assert.ok(positions.severe.top>=positions.layoutBottom-1,'Cinemática deve ficar abaixo dos diagramas');
-  assert.ok(positions.scrollWidth<=positions.viewport+3,'Painéis não devem provocar scroll horizontal da página');
+  await page.locator('#foxAnalysis').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.querySelector('#foxExplanation')?.textContent.includes('1100 J/kg'));
+  assert.equal(await page.locator('#foxTabs [role=tab]').count(),3);
+  for(const [group,panel] of [['thermo','thermoAdvanced'],['kin','severePanel'],['conv','compositeAdvanced']]){
+   await page.locator('[data-fox-tab="'+group+'"]').click();
+   assert.equal(await page.locator('#'+panel).isVisible(),true,group+' deve estar visível');
+   assert.equal(await page.locator('[data-fox-tab="'+group+'"]').getAttribute('aria-selected'),'true');
+   for(const other of ['thermoAdvanced','severePanel','compositeAdvanced'].filter(x=>x!==panel))
+    assert.equal(await page.locator('#'+other).isHidden(),true,other+' deve estar oculto');
+   const positions=await page.evaluate(id=>{
+    const layout=document.querySelector('.sounding-layout').getBoundingClientRect();
+    const summary=document.querySelector('#foxAnalysis').getBoundingClientRect();
+    const panel=document.getElementById(id).getBoundingClientRect();
+    return {layoutBottom:layout.bottom,summaryTop:summary.top,summaryBottom:summary.bottom,panelTop:panel.top,scrollWidth:document.documentElement.scrollWidth,viewport:innerWidth};
+   },panel);
+   assert.ok(positions.summaryTop>=positions.layoutBottom-1,'Síntese abaixo dos diagramas');
+   assert.ok(positions.panelTop>=positions.summaryBottom-1,'Painel abaixo da síntese');
+   assert.ok(positions.scrollWidth<=positions.viewport+3,'Sem scroll horizontal da página');
+  }
+  assert.ok(await page.locator('#skew > *').count()>0,'Skew-T desenhado');
+  assert.ok(await page.locator('#hodograph > *').count()>0,'Hodógrafo desenhado');
+  await page.locator('#city').selectOption('Porto');
+  await page.waitForFunction(()=>window.currentSoundingCity==='Porto');
+  assert.ok((await page.locator('#foxExplanation').innerText()).includes('1100 J/kg'));
+  await page.locator('#skewNext').click();
+  await page.waitForFunction(()=>Number(document.querySelector('#skewSlider').value)>0);
+  assert.ok((await page.locator('#foxExplanation').innerText()).includes('1100 J/kg'));
   assert.equal(errors.length,0,'Sem erros JavaScript: '+errors.join('; '));
   fs.mkdirSync('capturas',{recursive:true});
   await page.screenshot({path:'capturas/skewt-'+width+'.png',fullPage:true});
-  console.log(width,positions);
+  console.log(width,'Fox Analysis and tabs validated');
   await page.close();
  }
 }finally{await browser.close()}
