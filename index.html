@@ -305,7 +305,7 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
   </div>
   <div class="aviation-summary"><strong id="airportHeading">Portugal e Ilhas</strong><span class="status" id="airportCount">—</span></div>
   <div id="airportReports" class="aviation-results" aria-live="polite"><p class="note">Seleciona o separador para consultar os boletins.</p></div>
-  <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR e TAF da NOAA; SPECI apenas se existir. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
+  <p class="note">Portugal: METAR e SPECI do OGIMET, TAF da NOAA. Mundo: METAR e TAF da NOAA; SPECI apenas quando posterior ao último METAR. Mensagens originais, sem descodificação; apenas realce de CB e TS. A hora apresentada é a hora registada na fonte. Os dados podem ser antigos quando não há novas mensagens.</p>
  </div>
 </section>
 <section id="spaceWeather" class="section" aria-label="Space Weather">
@@ -634,7 +634,7 @@ function aviationRenderWorld(){
  const notices=[];
  if(invalid.length)notices.push('<p class="aviation-empty">Códigos ignorados (formato inválido): '+safe(invalid.join(', '))+'</p>');
  const results=codes.map(id=>{
-  const m=worldAviation.metar?.[id],sp=worldAviation.speci?.[id],t=worldAviation.taf?.[id];
+  const m=worldAviation.metar?.[id],sp=currentSpeci(m,worldAviation.speci?.[id]),t=worldAviation.taf?.[id];
   const isAmd=/\bAMD\b/i.test(t?.raw||'');
   return `<article class="aviation-card" data-icao="${id}"><div class="aviation-card-head"><div><h3>${id} · Consulta mundial</h3><small>Última recolha: ${safe(aviationDateUTC(worldAviation.checked_utc))} · A cobertura depende da NOAA</small></div></div>
   <div class="aviation-bulletins">
@@ -676,7 +676,7 @@ function aviationRender(){
  if(!aviationData){$('airportReports').innerHTML='<p class="aviation-empty">A consultar dados de aviação…</p>';return;}
  const d=aviationData;
  $('airportReports').innerHTML=airports.map(a=>{
-   const m=d.metar?.[a.id],sp=d.speci?.[a.id],t=d.taf?.[a.id];
+   const m=d.metar?.[a.id],sp=currentSpeci(m,d.speci?.[a.id]),t=d.taf?.[a.id];
    const isAmd=/\bAMD\b/i.test(t?.raw||'');
    return `<article class="aviation-card" data-icao="${a.id}"><div class="aviation-card-head"><div><h3>${safe(a.id)} · ${safe(a.name)}</h3><small>${a.region==='continental'?'Portugal continental':a.region==='madeira'?'Madeira':'Açores'}</small></div></div>
     <div class="aviation-bulletins">
@@ -981,6 +981,16 @@ function obsMetarParsed(item){
   reason:complete?'':'Visibilidade ou informação de nebulosidade ausente/não reconhecida'};
 }
 const MILITARY_SCALE=[["BLU","#2563eb",8000,2500],["WHT","#f8fafc",5000,1500],["GRN","#16a34a",3700,700],["YLO1","#facc15",2500,500],["YLO2","#eab308",1600,300],["AMB","#f59e0b",800,200],["RED","#dc2626",0,0]];
+// SPECI only supersedes a METAR when its full UTC timestamp is strictly newer.
+function currentSpeci(m,s){
+ if(!s?.raw?.trim()||!m?.raw?.trim())return null;
+ const mt=Date.parse(m.utc),st=Date.parse(s.utc);
+ return Number.isFinite(mt)&&Number.isFinite(st)&&st>mt?s:null;
+}
+function currentObservation(d,id){
+ const m=d?.metar?.[id];
+ return currentSpeci(m,d?.speci?.[id])||m;
+}
 function obsClasses(item){
  const p=obsMetarParsed(item);
  if(!p||!p.complete)return {color:'#89939e',code:'—',flight:'Indisponível',parsed:p};
@@ -995,14 +1005,14 @@ function obsClasses(item){
  return {code,color,flight,parsed:p};
 }
 function obsAviationPopup(a,d){
- const id=a.id,m=d?.metar?.[id],t=d?.taf?.[id],sp=d?.speci?.[id],cat=obsClasses(m);
+ const id=a.id,m=d?.metar?.[id],t=d?.taf?.[id],sp=currentSpeci(m,d?.speci?.[id]),cat=obsClasses(sp||m);
  const rawReport=(name,v)=>v?.raw?.trim()?'<section class="obs-report"><p><strong>'+name+
   '</strong></p><pre>'+safe(name.startsWith('TAF')?formatTAF(v.raw):v.raw)+'</pre></section>':'';
  const p=cat.parsed;
  return '<div class="obs-popup"><h4>'+safe(id)+' · '+safe(a.name)+'</h4>'+
   '<span class="cat" style="border-left:5px solid '+cat.color+'">Cor: '+safe(cat.code)+'</span>'+
   '<span class="cat">Voo: '+safe(cat.flight)+'</span>'+
-  '<p>'+safe(m?.raw?obsFreshness(m):'Sem METAR disponível')+'</p>'+
+  '<p>'+safe((sp||m)?.raw?((sp?'SPECI · ':'METAR · ')+obsFreshness(sp||m)):'Sem METAR disponível')+'</p>'+
   (p?.complete?'<p>Visibilidade: '+(p.visibility>=10000?'≥ 10 km':p.visibility.toFixed(0)+' m')+
   ' · Teto: '+(Number.isFinite(p.ceiling)?p.ceiling+' ft':'sem teto limitativo reportado')+'</p>':'<p>Classificação indisponível por dados insuficientes</p>')+
   rawReport('METAR original',m)+rawReport('TAF original',t)+rawReport('SPECI original',sp)+
@@ -1017,7 +1027,7 @@ function renderAviationMap(){
  const points=[];
  for(const a of list){
   const pos=OBS_AIRPORT_POS[a.id];if(!pos)continue;
-  const category=obsClasses(aviationData?.metar?.[a.id]);
+  const category=obsClasses(currentObservation(aviationData,a.id));
   const marker=obsCircle(pos,category.color).addTo(obsAviationLayer);
   marker.bindTooltip(a.id+' · '+category.code+' · '+category.flight);
   marker.bindPopup(()=>obsAviationPopup(a,aviationData),{minWidth:150,maxWidth:930,autoPan:true});
