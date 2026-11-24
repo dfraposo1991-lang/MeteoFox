@@ -63,6 +63,7 @@ async function actualSatelliteTimes(product=LAYER){
 class MeteoFoxSatellite{
  constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=1;this.radarOpacity=.66;this.satMode='geo';this.satRenderedMode=null;this.fogLayer=null;this.fogRenderedTime=null;this.fogStatus=null;
   // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
+  this.tileCache=new Map();this.tileWarmEpoch=0;this.tileCacheLimit=192;
   this.bordersLayer=null;this.bordersRequest=null;
   this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
   this.bordersPane.style.zIndex='650';
@@ -116,7 +117,7 @@ class MeteoFoxSatellite{
   this.slider.oninput=()=>{this.stop();this.select(+this.slider.value)};
   this.satelliteRefresh=setInterval(()=>{if(this.satOn&&!document.hidden&&!this.playing&&!this.transition&&this.index===this.timeline.length-1)this.setSatellite(true);},10*60000);
   document.addEventListener('visibilitychange',()=>{if(document.hidden){this.stop();this.dropPrefetch();}});
-  map.on('zoomstart movestart',()=>this.dropPrefetch());
+  map.on('zoomstart movestart',()=>{this.tileWarmEpoch++;this.dropPrefetch();});
  }
  state(s){this.status.textContent=s;}
  async readFogStatus(){
@@ -230,6 +231,40 @@ class MeteoFoxSatellite{
  // Pré-carregamento limitado: um único fotograma Meteosat seguinte, nunca
  // a sequência inteira. A camada fica invisível enquanto recebe os mosaicos.
  modeForTime(time){return this.satMode;}
+ // Cache decoded image resources by the complete WMS URL, never by layer index.
+ cachedTile(url){
+  let entry=this.tileCache.get(url);
+  if(entry){this.tileCache.delete(url);this.tileCache.set(url,entry);return entry;}
+  const img=new Image();entry={img,ready:false};
+  entry.promise=new Promise((resolve,reject)=>{
+   img.onload=()=>{entry.ready=true;resolve(img);};
+   img.onerror=()=>{if(this.tileCache.get(url)===entry)this.tileCache.delete(url);reject(Error('WMS tile failed'));};
+   img.src=url;
+  });
+  this.tileCache.set(url,entry);
+  while(this.tileCache.size>this.tileCacheLimit)this.tileCache.delete(this.tileCache.keys().next().value);
+  return entry;
+ }
+ warmTiles(layer){
+  const epoch=++this.tileWarmEpoch;
+  if(!this.playing||document.hidden||!this.satOn)return;
+  const urls=[];
+  for(let offset=1;offset<=Math.min(2,this.timeline.length-1);offset++){
+   const time=this.nearestSat(this.timeline[(this.index+offset)%this.timeline.length]);
+   if(time===null)continue;
+   for(const tile of Object.values(layer._tiles||{})){
+    if(!tile.current||!tile.coords)continue;
+    const url=new URL(layer.getTileUrl(tile.coords));
+    url.searchParams.set('time',new Date(time).toISOString().replace('.000Z','Z'));
+    if(!this.tileCache.has(url.toString()))urls.push(url.toString());
+   }
+  }
+  let cursor=0;
+  const worker=async()=>{while(epoch===this.tileWarmEpoch&&this.playing&&!document.hidden&&cursor<urls.length){
+   const url=urls[cursor++];try{await this.cachedTile(url).promise;}catch(e){}
+  }};
+  for(let i=0;i<4;i++)worker();
+ }
  createSatLayer(time){
   const mode=this.modeForTime(time);
   const layer=L.tileLayer.wms(WMS,{
@@ -244,6 +279,15 @@ class MeteoFoxSatellite{
    layer.getTileUrl=coords=>window.MeteoFoxFogMask?.tileLighting(time,coords)==='night'?BLANK_TILE:original(coords);
    layer.on('tileload',e=>this.applyAutoGeoMask(e.tile,e.coords,time));
   }
+  layer.createTile=(coords,done)=>{
+   const url=layer.getTileUrl(coords),tile=document.createElement('canvas');
+   tile.width=512;tile.height=512;
+   tile.setAttribute('aria-hidden','true');
+   this.cachedTile(url).promise.then(img=>{
+    tile.getContext('2d').drawImage(img,0,0,512,512);done(null,tile);
+   }).catch(error=>done(error,tile));
+   return tile;
+  };
   layer.meteofoxAutoGeo=mode==='auto';
   layer.meteofoxTime=time;
   return layer;
@@ -355,7 +399,7 @@ class MeteoFoxSatellite{
   if(this.radarLayer&&this.map.hasLayer(this.radarLayer))this.radarLayer.setZIndex(350);
  }
  stageFrame(time){
-  this.dropPrefetch();this.cancelTransition();
+  this.tileWarmEpoch++;this.dropPrefetch();this.cancelTransition();
   const seq=this.transitionSeq;
   const satTime=this.satOn?this.nearestSat(time):null;
   const radFrame=this.radarOn?this.nearestRadar(time):null;
@@ -393,7 +437,7 @@ class MeteoFoxSatellite{
     const info=[];
     if(this.satOn)info.push((this.satMode==='fog'?'RGB Fog':'GeoColour RGB')+' · '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
     if(this.radarOn)info.push('Radar '+fmt(radFrame.time*1000));
-    this.state(info.join(' · ')+' · carregado');resolve(true);
+    this.state(info.join(' · ')+' · carregado');if(this.satLayer)this.warmTiles(this.satLayer);resolve(true);
    };
    if(!remaining){finish(true);return;}
    job.timeout=setTimeout(()=>finish(false),20000);
@@ -413,14 +457,14 @@ class MeteoFoxSatellite{
   return this.stageFrame(this.timeline[this.index]);
  }
  stop(){
-  this.playing=false;
+  this.playing=false;this.tileWarmEpoch++;
   if(this.frameTimeout){clearTimeout(this.frameTimeout);this.frameTimeout=null;}
   this.play.textContent='▶ Animar';
  }
  togglePlay(){
   if(this.playing){this.stop();return;}
   if(!this.timeline.length)return;
-  this.playing=true;this.play.textContent='Ⅱ Pausar';
+  this.playing=true;this.play.textContent='Ⅱ Pausar';if(this.satLayer)this.warmTiles(this.satLayer);
   const tick=async()=>{
    if(!this.playing)return;
    const i=this.index>=this.timeline.length-1?0:this.index+1;
