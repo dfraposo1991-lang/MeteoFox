@@ -28,42 +28,44 @@ function parseTimes(text){const items=[];for(const part of String(text||'').spli
  }
  return [...new Set(items)].filter(n=>n<=Date.now()+600000).sort((a,b)=>a-b).slice(-36);
 }
-async function actualSatelliteTimesDirect(){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
+async function actualSatelliteTimesDirect(product=LAYER){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
  try{
   const r=await fetch(WMS+'?service=WMS&version=1.1.1&request=GetCapabilities',{signal:controller.signal,mode:'cors',cache:'no-store'});
   if(!r.ok)throw Error('HTTP '+r.status);const xml=new DOMParser().parseFromString(await r.text(),'text/xml');
-  const layer=findLayer(xml.documentElement,LAYER);if(!layer)throw Error('Camada Meteosat não encontrada');
+  const layer=findLayer(xml.documentElement,product);if(!layer)throw Error('Camada Meteosat não encontrada');
   let current=layer,dim=null;
   while(current && !dim){dim=[...current.children].find(x=>['Dimension','Extent'].includes(x.localName)&&x.getAttribute('name')?.toLowerCase()==='time');current=current.parentElement;}
   const times=parseTimes(dim?.textContent);if(!times.length)throw Error('Sem horas UTC publicadas');return times;
  }finally{clearTimeout(timeout);}
 }
-async function actualSatelliteTimes(){
+async function actualSatelliteTimes(product=LAYER){
  // A lista de horários é recolhida pelo GitHub Actions: evita falhas de CORS do GetCapabilities no navegador.
  try{
   const r=await fetch(SAT_MANIFEST+'?v='+Date.now(),{cache:'no-store'});
   if(!r.ok)throw Error('Manifesto HTTP '+r.status);
   const d=await r.json();
-  if(d.layer!==LAYER||!Array.isArray(d.times_utc))throw Error('Formato do manifesto inválido');
+  const sourceTimes=product===LAYER?d.times_utc:d.fog_times_utc;
+  if(d.layer!==LAYER||!Array.isArray(sourceTimes))throw Error('Formato do manifesto inválido');
   const checked=DATE(d.checked_utc);
   if(checked===null||Date.now()-checked>90*60000||checked>Date.now()+5*60000)throw Error('Manifesto de horários desatualizado');
-  const times=[...new Set(d.times_utc.map(DATE).filter(x=>x!==null&&x<=Date.now()+120000&&x>=Date.now()-6*3600000))].sort((a,b)=>a-b);
+  const times=[...new Set(sourceTimes.map(DATE).filter(x=>x!==null&&x<=Date.now()+120000&&x>=Date.now()-6*3600000))].sort((a,b)=>a-b);
   if(times.length<2)throw Error('Sem sequência recente confirmada');
   return times;
  }catch(manifestError){
   // Alternativa direta: funciona apenas quando o serviço permitir CORS.
-  try{return await actualSatelliteTimesDirect();}
+  try{return await actualSatelliteTimesDirect(product);}
   catch(directError){throw Error('Manifesto: '+manifestError.message+'; EUMETSAT: '+directError.message);}
  }
 }
 class MeteoFoxSatellite{
- constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=1;this.radarOpacity=.66;this.satMode='auto';this.satRenderedMode=null;this.fogLayer=null;this.fogRenderedTime=null;this.fogStatus=null;
+ constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=1;this.radarOpacity=.66;this.satMode='geo';this.satRenderedMode=null;this.fogLayer=null;this.fogRenderedTime=null;this.fogStatus=null;
   // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
   this.bordersLayer=null;this.bordersRequest=null;
   this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
   this.bordersPane.style.zIndex='550';
   this.bordersPane.style.pointerEvents='none';
-  this.sat=add('button',host,'🌗 VIS / FOG Auto: desligado',{'type':'button','aria-pressed':'false','title':'Satélite automático: GeoColour de dia e Fog RGB à noite; GeoColour de segurança'});
+  this.sat=add('button',host,'☀ VIS: desligado',{'type':'button','aria-pressed':'false','title':'GeoColour RGB'});
+  this.fog=add('button',host,'☾ RGB Fog: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
   this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
@@ -106,7 +108,7 @@ class MeteoFoxSatellite{
   this.status=add('span',host,'Ativa o radar e/ou o satélite. As horas apresentadas são UTC verificadas.',{'class':'sat-status','aria-live':'polite'});
   this.attr=add('span',host,'Fonte: Meteosat MTG GeoColour / Fog RGB © EUMETSAT/NASA · Radar © RainViewer · dados de observação. ',{'class':'sat-attribution'});
   const a=add('a',this.attr,'EUMETView',{href:'https://view.eumetsat.int/',target:'_blank',rel:'noopener noreferrer'});a.style.color='#07518b';
-  this.sat.onclick=()=>this.setSatellite(!this.satOn);this.radar.onclick=()=>this.setRadar(!this.radarOn);
+  this.sat.onclick=()=>this.setSatellite(!(this.satOn&&this.satMode==='geo'),'geo');this.fog.onclick=()=>this.setSatellite(!(this.satOn&&this.satMode==='fog'),'fog');this.radar.onclick=()=>this.setRadar(!this.radarOn);
   this.play.onclick=()=>this.togglePlay();this.speedButton.onclick=()=>this.cycleSpeed();this.back.onclick=()=>this.select(this.index-1);this.forward.onclick=()=>this.select(this.index+1);
   this.slider.oninput=()=>{this.stop();this.select(+this.slider.value)};
   this.satelliteRefresh=setInterval(()=>{if(this.satOn&&!document.hidden&&!this.playing&&!this.transition&&this.index===this.timeline.length-1)this.setSatellite(true);},10*60000);
@@ -160,40 +162,23 @@ class MeteoFoxSatellite{
   }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
   .finally(()=>{this.bordersRequest=null});
  }
- async setSatellite(on){this.stop();this.dropPrefetch();this.cancelTransition();const satRequest=Symbol('sat');this.satRequest=satRequest;this.satOn=on;this.sat.textContent='🌗 VIS / FOG Auto: '+(on?'ligado':'desligado');this.sat.setAttribute('aria-pressed',String(on));this.syncSatelliteBorders();
+ async setSatellite(on,mode=this.satMode){
+  this.stop();this.dropPrefetch();this.cancelTransition();
+  const satRequest=Symbol('sat');this.satRequest=satRequest;
+  const changed=this.satMode!==mode;
+  this.satMode=mode;this.satOn=on;
+  for(const [button,key,label] of [[this.sat,'geo','☀ VIS'],[this.fog,'fog','☾ RGB Fog']]){
+   const active=on&&mode===key;button.textContent=label+': '+(active?'ligado':'desligado');button.setAttribute('aria-pressed',String(active));
+  }
+  this.syncSatelliteBorders();
   if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satRenderedMode=null;this.fogRenderedTime=null;if(this.fogLayer&&this.map.hasLayer(this.fogLayer))this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
-  // A camada é criada com TIME explícito após obter horários publicados.
-  // Opacidade configurável nos controlos, com valores iniciais 80% e 66%.
+
+  if(changed){this.satKnown=false;this.satTimes=[];this.satRenderedMode=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satRenderedTime=null;}
   this.ensureRadarAbove();
-  // A escolha automática é a única exposta. Ao voltar a ligar, repetir
-  // a validação Fog e recuperar o modo híbrido se o serviço voltou.
-  this.satMode='auto';this.satRenderedMode=null;
-  this.sat.textContent='🌗 VIS / FOG Auto: ligado';
-  this.sat.title='VIS / FOG Auto: GeoColour de dia, Fog RGB à noite';
-  if(!window.MeteoFoxFogMask){
-   this.satMode='geo';
-   this.sat.textContent='☁ GeoColour (máscara indisponível)';
-   this.sat.title='GeoColour de segurança: máscara solar indisponível';
-  }else{
-   try{await this.readFogStatus();}
-   catch(error){
-    if(this.satRequest!==satRequest)return;
-    this.satMode='geo';
-    this.sat.textContent='☁ GeoColour (Fog indisponível)';
-    this.sat.title='GeoColour de segurança: Fog RGB indisponível';
-   }
-  }
-  if(this.satRequest!==satRequest)return;
-  this.state(this.satMode==='auto'
-   ?'VIS / FOG Auto: a verificar horários UTC EUMETSAT…'
-   :'Fog RGB temporariamente indisponível; a utilizar GeoColour de segurança. A verificar horários UTC…');
-  try{const confirmed=await actualSatelliteTimes();if(this.satRequest!==satRequest)return;this.satTimes=confirmed;this.satKnown=true;this.state('Horários Meteosat confirmados: '+this.satTimes.length+' imagens.');}
-  catch(e){if(this.satRequest!==satRequest)return;this.satKnown=false;this.satTimes=[];this.state('Satélite disponível sem horários confirmados ('+e.message+'). Não será animado com horas inventadas.');}
-  if(this.satRequest===satRequest){
-   // Never truncate the GeoColour timeline to the experimental Fog probe.
-   // Newer frames use GeoColour alone until Fog is validated.
-   this.refreshTimeline();
-  }
+  this.state('A consultar horários UTC '+(mode==='fog'?'RGB Fog':'GeoColour')+'…');
+  try{const confirmed=await actualSatelliteTimes(mode==='fog'?FOG_LAYER:LAYER);if(this.satRequest!==satRequest)return;this.satTimes=confirmed;this.satKnown=true;}
+  catch(e){if(this.satRequest!==satRequest)return;this.satKnown=false;this.satTimes=[];this.state('Horários indisponíveis: '+e.message);}
+  if(this.satRequest===satRequest)this.refreshTimeline();
  }
  async setRadar(on){this.stop();this.dropPrefetch();this.cancelTransition();this.clearRadar();this.radarOn=on;this.radar.textContent='🌧 Radar: '+(on?'ligado':'desligado');this.radar.setAttribute('aria-pressed',String(on));
   if(!on){this.radarRequest=null;this.radarFrames=[];this.clearRadar();this.refreshTimeline();return;}
@@ -240,10 +225,7 @@ class MeteoFoxSatellite{
  }
  // Pré-carregamento limitado: um único fotograma Meteosat seguinte, nunca
  // a sequência inteira. A camada fica invisível enquanto recebe os mosaicos.
- modeForTime(time){
-  const limit=DATE(this.fogStatus?.matching_time_utc);
-  return this.satMode==='auto'&&limit!==null&&time<=limit?'auto':'geo';
- }
+ modeForTime(time){return this.satMode;}
  createSatLayer(time){
   const mode=this.modeForTime(time);
   const layer=L.tileLayer.wms(WMS,{
@@ -427,7 +409,7 @@ class MeteoFoxSatellite{
      for(const x of pending){x.layer.off('load');x.layer.off('tileerror');if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);}
      this.state('Não foi possível carregar todas as imagens de '+fmt(time)+'. Mantidas as anteriores.');
      // Se o produto experimental não devolver mosaicos, não imobilizar o mapa.
-     if(this.satMode!=='geo')this.fallbackToGeoColour('mosaicos ou sincronização');
+     
      resolve(false);return;
     }
     // O problema do piscar vinha da soma de dois fades por mosaico.
@@ -473,7 +455,7 @@ class MeteoFoxSatellite{
       // quando o utilizador salta rapidamente para outro instante.
       this.fadeTimer=setTimeout(()=>this.clearFades(),340);
      });
-     this.state(info.join(' · ')+(this.satOn?' · Produto: '+(this.modeForTime(satTime)==='auto'?'GeoColour + Fog RGB':'GeoColour apenas (Fog RGB não validado para esta hora)'):''));
+     this.state(info.join(' · ')+(this.satOn?' · Produto: '+(this.modeForTime(satTime)==='fog'?'RGB Fog':'GeoColour RGB'):''));
      // Uma preparação em segundo plano só após estabilizar o fotograma atual.
      this.schedulePrefetch();
      resolve(true);

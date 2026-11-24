@@ -49,13 +49,13 @@ def parse_dimension(raw, now):
 
 def local(tag):return tag.rsplit('}',1)[-1]
 
-def dimension_for(root):
+def dimension_for(root, product=LAYER):
     # Procura a camada específica, ignorando outras fontes presentes no capabilities.
     parents={child:parent for parent in root.iter() for child in parent}
     layer=None
     for elem in root.iter():
         if local(elem.tag)!='Layer':continue
-        if any(local(x.tag)=='Name' and (x.text or '').strip()==LAYER for x in elem):
+        if any(local(x.tag)=='Name' and (x.text or '').strip()==product for x in elem):
             layer=elem;break
     if layer is None:raise RuntimeError('Camada GeoColour não encontrada no GetCapabilities')
     node=layer
@@ -79,6 +79,10 @@ def main():
     if len(times)<2:raise RuntimeError('Menos de 2 instantes recentes confirmados')
     payload={'source':'EUMETSAT EUMETView GetCapabilities','layer':LAYER,
              'checked_utc':iso(now),'times_utc':[iso(t) for t in times]}
+    try:
+        payload['fog_times_utc']=[iso(t) for t in parse_dimension(dimension_for(root,'mtg_fd:rgb_fog'),now)]
+    except RuntimeError:
+        payload['fog_times_utc']=[]
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('Instantes Meteosat confirmados:',len(times),iso(times[0]),iso(times[-1]))
