@@ -94,23 +94,7 @@ def update_synop():
         incoming=server.synop_data()
         if not any(s.get('latest_utc') for s in incoming.get('stations',[])):
             raise RuntimeError('Nenhuma estação trouxe observações')
-        stations={s['station']:s for s in existing.get('stations',[])}
-        for incoming_st in incoming['stations']:
-            code=incoming_st['station']
-            previous=stations.get(code,{})
-            merged=dict(previous)
-            merged.update({'station':code,'name':incoming_st.get('name') or previous.get('name')})
-            if incoming_st.get('latest_utc') and incoming_st['latest_utc'] >= (previous.get('latest_utc') or ''):
-                merged['latest_utc']=incoming_st['latest_utc']
-                periods={}
-                for period,val in incoming_st.get('periods',{}).items():
-                    if val.get('utc','') >= periods.get(period,{}).get('utc',''):
-                        periods[period]=val
-                merged['periods']=periods
-                merged['reports']=incoming_st.get('reports',0)
-                merged['dry_reports']=incoming_st.get('dry_reports',0)
-            stations[code]=merged
-        existing.update({'source':'OGIMET getsynop','stations':list(stations.values()),'checked_utc':stamp()})
+        existing={'source':'OGIMET getsynop','stations':incoming['stations'],'checked_utc':stamp(),'decoder_version':3}
         save('synop.json',existing)
         return 1
     except Exception as exc:
