@@ -347,7 +347,7 @@
         }
       },
       "latest_utc": "2026-11-24T15:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -1750,7 +1750,7 @@
         }
       },
       "latest_utc": "2026-11-24T15:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -2509,7 +2509,7 @@
         }
       },
       "latest_utc": "2026-11-24T15:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -3478,7 +3478,7 @@
       "name": "Beja / BA11",
       "periods": {},
       "latest_utc": "2026-11-24T12:00:00Z",
-      "reports": 24,
+      "reports": 23,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {},
@@ -4299,8 +4299,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -6677,7 +6677,7 @@
         }
       },
       "latest_utc": "2026-11-24T15:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -7653,7 +7653,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -9678,7 +9678,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -12243,7 +12243,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 9,
       "history": {
@@ -13188,8 +13188,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -15127,8 +15127,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -17465,7 +17465,7 @@
       "station": "08536",
       "name": "Lisboa / Portela",
       "periods": {},
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 2,
       "history": {
@@ -18401,8 +18401,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -20426,8 +20426,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {
@@ -22991,7 +22991,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -25556,7 +25556,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -27533,7 +27533,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 73,
       "dry_reports": 0,
       "history": {
@@ -29871,8 +29871,8 @@
       "station": "08558",
       "name": "Évora",
       "periods": {},
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "history": {
         "2026-11-24T15:00:00Z": {},
@@ -30039,7 +30039,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -32292,7 +32292,7 @@
       "name": "Santa Maria",
       "periods": {},
       "latest_utc": "2026-11-24T15:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "lat": 36.95972,
       "lon": -25.17,
@@ -32433,7 +32433,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 56,
       "dry_reports": 0,
       "lat": 30.14528,
@@ -33728,7 +33728,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 32.6475,
@@ -37747,8 +37747,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "lat": 37.95444,
       "lon": -8.83778,
@@ -40228,8 +40228,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "lat": 41.13833,
       "lon": -8.6025,
@@ -42709,8 +42709,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "lat": 40.1575,
       "lon": -8.46833,
@@ -45190,8 +45190,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 0,
       "lat": 41.27417,
       "lon": -7.71694,
@@ -47616,8 +47616,8 @@
       "station": "08568",
       "name": "Penhas Douradas",
       "periods": {},
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 12,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 13,
       "dry_reports": 0,
       "lat": 40.41667,
       "lon": -7.55,
@@ -47784,8 +47784,8 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 52,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 53,
       "dry_reports": 1,
       "lat": 39.83917,
       "lon": -7.47861,
@@ -49498,8 +49498,8 @@
       "station": "08571",
       "name": "Portalegre",
       "periods": {},
-      "latest_utc": "2026-11-24T16:00:00Z",
-      "reports": 72,
+      "latest_utc": "2026-11-24T17:00:00Z",
+      "reports": 73,
       "dry_reports": 1,
       "lat": 39.29417,
       "lon": -7.42111,
@@ -51924,7 +51924,7 @@
           "utc": "2026-11-24T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-24T16:00:00Z",
+      "latest_utc": "2026-11-24T17:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.79972,
@@ -54347,7 +54347,7 @@
       }
     }
   ],
-  "checked_utc": "2026-11-24T17:24:44.403937Z",
+  "checked_utc": "2026-11-24T18:14:44.470020Z",
   "decoder_version": 6,
   "references_utc": [
     "2026-11-24T15:00:00Z",
