@@ -507,13 +507,13 @@ function formatTAF(raw){
 }
 function synopZone(st){
  const id=String(st.station), name=String(st.name||'').toLowerCase();
- if(['08506','08508','08509','08513'].includes(id))return ['Açores',5];
+ if(['08506','08508','08509','08512'].includes(id))return ['Açores',5];
  if(id==='08524')return ['Madeira',4];
  if(['08512','08521'].includes(id))return ['Localização por confirmar',6];
- if(['08543','08545','08544'].includes(id))return ['Norte',0];
- if(['08540','08530','08552'].includes(id))return ['Centro',1];
+ if(['08551','08545','08544'].includes(id))return ['Norte',0];
+ if(['08540','08531','08552','08560'].includes(id))return ['Centro',1];
  if(['08539','08537','08536','08535','08534','08532'].includes(id))return ['Lisboa e Vale do Tejo',2];
- if(['08562','08538'].includes(id))return ['Alentejo e Algarve',3];
+ if(['08561','08562','08558','08533'].includes(id))return ['Alentejo e Algarve',3];
  return ['Localização por confirmar',6];
 }
 function safe(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -724,14 +724,14 @@ $('airportReports').addEventListener('click',async(event)=>{
 
 function recentSynopPeriod(st,h,now=Date.now()){
  const p=st.periods?.[String(h)];
- if(!p||Number(p.hours)!==h||(!p.trace&&(p.mm==null||!Number.isFinite(Number(p.mm))||Number(p.mm)<0)))return null;
+ if(!p||p.suspect||Number(p.hours)!==h||(!p.trace&&(p.mm==null||!Number.isFinite(Number(p.mm))||Number(p.mm)<0)))return null;
  const end=Date.parse(p.utc),age=now-end;
  return Number.isFinite(end)&&age>=0&&age<=h*3600000?p:null;
 }
 function synopPeriodLabel(p,h){
  if(!p)return 'Sem dados recentes';
  const end=Date.parse(p.utc);
- return new Date(end-h*3600000).toISOString().slice(0,16).replace('T',' ')+' — '+new Date(end).toISOString().slice(0,16).replace('T',' ')+' UTC';
+ return (p.method==='calculated'?'Calculado · ':'Reportado · ')+new Date(end-h*3600000).toISOString().slice(0,16).replace('T',' ')+' — '+new Date(end).toISOString().slice(0,16).replace('T',' ')+' UTC';
 }
 async function loadSynop(){
  $('synopStatus').textContent='A consultar OGIMET…';
@@ -739,7 +739,7 @@ async function loadSynop(){
  synopMapData=d;
  renderSynopMap();
  const format=p=>!p?'Sem dados recentes':p.trace?'Traços':fmt(p.mm,1);
- const order={'08543':0,'08545':1,'08544':2,'08540':3,'08530':4,'08552':5,'08539':6,'08537':7,'08536':8,'08535':9,'08532':10,'08534':11,'08562':12,'08538':13,'08522':14,'08524':15,'08506':16,'08509':16,'08508':17,'08513':18,'08512':19,'08521':20};
+ const order={'08551':0,'08545':1,'08544':2,'08540':3,'08531':4,'08552':5,'08539':6,'08537':7,'08536':8,'08535':9,'08532':10,'08534':11,'08562':12,'08533':13,'08522':14,'08524':15,'08506':16,'08509':16,'08508':17,'08512':18,'08512':19,'08521':20};
  const chosen=$('place').value;const selectedStations=chosen==='Madeira'?d.stations.filter(st=>synopZone(st)[0]==='Madeira'):chosen==='Açores'?d.stations.filter(st=>synopZone(st)[0]==='Açores'):d.stations;const sorted=[...selectedStations].sort((a,b)=>synopZone(a)[1]-synopZone(b)[1] || (order[a.station]??99)-(order[b.station]??99));
  let zone='';$('precipRows').innerHTML=sorted.map(st=>{
   const z=synopZone(st)[0];let head='';if(z!==zone){zone=z;head=`<tr class="zone-row"><td colspan="6">${safe(z)}</td></tr>`;}
@@ -913,11 +913,11 @@ const OBS_AIRPORT_POS = {
 };
 // Localizações de referência para as estações identificadas por WMO; não assumir coordenadas para IDs desconhecidos.
 const OBS_SYN_POS = {
- '08543':[41.694,-8.832], '08545':[41.248,-8.682], '08544':[40.915,-8.645],
- '08540':[39.829,-8.887], '08530':[39.354,-9.405], '08552':[39.475,-8.364],
+ '08551':[41.694,-8.832], '08545':[41.248,-8.682], '08544':[40.915,-8.645],
+ '08540':[39.829,-8.887], '08531':[39.354,-9.405], '08552':[39.475,-8.364],
  '08539':[39.117,-8.983], '08537':[38.884,-9.030], '08536':[38.781,-9.136],
  '08535':[38.718,-9.150], '08534':[38.704,-9.035], '08532':[38.829,-9.340],
- '08562':[38.078,-7.932], '08538':[37.007,-8.942], '08524':[33.073,-16.350],
+ '08561':[38.078,-7.932], '08562':[38.020,-7.870], '08558':[38.5364,-7.8878], '08560':[40.7147,-7.7625], '08533':[37.007,-8.942], '08524':[33.073,-16.350],
  '08509':[38.761,-27.091]
 };
 let obsAviationMap=null,obsAviationLayer=null,obsSynopMap=null,obsSynopLayer=null;
