@@ -320,8 +320,8 @@ th{color:#536f84}th,td{border-bottom-color:#e2ebf2}
  <div class="card obs-map-wrap" id="synopMapPanel">
   <div class="obs-map-head"><h3>Mapa interativo · precipitação observada</h3><span class="status" id="synopMapStatus">A carregar…</span></div>
   <div class="obs-tools" role="group" aria-label="Período de precipitação"><button type="button" class="action" data-synop-hours="6" aria-pressed="false">6 horas</button><button type="button" class="action" data-synop-hours="12" aria-pressed="false">12 horas</button><button type="button" class="action" data-synop-hours="24" aria-pressed="true">24 horas</button></div>
-  <div id="synopMap" class="obs-map" role="application" aria-label="Mapa de estações SYNOP e acumulados de precipitação"></div>
-  <div class="obs-legend"><span><i class="obs-dot" style="background:#a5adb5"></i>Sem observação</span><span><i class="obs-dot" style="background:#dbeafe"></i>0–1 mm</span><span><i class="obs-dot" style="background:#60a5fa"></i>1–10 mm</span><span><i class="obs-dot" style="background:#1661cf"></i>10–30 mm</span><span><i class="obs-dot" style="background:#9035c6"></i>30–60 mm</span><span><i class="obs-dot" style="background:#db2560"></i>≥60 mm</span></div>
+  <div class="obs-tools"><label for="synopReference">Referência UTC</label> <select id="synopReference" class="action"></select></div><div id="synopMap" class="obs-map" role="application" aria-label="Mapa de estações SYNOP e acumulados de precipitação"></div>
+  <div class="obs-legend" id="synopRainLegend"></div>
   <p class="obs-notice">Os marcadores representam apenas estações com localização conhecida. A tabela abaixo mantém todas as estações, incluindo as que ainda não têm coordenadas verificadas. «Traços» não é igual a zero; horas UTC do período indicadas ao clicar.</p>
  </div>
  <div class="card"><div class="maptools"><button class="action active" id="refreshSynop">↻ Atualizar observações</button></div><div class="tablewrap"><table><thead><tr><th>Estação</th><th>WMO</th><th>6 h (mm)</th><th>12 h (mm)</th><th>24 h (mm)</th><th>Última observação UTC</th></tr></thead><tbody id="precipRows"><tr><td>A carregar…</td></tr></tbody></table></div><p class="note">Nas regiões insulares são apresentados os postos SYNOP identificados por código WMO; a cobertura pode ser incompleta, mesmo que existam aeródromos adicionais. Valores observados descodificados de SYNOP. — significa período não comunicado, não 0 mm. «Traços» significa precipitação inferior a 0,1 mm. A hora de cada acumulado pode diferir da última observação. Códigos e nomes de estação fornecidos pelo utilizador; algumas correspondências carecem de validação.</p></div>
@@ -722,11 +722,13 @@ $('airportReports').addEventListener('click',async(event)=>{
  catch(e){button.textContent='Cópia indisponível';}
 });
 
+let synopSelectedReference=null;
+function synopPeriods(st){return synopSelectedReference&&st.history?st.history[synopSelectedReference]||{}:st.periods||{};}
 function recentSynopPeriod(st,h,now=Date.now()){
- const p=st.periods?.[String(h)];
+ const p=synopPeriods(st)[String(h)];
  if(!p||p.suspect||Number(p.hours)!==h||(!p.trace&&(p.mm==null||!Number.isFinite(Number(p.mm))||Number(p.mm)<0)))return null;
  const end=Date.parse(p.utc),age=now-end;
- return Number.isFinite(end)&&age>=0&&age<=h*3600000?p:null;
+ return Number.isFinite(end)&&age>=0&&(synopSelectedReference?end===Date.parse(synopSelectedReference):age<=h*3600000)?p:null;
 }
 function synopPeriodLabel(p,h){
  if(!p)return 'Sem dados recentes';
@@ -737,17 +739,25 @@ async function loadSynop(){
  $('synopStatus').textContent='A consultar OGIMET…';
  try{const d=await fetchMeteoFoxData('synop');
  synopMapData=d;
+ const refs=d.references_utc||[d.reference_utc].filter(Boolean);
+ if(!refs.includes(synopSelectedReference))synopSelectedReference=refs[0]||null;
+ $('synopReference').innerHTML=refs.map(t=>`<option value="${safe(t)}">${safe(t.replace('T',' ').slice(0,16))} UTC</option>`).join('');
+ $('synopReference').value=synopSelectedReference||'';
+ renderSynopTable(d);
+ }catch(e){$('synopStatus').textContent='Erro nos dados SYNOP';$('precipRows').innerHTML='<tr><td colspan="6">Não foi possível apresentar as observações SYNOP: '+safe(e.message)+'</td></tr>'}
+}
+function renderSynopTable(d){
  renderSynopMap();
  const format=p=>!p?'Sem dados no período':p.trace?'Traços':fmt(p.mm,1);
- const order={'08551':0,'08545':1,'08544':2,'08540':3,'08531':4,'08552':5,'08539':6,'08537':7,'08536':8,'08535':9,'08532':10,'08534':11,'08562':12,'08533':13,'08522':14,'08524':15,'08506':16,'08509':16,'08508':17,'08512':18,'08512':19,'08521':20};
+ const order={'08551':0,'08545':1,'08544':2,'08540':3,'08531':4,'08552':5,'08539':6,'08537':7,'08536':8,'08535':9,'08532':10,'08534':11,'08562':12,'08533':13,'08522':14,'08524':15,'08506':16,'08509':16,'08508':17,'08512':18,'08521':20};
  const chosen=$('place').value;const selectedStations=chosen==='Madeira'?d.stations.filter(st=>synopZone(st)[0]==='Madeira'):chosen==='Açores'?d.stations.filter(st=>synopZone(st)[0]==='Açores'):d.stations;const sorted=[...selectedStations].sort((a,b)=>synopZone(a)[1]-synopZone(b)[1] || (order[a.station]??99)-(order[b.station]??99));
  let zone='';$('precipRows').innerHTML=sorted.map(st=>{
   const z=synopZone(st)[0];let head='';if(z!==zone){zone=z;head=`<tr class="zone-row"><td colspan="6">${safe(z)}</td></tr>`;}
-  return head+`<tr><td>${safe(st.name)}</td><td>${safe(st.station)}</td>${[6,12,24].map(h=>{const p=recentSynopPeriod(st,h);return `<td title="${safe(st.periods?.[String(h)]?.suspect?'Rejeitado pelo controlo de qualidade':synopPeriodLabel(p,h))}">${st.periods?.[String(h)]?.suspect?'Suspeito':format(p)}</td>`}).join('')}<td>${safe(st.latest_utc||'—')}</td></tr>`;
+  return head+`<tr><td>${safe(st.name)}</td><td>${safe(st.station)}</td>${[6,12,24].map(h=>{const p=recentSynopPeriod(st,h);return `<td title="${safe(synopPeriods(st)[String(h)]?.suspect?'Rejeitado pelo controlo de qualidade':synopPeriodLabel(p,h))}">${synopPeriods(st)[String(h)]?.suspect?'Suspeito':format(p)}</td>`}).join('')}<td>${safe(st.latest_utc||'—')}</td></tr>`;
  }).join('');
- $('synopStatus').textContent=(chosen==='Madeira'?'Madeira · ':chosen==='Açores'?'Açores · ':'Todas as estações · ')+'OGIMET · referência '+(d.reference_utc?new Date(d.reference_utc).toISOString().slice(0,16).replace('T',' ')+' UTC':'não indicada')+' · consulta '+(d.checked_utc||d.retrieved_utc ? new Date(d.checked_utc||d.retrieved_utc).toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC' : 'hora não indicada');
- }catch(e){$('synopStatus').textContent='Erro nos dados SYNOP';$('precipRows').innerHTML='<tr><td colspan="6">Não foi possível apresentar as observações SYNOP: '+safe(e.message)+'</td></tr>'}
+ $('synopStatus').textContent=(chosen==='Madeira'?'Madeira · ':chosen==='Açores'?'Açores · ':'Todas as estações · ')+'OGIMET · referência '+(synopSelectedReference?new Date(synopSelectedReference).toISOString().slice(0,16).replace('T',' ')+' UTC':'não indicada')+' · consulta '+(d.checked_utc||d.retrieved_utc ? new Date(d.checked_utc||d.retrieved_utc).toLocaleTimeString('pt-PT',{timeZone:'UTC',hour:'2-digit',minute:'2-digit'})+' UTC' : 'hora não indicada');
 }
+$('synopReference').onchange=()=>{synopSelectedReference=$('synopReference').value;renderSynopTable(synopMapData);};
 $('refreshSynop').onclick=loadSynop;
 function initMap(){if(!window.L)return;map=L.map('radarMap').setView(current,6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);map.setView(current,6);loadRadar()}
 async function loadRadar(){try{const r=await fetch('https://api.rainviewer.com/public/weather-maps.json');if(!r.ok)throw Error('RainViewer indisponível');const j=await r.json();const past=j.radar?.past||[],now=j.radar?.nowcast||[];radarFrames=[...past,...now];if(!radarFrames.length)throw Error('Sem imagens disponíveis');$('radarStatus').textContent=`${past.length} imagens anteriores · ${now.length} previsão`;showRadar(radarFrames.length-1)}catch(e){$('radarStatus').innerHTML='<span class="error">Radar indisponível: '+e.message+'</span>'}}
@@ -1054,17 +1064,25 @@ function obsSynopCoords(st){
  if(Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=30&&lat<=43&&lon>=-32&&lon<=-6)return [lat,lon];
  return OBS_SYN_POS[String(st.station)]||null;
 }
+const synopRainColors=['#a6d9f5','#398cdb','#2450ae','#f4cf42','#f18b32','#d83b39','#9b36a7'];
+function synopThresholds(){return ({6:[0.5,2,5,10,20,30],12:[1,3,7,15,30,45],24:[1,5,10,20,40,60]})[synopMapHours];}
 function obsSynopColor(p){
- if(!p||p.mm==null&&!p.trace)return '#9ba5af';
- if(p.trace)return '#dbeafe';
- const v=Number(p.mm);
- if(!Number.isFinite(v))return '#9ba5af';
- return v>=60?'#db2560':v>=30?'#9035c6':v>=10?'#1661cf':v>=1?'#60a5fa':'#dbeafe';
+ if(!p)return '#9ba5af';
+ if(p.trace)return '#83c9eb';
+ const v=Number(p.mm);if(!Number.isFinite(v))return '#9ba5af';
+ if(v===0)return '#f0f0f0';
+ return synopRainColors[synopThresholds().filter(t=>v>=t).length];
+}
+function renderSynopLegend(){
+ const t=synopThresholds();
+ const entries=[['#9ba5af','Sem dados'],['#e3a22d','Suspeito'],['#f0f0f0','0 mm'],['#83c9eb','Traços'],...synopRainColors.map((c,i)=>[c,i===0?'0 < mm < '+t[0]:i===t.length?'≥ '+t[i-1]+' mm':t[i-1]+'–<'+t[i]+' mm'])];
+ $('synopRainLegend').innerHTML=entries.map(([c,l])=>'<span><i class="obs-dot" style="background:'+c+'"></i>'+safe(l)+'</span>').join('');
 }
 function renderSynopMap(){
  if(!$('synop').classList.contains('active'))return;
  const m=ensureObsMap('synopMap');if(!m)return;
  obsSynopLayer.clearLayers();
+ renderSynopLegend();
  const data=synopMapData;
  if(!data?.stations){$('synopMapStatus').textContent='A aguardar SYNOP';return;}
  const city=$('place').value;
@@ -1074,7 +1092,7 @@ function renderSynopMap(){
  for(const st of shown){
   const pos=obsSynopCoords(st);if(!pos)continue;
   const p=recentSynopPeriod(st,synopMapHours);
-  const suspect=!!st.periods?.[String(synopMapHours)]?.suspect;
+  const suspect=!!synopPeriods(st)[String(synopMapHours)]?.suspect;
   const val=suspect?'Suspeito':!p?'Sem dados no período':p.trace?'Traços':Number(p.mm).toFixed(1)+' mm';
   const marker=obsCircle(pos,suspect?'#e3a22d':obsSynopColor(p),8).addTo(obsSynopLayer);
   marker.bindTooltip(safe(st.name||st.station)+' · '+val);
@@ -1082,7 +1100,7 @@ function renderSynopMap(){
   points.push(pos);
  }
  if(points.length)m.fitBounds(L.latLngBounds(points).pad(0.18),{maxZoom:9,animate:false});
- $('synopMapStatus').textContent=(data.reference_utc?'Referência '+data.reference_utc.replace('T',' ').slice(0,16)+' UTC · ':'')+points.length+' estações no mapa · '+shown.filter(st=>obsSynopCoords(st)&&recentSynopPeriod(st,synopMapHours)).length+' com dados recentes · '+(shown.length-points.length)+' sem localização';
+ $('synopMapStatus').textContent=(synopSelectedReference?'Referência '+synopSelectedReference.replace('T',' ').slice(0,16)+' UTC · ':'')+points.length+' estações no mapa · '+shown.filter(st=>obsSynopCoords(st)&&recentSynopPeriod(st,synopMapHours)).length+' com dados no período · '+(shown.length-points.length)+' sem localização';
 }
 document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListener('click',()=>{
  synopMapHours=Number(btn.dataset.synopHours);
