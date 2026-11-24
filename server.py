@@ -92,37 +92,62 @@ def precip(raw):
     return next(iter(precip_groups(raw)),None)
 
 def accumulate(records, reference=None):
-    # Exact contiguous intervals only. Never infer duration from iR=3 alone.
+    # Preserve competing observations; select exact paths by encoding uncertainty.
     edges={}
     for end,p in records:
         start=end-timedelta(hours=p['hours'])
-        edges.setdefault(end,{}).setdefault(start,p)
+        q=dict(p)
+        g=q.get('group','')
+        q['resolution_mm']=1.0 if g.startswith('6') and g[1:4].isdigit() and int(g[1:4])<990 else 0.1
+        q['uncertainty_mm']=q['resolution_mm']/2
+        if q.get('trace'):q['uncertainty_mm']=0.1
+        edges.setdefault(end,{}).setdefault(start,[]).append(q)
     result={}
     for end in ([reference] if reference is not None else sorted(edges,reverse=True)):
         for h in (6,12,24):
             if str(h) in result:continue
             start=end-timedelta(hours=h)
+            memo={}
+            def score(parts):
+                return (any(p.get('lower_bound') for _,_,p in parts),
+                        sum(p['uncertainty_mm'] for _,_,p in parts),len(parts))
             def path(t):
                 if t==start:return []
-                for prev,p in sorted(edges.get(t,{}).items()):
+                if t in memo:return memo[t]
+                options=[]
+                for prev,ps in edges.get(t,{}).items():
                     if prev<start:continue
                     tail=path(prev)
-                    if tail is not None:return [p]+tail
-                return None
-            direct=edges.get(end,{}).get(start)
-            parts=[direct] if direct else path(end)
+                    if tail is not None:
+                        options.extend([[(prev,t,p)]+tail for p in ps])
+                memo[t]=min(options,key=score) if options else None
+                return memo[t]
+            direct=edges.get(end,{}).get(start,[])
+            parts=[(start,end,min(direct,key=lambda p:score([(start,end,p)])))] if direct else path(end)
             if not parts:continue
-            if direct:p=dict(direct)
+            values=[p for _,_,p in parts]
+            uncertainty=round(sum(p['uncertainty_mm'] for p in values),4)
+            if direct:p=dict(values[0])
             else:
-                total=round(sum(x['mm'] or 0 for x in parts),1)
-                trace=any(x['trace'] for x in parts)
-                p={'hours':h,'mm':None if trace and total==0 else total,'trace':trace and total==0,'contains_trace':trace,'method':'calculated','components':len(parts)}
+                total=round(sum(x['mm'] or 0 for x in values),1)
+                trace=any(x.get('trace') for x in values)
+                p={'hours':h,'mm':None if trace and total==0 else total,'trace':trace and total==0,'contains_trace':trace,'method':'calculated','components':len(parts),'lower_bound':any(x.get('lower_bound') for x in values)}
+            p.update(uncertainty_mm=uncertainty,quality='VALID',provenance=[
+                {**q,'start_utc':a.isoformat().replace('+00:00','Z'),'end_utc':b.isoformat().replace('+00:00','Z')} for a,b,q in reversed(parts)])
+            # Compare duplicate direct reports without replacing their original values.
+            for q in direct:
+                if q.get('mm') is not None and p.get('mm') is not None and not (q.get('lower_bound') or p.get('lower_bound')) and abs(q['mm']-p['mm'])>uncertainty+q['uncertainty_mm']+1e-9:
+                    p.update(quality='SUSPECT',suspect=True)
             result[str(h)]={**p,'utc':end.isoformat().replace('+00:00','Z')}
-    # Nested intervals ending at the same time must be monotonic.
     for a,b in ((6,12),(6,24),(12,24)):
         x,y=result.get(str(a)),result.get(str(b))
-        if x and y and x['utc']==y['utc'] and not y.get('lower_bound') and (x.get('mm') or 0)>(y.get('mm') or 0)+0.5:
-            x['suspect']=y['suspect']=True
+        if not x or not y or x['utc']!=y['utc'] or y.get('lower_bound') or x.get('mm') is None or y.get('mm') is None:continue
+        delta=x['mm']-y['mm']
+        if delta<=1e-9:continue
+        suspect=delta>x['uncertainty_mm']+y['uncertainty_mm']+1e-9
+        for p in (x,y):
+            if suspect:p.update(quality='SUSPECT',suspect=True)
+            elif p['quality']!='SUSPECT':p['quality']='ROUNDING'
     return result
 
 def synop_data():

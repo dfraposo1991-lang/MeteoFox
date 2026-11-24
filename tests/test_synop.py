@@ -51,3 +51,23 @@ class SynopTests(unittest.TestCase):
         end=datetime(2026,11,24,12,tzinfo=timezone.utc)
         records=[(end,{"hours":6,"mm":0,"trace":False}),(end-timedelta(hours=1),{"hours":12,"mm":3,"trace":False})]
         self.assertNotIn("12",accumulate(records,end))
+
+    def test_rounding_precision(self):
+        end=datetime(2026,11,24,15,tzinfo=timezone.utc)
+        raw="AAXX 24151 08535 11470 32905 60082 333 70075="
+        result=accumulate([(end,p) for p in decode(raw)],end)
+        self.assertEqual(result["12"]["mm"],8)
+        self.assertEqual(result["24"]["mm"],7.5)
+        self.assertEqual(result["12"]["quality"],"ROUNDING")
+        self.assertEqual(result["24"]["quality"],"ROUNDING")
+        self.assertEqual(result["12"]["provenance"][0]["group"],"60082")
+
+    def test_precision_path(self):
+        end=datetime(2026,11,24,15,tzinfo=timezone.utc)
+        coarse={"hours":3,"mm":2,"trace":False,"group":"60027"}
+        fine={"hours":1,"mm":0.6,"trace":False,"group":"69965"}
+        records=[(end-timedelta(hours=i),fine) for i in range(6)]
+        records.extend([(end,coarse),(end-timedelta(hours=3),coarse)])
+        result=accumulate(records,end)["6"]
+        self.assertEqual(result["mm"],3.6)
+        self.assertEqual(len(result["provenance"]),6)

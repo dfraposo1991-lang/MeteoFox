@@ -70,7 +70,7 @@ async function verify(){
   const st=synop.stations?.find(s=>String(s.station)===info.wmo);
   const periods=st?.periods||{};
   // Prioridade a intervalos observados mais recentes; nunca comparar acumulado de 12 h com valor horário.
-  const candidates=Object.entries(periods).filter(([k,p])=>[6,12,24].includes(Number(k))&&p&&!p.suspect&&!p.lower_bound&&p.trace!==true&&p.mm!=null&&Number.isFinite(p.mm)&&p.hours===Number(k)&&fresh(p.utc,36))
+  const candidates=Object.entries(periods).filter(([k,p])=>[6,12,24].includes(Number(k))&&p&&!p.suspect&&(!p.quality||['VALID','ROUNDING'].includes(p.quality))&&!p.lower_bound&&p.trace!==true&&p.mm!=null&&Number.isFinite(p.mm)&&p.hours===Number(k)&&fresh(p.utc,36))
     .sort((a,b)=>ms(b[1].utc)-ms(a[1].utc)||Number(a[0])-Number(b[0]));
   const pick=candidates[0],hours=pick?Number(pick[0]):null,p=pick?.[1];
   let predicted=null;
