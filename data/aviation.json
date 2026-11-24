@@ -5,7 +5,7 @@
       "utc": "2026-11-24T12:00:00Z"
     },
     "LPBJ": {
-      "raw": "METAR LPBJ 241200Z 30010KT 6000 -RA BKN025 14/12 Q1020=",
+      "raw": "METAR LPBJ 241200Z 30010KT 6000 2900N -RA BKN020 14/12 Q1020=",
       "utc": "2026-11-24T12:00:00Z"
     },
     "LPCR": {
@@ -172,7 +172,7 @@
   "metar_source": "OGIMET getmetar",
   "speci_source": "OGIMET getmetar",
   "taf_source": "NOAA Aviation Weather Center",
-  "metar_checked_utc": "2026-11-24T12:11:12.106995Z",
-  "speci_checked_utc": "2026-11-24T12:11:12.106995Z",
-  "taf_checked_utc": "2026-11-24T12:11:12.177524Z"
+  "metar_checked_utc": "2026-11-24T12:18:23.749767Z",
+  "speci_checked_utc": "2026-11-24T12:18:23.749767Z",
+  "taf_checked_utc": "2026-11-24T12:18:28.717830Z"
 }
