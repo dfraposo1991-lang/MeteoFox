@@ -29,3 +29,15 @@ class SynopTests(unittest.TestCase):
         end = datetime(2026,11,24,12,tzinfo=timezone.utc)
         p = {"hours":6,"mm":0,"trace":False,"method":"reported"}
         self.assertEqual(accumulate([(end,p)])["6"]["mm"],0)
+
+    def test_real_faro_radiation(self):
+        raw="AAXX 10141 08554 05/// /2104 10247 20161 30150 40155 57006 60002 333 10280 20201 55/// 63089 553// 63565 60005 70000 91005 90710 91105=="
+        self.assertEqual([(p["hours"],p["mm"]) for p in decode(raw)],[(12,0),(1,0),(24,0)])
+    def test_24h_trace(self):
+        self.assertTrue(decode("AAXX 24121 08540 21470 32905 333 79999=")[0]["trace"])
+        self.assertEqual(decode("AAXX 24121 08540 21470 32905 333 79998=")[0]["mm"],999.8)
+    def test_inconsistent(self):
+        end=datetime(2026,11,24,12,tzinfo=timezone.utc)
+        result=accumulate([(end,{"hours":h,"mm":v,"trace":False}) for h,v in [(6,56),(12,0.4)]])
+        self.assertTrue(result["6"]["suspect"])
+        self.assertTrue(result["12"]["suspect"])
