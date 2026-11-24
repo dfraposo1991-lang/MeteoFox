@@ -7,7 +7,7 @@ from pathlib import Path
 import json, csv, io, re, time, threading
 
 ROOT=Path(__file__).resolve().parent
-STATIONS={'08532':'Sintra / BA1','08509':'Lajes / BA4','08540':'Monte Real / BA5','08534':'Montijo / BA6','08562':'Beja / BA11','08544':'Ovar / AM1','08552':'Tancos','08539':'Ota','08537':'Alverca','08506':'Horta','08513':'Ponta Delgada','08524':'Porto Santo','08530':'Cabo Carvoeiro','08535':'Lisboa / Geofísico','08536':'Lisboa / Portela','08538':'Sagres','08543':'Viana do Castelo','08545':'Porto / Pedras Rubras','08521':'MADEIRA / LPMA','08554':'FARO / LPFR'}
+STATIONS={'08532':'Sintra / BA1','08509':'Lajes / BA4','08540':'Monte Real / BA5','08534':'Montijo / BA6','08561':'Beja / BA11','08562':'Beja','08544':'Ovar / AM1','08552':'Tancos','08539':'Ota','08537':'Alverca','08506':'Horta','08512':'Ponta Delgada','08524':'Porto Santo','08531':'Cabo Carvoeiro','08535':'Lisboa / Geofísico','08536':'Lisboa / Portela','08533':'Sagres','08551':'Viana do Castelo','08545':'Porto / Pedras Rubras','08521':'MADEIRA / LPMA','08554':'FARO / LPFR','08558':'Évora','08560':'Viseu'}
 AIRPORTS=['LPFR','LPPT','LPAR','LPST','LPCS','LPMT','LPBJ','LPPR','LPOV','LPMR','LPLA','LPMA','LPPS','LPPD','LPHR','LPFL','LPPI','LPSJ','LPGR','LPCR','LPAZ']
 CACHE={}; LOCK=threading.Lock()
 def cached(key,ttl,fn):
@@ -56,6 +56,20 @@ def precip_groups(raw):
             section=3 if token=='333' else 0
             continue
         if section in sections:sections[section].append(token)
+    # Portuguese reports use a radiation value immediately after each 55 group.
+    # Consume the supplementary group before interpreting precipitation.
+    filtered=[]
+    skip=False
+    for g in sections[3]:
+        if skip:
+            skip=False
+            if re.fullmatch(r'[0-6][0-9/]{4}',g) and not g.startswith('55'):
+                continue
+        if re.fullmatch(r'55[0-9/]{3}',g):
+            skip=True
+            continue
+        filtered.append(g)
+    sections[3]=filtered
     out=[]
     for section in (1,3):
         if (section==1 and ir not in ('0','1')) or (section==3 and ir not in ('0','2')):continue
@@ -68,7 +82,7 @@ def precip_groups(raw):
     for g in sections[3]:
         if re.fullmatch(r'7[0-9]{4}',g):
             n=int(g[1:])
-            if n<=9998:out.append({'mm':None if n==9998 else n/10,'hours':24,'trace':n==9998,'method':'reported','group':g,'section':3})
+            if n<=9999:out.append({'mm':None if n==9999 else n/10,'hours':24,'trace':n==9999,'lower_bound':n==9998,'method':'reported','group':g,'section':3})
     return out
 
 def precip(raw):
@@ -101,6 +115,11 @@ def accumulate(records):
                 trace=any(x['trace'] for x in parts)
                 p={'hours':h,'mm':None if trace and total==0 else total,'trace':trace and total==0,'contains_trace':trace,'method':'calculated','components':len(parts)}
             result[str(h)]={**p,'utc':end.isoformat().replace('+00:00','Z')}
+    # Nested intervals ending at the same time must be monotonic.
+    for a,b in ((6,12),(6,24),(12,24)):
+        x,y=result.get(str(a)),result.get(str(b))
+        if x and y and x['utc']==y['utc'] and not y.get('lower_bound') and (x.get('mm') or 0)>(y.get('mm') or 0)+0.5:
+            x['suspect']=y['suspect']=True
     return result
 
 def synop_data():
