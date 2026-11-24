@@ -88,14 +88,14 @@ def precip_groups(raw):
 def precip(raw):
     return next(iter(precip_groups(raw)),None)
 
-def accumulate(records):
+def accumulate(records, reference=None):
     # Exact contiguous intervals only. Never infer duration from iR=3 alone.
     edges={}
     for end,p in records:
         start=end-timedelta(hours=p['hours'])
         edges.setdefault(end,{}).setdefault(start,p)
     result={}
-    for end in sorted(edges,reverse=True):
+    for end in ([reference] if reference is not None else sorted(edges,reverse=True)):
         for h in (6,12,24):
             if str(h) in result:continue
             start=end-timedelta(hours=h)
@@ -137,8 +137,11 @@ def synop_data():
             if i<len(tokens) and tokens[i].startswith('3'):st['dry_reports']+=1
         end=datetime.fromisoformat(r['utc'].replace('Z','+00:00'))
         intervals[s].extend((end,p) for p in precip_groups(r['raw']))
-    for s,st in out.items():st['periods']=accumulate(intervals[s])
-    return {'source':'OGIMET getsynop','retrieved_utc':datetime.now(timezone.utc).isoformat(),'stations':list(out.values())}
+    # Common UTC reference: latest observed whole hour across the network.
+    latest=max((st['latest_utc'] for st in out.values() if st['latest_utc']),default=None)
+    reference=datetime.fromisoformat(latest.replace('Z','+00:00')).replace(minute=0,second=0,microsecond=0) if latest else None
+    for s,st in out.items():st['periods']=accumulate(intervals[s],reference) if reference else {}
+    return {'source':'OGIMET getsynop','reference_utc':reference.isoformat().replace('+00:00','Z') if reference else None,'retrieved_utc':datetime.now(timezone.utc).isoformat(),'stations':list(out.values())}
 
 def metar_data():
     records=parse_csv(ogimet('metar',hours=12))
