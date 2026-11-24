@@ -1,22 +1,22 @@
 {
-  "checked_utc": "2026-11-24T13:25:44.623529Z",
+  "checked_utc": "2026-11-24T15:10:53.234637Z",
   "ready": false,
   "source": "EUMETSAT EUMETView WMS GetCapabilities",
   "geo_layer": "mtg_fd:rgb_geocolour",
   "fog_layer": null,
   "matching_time_utc": null,
-  "reason": "GeoColour reference timestamps are absent or too old",
+  "reason": "Fog WMS validation unavailable: HTTP Error 502: Bad Gateway",
   "candidate_layers": [
     {
       "name": "mtg_fd:rgb_fog",
       "title": "Fog / Low Clouds RGB - MTG-I - 0 degree",
-      "last_listed_utc": "2026-11-24T09:50:00Z",
+      "last_listed_utc": "2026-11-24T14:40:00Z",
       "is_mtg": true
     },
     {
       "name": "msg_fes:rgb_fog",
       "title": "Fog / Low Clouds RGB - MSG - 0 degree",
-      "last_listed_utc": "2026-11-24T13:00:00Z",
+      "last_listed_utc": "2026-11-24T14:45:00Z",
       "is_mtg": false
     }
   ],
@@ -32,7 +32,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-24T09:50:00.000Z/PT10M"
+        "raw_preview": "2025-06-06T18:40:00.000Z/2026-11-24T14:40:00.000Z/PT10M"
       }
     ],
     "mtg_fd:rgb_geocolour": [
@@ -42,7 +42,7 @@
       },
       {
         "name": "time",
-        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-24T13:00:00.000Z/PT10M"
+        "raw_preview": "2024-09-23T00:00:00.000Z/2026-11-24T14:40:00.000Z/PT10M"
       }
     ]
   },
