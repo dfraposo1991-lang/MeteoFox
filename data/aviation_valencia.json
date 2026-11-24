@@ -1,17 +1,17 @@
 {
-  "checked_utc": "2026-11-24T05:16:55.370527Z",
+  "checked_utc": "2026-11-24T06:22:18.614537Z",
   "source": "NOAA Aviation Weather Center (worldwide cache)",
   "metar": {
     "LEVC": {
-      "raw": "METAR LEVC 240500Z 27003KT CAVOK 06/04 Q1021 NOSIG",
-      "utc": "2026-11-24T05:00:00.000Z"
+      "raw": "METAR LEVC 240600Z 29003KT 260V320 CAVOK 06/04 Q1021 NOSIG",
+      "utc": "2026-11-24T06:00:00.000Z"
     }
   },
   "speci": {},
   "taf": {
     "LEVC": {
-      "raw": "TAF LEVC 232300Z 2400/2424 30005KT CAVOK TX20/2412Z TN07/2406Z BECMG 2420/2422 26009KT",
-      "utc": "2026-11-23T23:00:00.000Z"
+      "raw": "TAF LEVC 240500Z 2406/2506 28005KT CAVOK TX20/2412Z TN06/2406Z TEMPO 2414/2416 14009KT BECMG 2418/2420 26009KT BECMG 2502/2504 23009KT",
+      "utc": "2026-11-24T05:00:00.000Z"
     }
   }
 }
