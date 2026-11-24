@@ -17,13 +17,13 @@
     {
       "station": "08509",
       "name": "Lajes / BA4",
-      "latest_utc": "2026-11-24T03:00:00Z",
+      "latest_utc": "2026-11-24T06:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.4,
+          "mm": 0.8,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-23T21:00:00Z"
+          "utc": "2026-11-24T06:00:00Z"
         },
         "6": {
           "mm": 0.8,
@@ -40,7 +40,7 @@
     {
       "station": "08540",
       "name": "Monte Real / BA5",
-      "latest_utc": "2026-11-24T03:00:00Z",
+      "latest_utc": "2026-11-24T06:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
@@ -59,13 +59,13 @@
     {
       "station": "08534",
       "name": "Montijo / BA6",
-      "latest_utc": "2026-11-24T03:00:00Z",
+      "latest_utc": "2026-11-24T06:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.0,
+          "mm": 1.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-23T21:00:00Z"
+          "utc": "2026-11-24T06:00:00Z"
         },
         "6": {
           "mm": 0.4,
@@ -78,20 +78,20 @@
     {
       "station": "08562",
       "name": "Beja / BA11",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     },
     {
       "station": "08544",
       "name": "Ovar / AM1",
-      "latest_utc": "2026-11-24T03:00:00Z",
+      "latest_utc": "2026-11-24T06:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
@@ -131,13 +131,13 @@
     {
       "station": "08506",
       "name": "Horta",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
           "mm": 0.1,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     },
@@ -170,26 +170,26 @@
     {
       "station": "08521",
       "name": "MADEIRA / LPMA",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
-          "mm": 3.0,
+          "mm": 0.4,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     },
     {
       "station": "08524",
       "name": "Porto Santo",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T06:00:00Z"
         }
       }
     },
@@ -200,26 +200,26 @@
     {
       "station": "08535",
       "name": "Lisboa / Geofísico",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.9,
+          "mm": 3.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     },
     {
       "station": "08536",
       "name": "Lisboa / Portela",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.8,
+          "mm": 2.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     },
@@ -234,29 +234,29 @@
     {
       "station": "08545",
       "name": "Porto / Pedras Rubras",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
-          "mm": 0.0,
+          "mm": 0.1,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     },
     {
       "station": "08554",
       "name": "FARO / LPFR",
-      "latest_utc": "2026-11-24T05:00:00Z",
+      "latest_utc": "2026-11-24T07:00:00Z",
       "periods": {
         "12": {
           "mm": 0.0,
           "hours": 12,
           "trace": false,
-          "utc": "2026-11-24T05:00:00Z"
+          "utc": "2026-11-24T07:00:00Z"
         }
       }
     }
   ],
-  "checked_utc": "2026-11-24T06:22:18.543745Z"
+  "checked_utc": "2026-11-24T07:52:32.273045Z"
 }
