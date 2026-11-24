@@ -7,7 +7,7 @@ from pathlib import Path
 import json, csv, io, re, time, threading
 
 ROOT=Path(__file__).resolve().parent
-STATIONS={'08532':'Sintra / BA1','08509':'Lajes / BA4','08540':'Monte Real / BA5','08534':'Montijo / BA6','08561':'Beja / BA11','08562':'Beja','08544':'Ovar / AM1','08552':'Tancos','08539':'Ota','08537':'Alverca','08506':'Horta','08512':'Ponta Delgada','08524':'Porto Santo','08531':'Cabo Carvoeiro','08535':'Lisboa / Geofísico','08536':'Lisboa / Portela','08533':'Sagres','08551':'Viana do Castelo','08545':'Porto / Pedras Rubras','08521':'MADEIRA / LPMA','08554':'FARO / LPFR','08558':'Évora','08560':'Viseu'}
+STATIONS={'08532':'Sintra / BA1','08509':'Lajes / BA4','08540':'Monte Real / BA5','08534':'Montijo / BA6','08561':'Beja / BA11','08562':'Beja','08544':'Ovar / AM1','08537':'Alverca','08506':'Horta','08512':'Ponta Delgada','08524':'Porto Santo','08531':'Cabo Carvoeiro','08535':'Lisboa / Geofísico','08536':'Lisboa / Portela','08533':'Sagres','08551':'Viana do Castelo','08545':'Porto / Pedras Rubras','08521':'MADEIRA / LPMA','08554':'FARO / LPFR','08558':'Évora','08560':'Viseu'}
 # Station metadata: OGIMET Portugal SYNOP listing.
 STATIONS.update({"08515":"Santa Maria","08520":"Selvagem Grande","08522":"Funchal","08541":"Sines","08546":"Porto / Serra do Pilar","08548":"Coimbra / Cernache","08567":"Vila Real","08568":"Penhas Douradas","08570":"Castelo Branco","08571":"Portalegre","08575":"Bragança"})
 SYNOP_COORDS={"08515":[36.95972,-25.17],"08520":[30.14528,-15.87056],"08522":[32.6475,-16.89222],"08541":[37.95444,-8.83778],"08546":[41.13833,-8.6025],"08548":[40.1575,-8.46833],"08567":[41.27417,-7.71694],"08568":[40.41667,-7.55],"08570":[39.83917,-7.47861],"08571":[39.29417,-7.42111],"08575":[41.79972,-6.73306]}
