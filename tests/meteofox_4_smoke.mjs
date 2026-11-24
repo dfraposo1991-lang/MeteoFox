@@ -46,7 +46,10 @@ await page.route(/tilecache\.rainviewer\.com/,respondPNG);
 await page.route(/tile\.openstreetmap\.org/,respondPNG);
 await page.route(/view\.eumetsat\.int/,respondPNG);
 
+const moduleName=process.argv[2]||'all';
+const enabled=name=>moduleName==='all'||moduleName===name;
 try{
+ if(enabled('produtos')){
  await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
  assert.equal(await page.locator('#place option[value="Valência"]').count(),1,'Valência deve existir na lista da Síntese');
  await page.locator('#place').selectOption('Valência');
@@ -86,6 +89,9 @@ try{
  await page.evaluate(()=>ecmwfLoadCycle());
  assert.equal(await page.locator('#ecmwfRain').getAttribute('src'),expectedUrl('chuva','054'));
  assert.notEqual(await page.locator('#ecmwfRain').getAttribute('src'),priorURL,'Novo run não pode reutilizar URL anterior');
+ }
+ if(enabled('aerodromos')){
+ await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:45000});
  await page.locator('[data-tab="aerodromes"]').click();
  // Os TAF formam linhas apenas nas mudanças, sem partir palavras ou grupos.
  const tafSpec=await page.evaluate(()=>{
@@ -207,6 +213,10 @@ try{
  assert.ok(popupLayout.popupWidth<680,'Popup curta não ocupa largura fixa 680px: '+JSON.stringify(popupLayout));
  console.log('MAP POPUP DIMENSIONS',JSON.stringify(popupLayout));
 
+ }
+ if(enabled('mapa')){
+ await page.goto('http://127.0.0.1:8765/mapa.html',{waitUntil:'domcontentloaded',timeout:45000});
+ await page.waitForSelector('#satTools button',{timeout:25000});
  assert.equal(await page.locator('#mapLegends').isHidden(),true);
  const viewport=page.viewportSize(),mapBounds=await page.locator('#largeMap').boundingBox(),headerBounds=await page.locator('header').boundingBox();
  assert.ok(mapBounds.y>=headerBounds.y+headerBounds.height-3,'Mapa abaixo do cabeçalho');
@@ -466,7 +476,7 @@ try{
  assert.equal(fallback.safeMode,'geo','GeoColour é a alternativa interna');
  assert.equal(fallback.radarStillOn,true,'O radar mantém-se quando Fog falha');
  assert.equal(fallback.hasSelector,false,'Não apresentar seletor em modo de segurança');
- assert.ok(fallback.button.includes('VIS / FOG Auto'),'O nome do botão mantém-se no fallback');
+ assert.ok(fallback.button.includes('GeoColour') && fallback.button.includes('Fog indisponível'),'O botão identifica GeoColour e indisponibilidade Fog');
  assert.equal(fallback.restoredMode,'auto','Ao reativar, voltar a tentar VIS / FOG Auto');
  assert.ok(fallback.restoredButton.includes('VIS / FOG Auto: ligado'),'Botão mantém-se simples');
 
@@ -519,5 +529,6 @@ try{
  const mobile=await page.evaluate(()=>({viewport:document.documentElement.clientWidth,pageWidth:document.documentElement.scrollWidth}));
  assert.ok(mobile.pageWidth<=mobile.viewport+3,'Overflow horizontal na página principal: '+JSON.stringify(mobile));
  console.log('PASS mobile 390px: página sem overflow horizontal');
+ }
  assert.deepEqual(errors,[],'Erros JavaScript inesperados');
 }finally{await browser.close();}
