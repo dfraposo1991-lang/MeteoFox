@@ -214,6 +214,16 @@ function obsMetarParsed(item){
   reason:complete?'':'Visibilidade ou informação de nebulosidade ausente/não reconhecida'};
 }
 const MILITARY_SCALE=[["BLU","#2563eb",8000,2500],["WHT","#f8fafc",5000,1500],["GRN","#16a34a",3700,700],["YLO1","#facc15",2500,500],["YLO2","#eab308",1600,300],["AMB","#f59e0b",800,200],["RED","#dc2626",0,0]];
+// SPECI only supersedes a METAR when its full UTC timestamp is strictly newer.
+function currentSpeci(m,s){
+ if(!s?.raw?.trim()||!m?.raw?.trim())return null;
+ const mt=Date.parse(m.utc),st=Date.parse(s.utc);
+ return Number.isFinite(mt)&&Number.isFinite(st)&&st>mt?s:null;
+}
+function currentObservation(d,id){
+ const m=d?.metar?.[id];
+ return currentSpeci(m,d?.speci?.[id])||m;
+}
 function obsClasses(item){
  const p=obsMetarParsed(item);
  if(!p||!p.complete)return {color:'#89939e',code:'—',flight:'Indisponível',parsed:p};
@@ -259,15 +269,15 @@ function paintMarkers(){
  markers.clearLayers();let n=0;
  for(const a of AVIATION_AIRPORTS){
   const latlng=OBS_AIRPORT_POS[a.id];if(!latlng)continue;
-  const c=obsClasses(data?.metar?.[a.id]);
+  const c=obsClasses(currentObservation(data,a.id));
   const marker=L.circleMarker(latlng,{pane:'meteofoxAirports',renderer:airportRenderer,radius:9,weight:2,color:'#203a55',fillColor:c.color,fillOpacity:.96}).addTo(markers);
   marker.bindTooltip(a.id+' · '+c.code+' · '+c.flight);
   marker.bindPopup(()=>{
-   const m=data?.metar?.[a.id],t=data?.taf?.[a.id],s=data?.speci?.[a.id];
+   const m=data?.metar?.[a.id],t=data?.taf?.[a.id],s=currentSpeci(m,data?.speci?.[a.id]);
    if(a.id==='LEVC'){
     return '<div class="popup" lang="ru"><h3>LEVC · Аэропорт Валенсии</h3>'+
      '<div><span class="cat" style="border-left:5px solid '+c.color+'">'+safe(c.code)+'</span> <span class="cat">'+safe(c.flight)+'</span></div>'+
-     russianReportBlock('METAR',m)+russianReportBlock('SPECI',s)+
+     russianReportBlock('METAR',m)+(s?russianReportBlock('SPECI',s):'')+
      russianReportBlock(/\bAMD\b/.test(t?.raw||'')?'TAF AMD':'TAF',t)+
      '<p class="ru-disclaimer">Автоматическая расшифровка на русском языке. Для полётов используйте официальные сообщения.</p></div>';
    }
