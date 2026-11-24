@@ -507,13 +507,12 @@ function formatTAF(raw){
 }
 function synopZone(st){
  const id=String(st.station), name=String(st.name||'').toLowerCase();
- if(['08506','08508','08509','08512'].includes(id))return ['Açores',5];
- if(id==='08524')return ['Madeira',4];
- if(['08512','08521'].includes(id))return ['Localização por confirmar',6];
- if(['08551','08545','08544'].includes(id))return ['Norte',0];
- if(['08540','08531','08552','08560'].includes(id))return ['Centro',1];
+ if(['08506','08508','08509','08512','08515'].includes(id))return ['Açores',5];
+ if(['08520','08521','08522','08524'].includes(id))return ['Madeira',4];
+ if(['08551','08545','08544','08546','08567','08575'].includes(id))return ['Norte',0];
+ if(['08540','08531','08552','08560','08548','08568','08570'].includes(id))return ['Centro',1];
  if(['08539','08537','08536','08535','08534','08532'].includes(id))return ['Lisboa e Vale do Tejo',2];
- if(['08561','08562','08558','08533'].includes(id))return ['Alentejo e Algarve',3];
+ if(['08561','08562','08558','08533','08554','08541','08571'].includes(id))return ['Alentejo e Algarve',3];
  return ['Localização por confirmar',6];
 }
 function safe(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -1110,5 +1109,5 @@ document.querySelectorAll('[data-synop-hours]').forEach(btn=>btn.addEventListene
 
 </script>
 
-<script src="./fox_verified.js?v=lightbox20261119" defer></script>
+<script src="./fox_verified.js?v=synop20261124" defer></script>
 </body></html>
