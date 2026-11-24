@@ -106,7 +106,7 @@ def accumulate(records, reference=None):
                     tail=path(prev)
                     if tail is not None:return [p]+tail
                 return None
-            direct=edges[end].get(start)
+            direct=edges.get(end,{}).get(start)
             parts=[direct] if direct else path(end)
             if not parts:continue
             if direct:p=dict(direct)
