@@ -7,7 +7,7 @@ const sites={
  'Lisboa':{lat:38.7223,lon:-9.1393,icao:'LPPT',wmo:'08536',label:'Lisboa / Portela'},
  'Valência':{lat:39.4699,lon:-0.3763,icao:'LEVC',wmo:'08284',label:'Валенсия / Манисес'},
  'Porto':{lat:41.1579,lon:-8.6291,icao:'LPPR',wmo:'08545',label:'Porto / Pedras Rubras'},
- 'Beja':{lat:38.0151,lon:-7.8632,icao:'LPBJ',wmo:'08562',label:'Beja / BA11'}
+ 'Beja':{lat:38.0151,lon:-7.8632,icao:'LPBJ',wmo:'08562',label:'Beja'}
 };
 const m=(value,dec=1)=>Number.isFinite(value)?value.toFixed(dec):'—';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -70,14 +70,14 @@ async function verify(){
   const st=synop.stations?.find(s=>String(s.station)===info.wmo);
   const periods=st?.periods||{};
   // Prioridade a intervalos observados mais recentes; nunca comparar acumulado de 12 h com valor horário.
-  const candidates=Object.entries(periods).filter(([k,p])=>[6,12,24].includes(Number(k))&&p&&p.trace!==true&&p.mm!=null&&fresh(p.utc,36))
+  const candidates=Object.entries(periods).filter(([k,p])=>[6,12,24].includes(Number(k))&&p&&!p.suspect&&!p.lower_bound&&p.trace!==true&&p.mm!=null&&Number.isFinite(p.mm)&&p.hours===Number(k)&&fresh(p.utc,36))
     .sort((a,b)=>ms(b[1].utc)-ms(a[1].utc)||Number(a[0])-Number(b[0]));
   const pick=candidates[0],hours=pick?Number(pick[0]):null,p=pick?.[1];
   let predicted=null;
   if(p&&Array.isArray(h.time)&&Array.isArray(h.precipitation)){
    const end=ms(p.utc),start=end-hours*3600000;
    const inds=h.time.map((t,i)=>({t:ms(t+'Z'),i})).filter(x=>x.t>start&&x.t<=end);
-   if(inds.length===hours&&inds.every(x=>Number.isFinite(Number(h.precipitation[x.i]))))
+   if(inds.length===hours&&inds.every((x,i)=>x.t===start+(i+1)*3600000&&Number.isFinite(h.precipitation[x.i])))
     predicted=inds.reduce((a,x)=>a+Number(h.precipitation[x.i]),0);
   }
   const metarNote=metarOK?info.icao+' · '+utc(mTime):(ru?'Нет актуального METAR':'METAR recente indisponível');
