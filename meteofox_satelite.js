@@ -34,7 +34,7 @@ async function actualSatelliteTimesDirect(product=LAYER){const controller=new Ab
   if(!r.ok)throw Error('HTTP '+r.status);const xml=new DOMParser().parseFromString(await r.text(),'text/xml');
   const layer=findLayer(xml.documentElement,product);if(!layer)throw Error('Camada Meteosat não encontrada');
   let current=layer,dim=null;
-  while(current && !dim){dim=[...current.children].find(x=>['Dimension','Extent'].includes(x.localName)&&x.getAttribute('name')?.toLowerCase()==='time');current=current.parentElement;}
+  while(current && !dim){dim=[...current.children].find(x=>['Dimension','Extent'].includes(x.localName)&&x.getAttribute('name')?.toLowerCase()==='time'&&x.textContent.trim());current=current.parentElement;}
   const times=parseTimes(dim?.textContent);if(!times.length)throw Error('Sem horas UTC publicadas');return times;
  }finally{clearTimeout(timeout);}
 }
@@ -50,6 +50,9 @@ async function actualSatelliteTimes(product=LAYER){
   if(checked===null||Date.now()-checked>90*60000||checked>Date.now()+5*60000)throw Error('Manifesto de horários desatualizado');
   const times=[...new Set(sourceTimes.map(DATE).filter(x=>x!==null&&x<=Date.now()+120000&&x>=Date.now()-6*3600000))].sort((a,b)=>a-b);
   if(times.length<2)throw Error('Sem sequência recente confirmada');
+  if(Date.now()-checked>10*60000||Date.now()-times.at(-1)>40*60000){
+   try{const live=await actualSatelliteTimesDirect(product);if(live.at(-1)>times.at(-1))return live;}catch(e){console.warn('MeteoFox: consulta direta indisponível',e.message);}
+  }
   return times;
  }catch(manifestError){
   // Alternativa direta: funciona apenas quando o serviço permitir CORS.
@@ -62,7 +65,7 @@ class MeteoFoxSatellite{
   // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
   this.bordersLayer=null;this.bordersRequest=null;
   this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
-  this.bordersPane.style.zIndex='550';
+  this.bordersPane.style.zIndex='650';
   this.bordersPane.style.pointerEvents='none';
   this.sat=add('button',host,'☀ VIS: desligado',{'type':'button','aria-pressed':'false','title':'GeoColour RGB'});
   this.fog=add('button',host,'☾ RGB Fog: desligado',{'type':'button','aria-pressed':'false'});
@@ -137,12 +140,13 @@ class MeteoFoxSatellite{
   this.state('Fog RGB indisponível ('+reason+'). Reposição segura do GeoColour.');
   if(this.satOn&&this.timeline.length)this.select(this.index);
  }
+ borderStyle(){return {color:this.satMode==='fog'?'#e0e5eb':'#69717a',weight:this.satMode==='fog'?1.4:1.05,opacity:this.satMode==='fog'?.9:.57,fill:false,lineCap:'round',lineJoin:'round'};}
  async syncSatelliteBorders(){
   if(!this.satOn){
    if(this.bordersLayer&&this.map.hasLayer(this.bordersLayer))this.map.removeLayer(this.bordersLayer);
    return;
   }
-  if(this.bordersLayer){if(!this.map.hasLayer(this.bordersLayer))this.bordersLayer.addTo(this.map);return;}
+  if(this.bordersLayer){this.bordersLayer.setStyle(this.borderStyle());if(!this.map.hasLayer(this.bordersLayer))this.bordersLayer.addTo(this.map);return;}
   if(this.bordersRequest)return;
   // Natural Earth 1:50m: maior detalhe costeiro e fronteiriço que 1:110m.
   const url='https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
@@ -156,9 +160,9 @@ class MeteoFoxSatellite{
    const borderRenderer=L.svg({pane:'meteofoxCountryBorders',padding:.5});
    this.bordersLayer=L.geoJSON(data,{
     pane:'meteofoxCountryBorders',renderer:borderRenderer,interactive:false,
-    style:{color:'#69717a',weight:1.05,opacity:.57,fill:false,lineCap:'round',lineJoin:'round'}
+    style:()=>this.borderStyle()
    });
-   if(this.satOn)this.bordersLayer.addTo(this.map);
+   if(this.satOn){this.bordersLayer.setStyle(this.borderStyle());this.bordersLayer.addTo(this.map);}
   }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
   .finally(()=>{this.bordersRequest=null});
  }
