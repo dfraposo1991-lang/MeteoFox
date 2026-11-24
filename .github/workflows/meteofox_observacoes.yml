@@ -42,5 +42,14 @@ jobs:
             exit 0
           fi
           git commit -m "Atualizar observações MeteoFox [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main; then
+              if git push origin HEAD:main; then exit 0; fi
+            else
+              git rebase --abort
+              echo "Conflito de observações: preservar dados publicados e repetir na próxima recolha."
+              exit 1
+            fi
+            sleep 5
+          done
+          exit 1
