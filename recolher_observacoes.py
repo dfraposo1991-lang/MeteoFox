@@ -94,7 +94,7 @@ def update_synop():
         incoming=server.synop_data()
         if not any(s.get('latest_utc') for s in incoming.get('stations',[])):
             raise RuntimeError('Nenhuma estação trouxe observações')
-        existing={'source':'OGIMET getsynop','stations':incoming['stations'],'checked_utc':stamp(),'decoder_version':4,'reference_utc':incoming.get('reference_utc')}
+        existing={'source':'OGIMET getsynop','stations':incoming['stations'],'checked_utc':stamp(),'decoder_version':5,'references_utc':incoming.get('references_utc',[]),'reference_utc':incoming.get('reference_utc')}
         save('synop.json',existing)
         return 1
     except Exception as exc:
