@@ -1,5 +1,9 @@
 name: MeteoFox | Recuperar publicação ECMWF
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/recovery_requests/45647528829.txt'
   workflow_dispatch:
     inputs:
       run_id:
@@ -22,7 +26,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: meteofox-ecmwf-32-cartas
-          run-id: ${{ inputs.run_id }}
+          run-id: ${{ inputs.run_id || '45647528829' }}
           github-token: ${{ github.token }}
           path: mapas_ecmwf
 
@@ -168,7 +172,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.retry.outputs.page_url || steps.retry_final.outputs.page_url }}
     steps:
       - name: Publicar site completo com novos mapas
         id: deploy
@@ -186,6 +190,7 @@ jobs:
         if: steps.retry.outcome == 'failure'
         run: sleep 120
       - name: Terceira tentativa
+        id: retry_final
         if: steps.retry.outcome == 'failure'
         uses: actions/deploy-pages@v4
       - name: Obter código para validação pós-publicação
