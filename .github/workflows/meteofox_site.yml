@@ -209,6 +209,10 @@ jobs:
                   grid = json.loads(reply.read())
               if 'metadata' in locals() and grid.get('run_utc','').replace('+00:00','Z') == metadata.get('cycle_utc'):
                   (public / 'forecast_grid.json').write_text(json.dumps(grid,separators=(',',':')),encoding='utf-8')
+                  for product, fields in (('rain', ('rain',)), ('gust', ('gust','u','v'))):
+                      keys = ('step','resolution','valid_utc','x','y') + fields
+                      payload = dict(run_utc=grid['run_utc'], frames=[{k: frame[k] for k in keys if k in frame} for frame in grid['frames']])
+                      (public / f'forecast_A_{product}.json').write_text(json.dumps(payload,separators=(',',':')),encoding='utf-8')
           except Exception as exc:
               print('Grelha interativa ainda indisponível:', exc)
           (public / '.nojekyll').write_text('', encoding='utf-8')

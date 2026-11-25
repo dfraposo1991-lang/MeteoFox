@@ -241,6 +241,11 @@ def main():
         del data
 
     (out / "forecast_grid.json").write_text(json.dumps(dict(run_utc=run.isoformat(),frames=interactive),allow_nan=False,separators=(",",":")),encoding="utf-8")
+    # Separate products while retaining the legacy file for older clients.
+    for product, fields in (("rain", ("rain",)), ("gust", ("gust", "u", "v"))):
+        keys = ("step", "resolution", "valid_utc", "x", "y") + fields
+        payload = dict(run_utc=run.isoformat(), frames=[{k: frame[k] for k in keys} for frame in interactive])
+        (out / f"forecast_A_{product}.json").write_text(json.dumps(payload, allow_nan=False, separators=(",", ":")), encoding="utf-8")
     criar_html(run.strftime("%d/%m/%Y %H:%M"), [p for p in steps if p<=54], out)
     print("\nCONCLUÍDO")
     print("Ficheiros PNG:", len([p for p in steps if p<=54]) * 2)
