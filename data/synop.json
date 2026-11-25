@@ -4591,7 +4591,7 @@
       "station": "08562",
       "name": "Beja",
       "periods": {},
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "history": {
@@ -7748,7 +7748,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -9742,7 +9742,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -12166,9 +12166,9 @@
       "station": "08524",
       "name": "Porto Santo",
       "periods": {},
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 73,
-      "dry_reports": 7,
+      "dry_reports": 6,
       "history": {
         "2026-11-25T18:00:00Z": {},
         "2026-11-25T15:00:00Z": {
@@ -13307,7 +13307,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -15301,7 +15301,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -17553,7 +17553,7 @@
       "station": "08536",
       "name": "Lisboa / Portela",
       "periods": {},
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "history": {
@@ -18657,7 +18657,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -20651,7 +20651,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -23216,7 +23216,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -25781,7 +25781,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 73,
       "dry_reports": 0,
       "history": {
@@ -27758,7 +27758,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -30010,7 +30010,7 @@
       "station": "08558",
       "name": "Évora",
       "periods": {},
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -30178,7 +30178,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -32633,7 +32633,7 @@
         }
       },
       "latest_utc": "2026-11-25T18:00:00Z",
-      "reports": 45,
+      "reports": 44,
       "dry_reports": 0,
       "lat": 30.14528,
       "lon": -15.87056,
@@ -33506,7 +33506,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 32.6475,
@@ -37961,7 +37961,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 37.95444,
@@ -40356,7 +40356,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.13833,
@@ -42783,7 +42783,7 @@
       "name": "Coimbra / Cernache",
       "periods": {},
       "latest_utc": "2026-11-25T14:00:00Z",
-      "reports": 70,
+      "reports": 69,
       "dry_reports": 0,
       "lat": 40.1575,
       "lon": -8.46833,
@@ -44668,7 +44668,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.27417,
@@ -47094,8 +47094,8 @@
       "station": "08568",
       "name": "Penhas Douradas",
       "periods": {},
-      "latest_utc": "2026-11-25T18:00:00Z",
-      "reports": 38,
+      "latest_utc": "2026-11-25T19:00:00Z",
+      "reports": 39,
       "dry_reports": 0,
       "lat": 40.41667,
       "lon": -7.55,
@@ -47351,7 +47351,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 39.83917,
@@ -49660,7 +49660,7 @@
           "utc": "2026-11-25T18:00:00Z"
         }
       },
-      "latest_utc": "2026-11-25T18:00:00Z",
+      "latest_utc": "2026-11-25T19:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "lat": 39.29417,
@@ -51459,14 +51459,296 @@
     {
       "station": "08575",
       "name": "Bragança",
-      "periods": {},
-      "latest_utc": "2026-11-25T17:00:00Z",
-      "reports": 73,
+      "periods": {
+        "6": {
+          "hours": 6,
+          "mm": 0.3,
+          "trace": false,
+          "contains_trace": false,
+          "method": "calculated",
+          "components": 6,
+          "lower_bound": false,
+          "uncertainty_mm": 2.55,
+          "quality": "VALID",
+          "provenance": [
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-25T12:00:00Z",
+              "end_utc": "2026-11-25T13:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-25T13:00:00Z",
+              "end_utc": "2026-11-25T14:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-25T14:00:00Z",
+              "end_utc": "2026-11-25T15:00:00Z"
+            },
+            {
+              "mm": 0.3,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "69935",
+              "section": 3,
+              "resolution_mm": 0.1,
+              "uncertainty_mm": 0.05,
+              "start_utc": "2026-11-25T15:00:00Z",
+              "end_utc": "2026-11-25T16:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-25T16:00:00Z",
+              "end_utc": "2026-11-25T17:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-25T17:00:00Z",
+              "end_utc": "2026-11-25T18:00:00Z"
+            }
+          ],
+          "utc": "2026-11-25T18:00:00Z"
+        },
+        "12": {
+          "mm": 0.3,
+          "hours": 12,
+          "trace": false,
+          "method": "reported",
+          "group": "69932",
+          "section": 1,
+          "resolution_mm": 0.1,
+          "uncertainty_mm": 0.05,
+          "quality": "VALID",
+          "provenance": [
+            {
+              "mm": 0.3,
+              "hours": 12,
+              "trace": false,
+              "method": "reported",
+              "group": "69932",
+              "section": 1,
+              "resolution_mm": 0.1,
+              "uncertainty_mm": 0.05,
+              "start_utc": "2026-11-25T06:00:00Z",
+              "end_utc": "2026-11-25T18:00:00Z"
+            }
+          ],
+          "utc": "2026-11-25T18:00:00Z"
+        },
+        "24": {
+          "mm": 5.4,
+          "hours": 24,
+          "trace": false,
+          "lower_bound": false,
+          "method": "reported",
+          "group": "70054",
+          "section": 3,
+          "resolution_mm": 0.1,
+          "uncertainty_mm": 0.05,
+          "quality": "VALID",
+          "provenance": [
+            {
+              "mm": 5.4,
+              "hours": 24,
+              "trace": false,
+              "lower_bound": false,
+              "method": "reported",
+              "group": "70054",
+              "section": 3,
+              "resolution_mm": 0.1,
+              "uncertainty_mm": 0.05,
+              "start_utc": "2026-11-24T18:00:00Z",
+              "end_utc": "2026-11-25T18:00:00Z"
+            }
+          ],
+          "utc": "2026-11-25T18:00:00Z"
+        }
+      },
+      "latest_utc": "2026-11-25T19:00:00Z",
+      "reports": 74,
       "dry_reports": 0,
       "lat": 41.79972,
       "lon": -6.73306,
       "history": {
-        "2026-11-25T18:00:00Z": {},
+        "2026-11-25T18:00:00Z": {
+          "6": {
+            "hours": 6,
+            "mm": 0.3,
+            "trace": false,
+            "contains_trace": false,
+            "method": "calculated",
+            "components": 6,
+            "lower_bound": false,
+            "uncertainty_mm": 2.55,
+            "quality": "VALID",
+            "provenance": [
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-25T12:00:00Z",
+                "end_utc": "2026-11-25T13:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-25T13:00:00Z",
+                "end_utc": "2026-11-25T14:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-25T14:00:00Z",
+                "end_utc": "2026-11-25T15:00:00Z"
+              },
+              {
+                "mm": 0.3,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "69935",
+                "section": 3,
+                "resolution_mm": 0.1,
+                "uncertainty_mm": 0.05,
+                "start_utc": "2026-11-25T15:00:00Z",
+                "end_utc": "2026-11-25T16:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-25T16:00:00Z",
+                "end_utc": "2026-11-25T17:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-25T17:00:00Z",
+                "end_utc": "2026-11-25T18:00:00Z"
+              }
+            ],
+            "utc": "2026-11-25T18:00:00Z"
+          },
+          "12": {
+            "mm": 0.3,
+            "hours": 12,
+            "trace": false,
+            "method": "reported",
+            "group": "69932",
+            "section": 1,
+            "resolution_mm": 0.1,
+            "uncertainty_mm": 0.05,
+            "quality": "VALID",
+            "provenance": [
+              {
+                "mm": 0.3,
+                "hours": 12,
+                "trace": false,
+                "method": "reported",
+                "group": "69932",
+                "section": 1,
+                "resolution_mm": 0.1,
+                "uncertainty_mm": 0.05,
+                "start_utc": "2026-11-25T06:00:00Z",
+                "end_utc": "2026-11-25T18:00:00Z"
+              }
+            ],
+            "utc": "2026-11-25T18:00:00Z"
+          },
+          "24": {
+            "mm": 5.4,
+            "hours": 24,
+            "trace": false,
+            "lower_bound": false,
+            "method": "reported",
+            "group": "70054",
+            "section": 3,
+            "resolution_mm": 0.1,
+            "uncertainty_mm": 0.05,
+            "quality": "VALID",
+            "provenance": [
+              {
+                "mm": 5.4,
+                "hours": 24,
+                "trace": false,
+                "lower_bound": false,
+                "method": "reported",
+                "group": "70054",
+                "section": 3,
+                "resolution_mm": 0.1,
+                "uncertainty_mm": 0.05,
+                "start_utc": "2026-11-24T18:00:00Z",
+                "end_utc": "2026-11-25T18:00:00Z"
+              }
+            ],
+            "utc": "2026-11-25T18:00:00Z"
+          }
+        },
         "2026-11-25T15:00:00Z": {
           "12": {
             "mm": 0.0,
@@ -53570,7 +53852,7 @@
       }
     }
   ],
-  "checked_utc": "2026-11-25T19:25:49.395158Z",
+  "checked_utc": "2026-11-25T20:21:39.475834Z",
   "decoder_version": 6,
   "references_utc": [
     "2026-11-25T18:00:00Z",
