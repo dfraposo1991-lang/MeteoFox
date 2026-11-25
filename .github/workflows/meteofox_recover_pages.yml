@@ -1,0 +1,194 @@
+name: MeteoFox | Recuperar publicação ECMWF
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'ID da produção ECMWF com artefacto válido'
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preparar:
+    name: Construir interface e preparar publicação
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Obter interface MeteoFox aprovada
+        uses: actions/checkout@v4
+
+      - name: Recuperar apenas cartas produzidas e validadas
+        uses: actions/download-artifact@v4
+        with:
+          name: meteofox-ecmwf-32-cartas
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: mapas_ecmwf
+
+      - name: Instalar MetPy para diagnósticos do laboratório
+        run: python -m pip install 'metpy>=1.6,<2' 'numpy>=1.26,<3'
+      - name: Calcular termodinâmica do ECMWF versionado
+        run: python calcular_conveccao_metpy.py
+
+      - name: Montar o site com cartas validadas e interface atual
+        run: |
+          start=$(date +%s)
+          python3 - <<'PY'
+          import json
+          import shutil
+          from pathlib import Path
+          run = Path("mapas_ecmwf/cycle.txt").read_text(encoding="utf-8").strip()
+          source = Path("mapas_ecmwf")
+          out = Path("public")
+          out.mkdir(exist_ok=True)
+          for step in range(9, 55, 3):
+              for kind in ("chuva", "rajadas"):
+                  f = source / f"{kind}_{step:03d}.png"
+                  assert f.exists() and f.stat().st_size > 1000, f"Falta {f}"
+                  shutil.copy2(f, out / f.name)
+          shutil.copy2(source / "forecast_grid.json", out / "forecast_grid.json")
+          for product in ("rain", "gust"):
+              name = f"forecast_A_{product}.json"
+              shutil.copy2(source / name, out / name)
+              for frame_file in source.glob(f"forecast_A_{product}_*.json"):
+                  shutil.copy2(frame_file, out / frame_file.name)
+          for frame_file in source.glob("forecast_B_*.json"):
+              shutil.copy2(frame_file, out / frame_file.name)
+          animation = source / "MeteoFox_animacao_48h.html"
+          assert animation.exists() and animation.stat().st_size > 1000
+          # Guardar a animação separadamente, para nunca substituir o site principal.
+          shutil.copy2(animation, out / "MeteoFox_animacao_48h.html")
+          main_site = Path("index.html")
+          assert main_site.exists() and main_site.stat().st_size > 1000, "Falta index.html na raiz do repositorio"
+          shutil.copy2(main_site, out / "index.html")
+          # O mapa interativo e a sincronização radar/Meteosat fazem parte
+          # obrigatória do pacote, também nas publicações automáticas ECMWF.
+          for name in ("mapa.html", "space-weather.html", "meteofox_satelite.js", "meteofox_fog_mask.js", "meteofox_ru_aviation.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "meteofox_keyboard.js", "fox_verified.js", "fox_verified.css", "fox-verified-skewt.html", "meteofox_conveccao.js"):
+              source_file = Path(name)
+              assert source_file.is_file() and source_file.stat().st_size > 1000, f"Falta {name}"
+              shutil.copy2(source_file, out / name)
+          # Recursos permanentes da marca. Nunca publicar uma versão sem estes
+          # ficheiros: Pages substitui integralmente o artefacto anterior.
+          for name in ("meteofox-logo.png", "MeteoFox_icon_v1_solid.svg", "meteofox-favicon-32.png"):
+              asset = Path(name)
+              assert asset.is_file() and asset.stat().st_size > 1000, f"Recurso visual obrigatório em falta: {name}"
+              shutil.copy2(asset, out / name)
+          # Verificar dependências locais críticas antes de substituir o site.
+          for html_name in ("index.html", "mapa.html"):
+              html = (out / html_name).read_text(encoding="utf-8")
+              assert "meteofox-favicon-32.png" in html, f"Favicon ausente de {html_name}"
+              assert "MeteoFox_icon_v1_solid.svg" in html, f"Logótipo ausente de {html_name}"
+          assert (out / "meteofox_fog_mask.js").stat().st_size > 1000
+          # Preservar observações utilizadas pelo Fox Verified em todas as publicações.
+          obs_target = out / "data"
+          obs_target.mkdir(exist_ok=True)
+          for name in ("aviation.json", "synop.json"):
+              obs_source = Path("data") / name
+              assert obs_source.is_file(), f"Falta {obs_source}"
+              json.loads(obs_source.read_text(encoding="utf-8"))
+              shutil.copy2(obs_source, obs_target / name)
+          # Manter igualmente o laboratório e o respetivo ciclo ECMWF 0p25
+          # em cada publicação automática dos 32 mapas 0p25.
+          import json
+          lab_page = Path("laboratorio.html")
+          lab_data = Path("produtos_experimentais/previsao_ecmwf.json")
+          assert lab_page.is_file() and lab_page.stat().st_size > 1000, "Falta laboratório"
+          assert lab_data.is_file() and lab_data.stat().st_size > 1000, "Faltam dados laboratório"
+          payload = json.loads(lab_data.read_text(encoding="utf-8"))
+          assert len(payload["meteogram_lisboa"]) == 30, "Meteograma incompleto"
+          assert [r["step_h"] for r in payload["meteogram_lisboa"]] == list(range(3, 91, 3)), "Prazos incorretos"
+          assert len(payload["soundings"]) in (9, 16), "Sondagens incompletas"
+          assert all(set(r["cities"]) == {"Lisboa", "Porto", "Beja"} for r in payload["soundings"])
+          shutil.copy2(lab_page, out / "laboratorio.html")
+          shutil.copy2(Path("fox-verified-skewt.html"), out / "fox-verified-skewt.html")
+          (out / "produtos_experimentais").mkdir(exist_ok=True)
+          shutil.copy2(lab_data, out / "produtos_experimentais/previsao_ecmwf.json")
+          thermo = Path("produtos_experimentais/conveccao_termodinamica.json")
+          calculated = json.loads(thermo.read_text(encoding="utf-8"))
+          assert calculated["run_utc"] == payload["run_utc"] and len(calculated["soundings"]) == len(payload["soundings"])
+          shutil.copy2(thermo, out / "produtos_experimentais/conveccao_termodinamica.json")
+          for name in ("fox_verified_skewt_previsoes.json", "radiossondagem_lisboa.json"):
+              source = Path("produtos_experimentais") / name
+              if source.is_file():
+                  json.loads(source.read_text(encoding="utf-8"))
+                  shutil.copy2(source, out / "produtos_experimentais" / name)
+          assert all((out / name).is_file() for name in
+                     ("index.html", "mapa.html", "meteofox_satelite.js", "meteofox_meteograma.js", "meteofox_meteograma.css", "laboratorio.html",
+                      "produtos_experimentais/previsao_ecmwf.json")), "Site incompleto"
+          # Manifesto meteorológico público mínimo; não contém credenciais,
+          # dados administrativos nem informação privada.
+          from datetime import datetime, timezone
+          import hashlib, os
+          metadata = {
+              "schema": 1,
+              "model": "ECMWF IFS Open Data",
+              "resolution": "0p25",
+              "cycle_utc": run,
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "images": {
+                  f"{kind}_{step:03d}.png": hashlib.sha256(
+                      (out / f"{kind}_{step:03d}.png").read_bytes()
+                  ).hexdigest()
+                  for step in range(9, 55, 3)
+                  for kind in ("chuva", "rajadas")
+              },
+          }
+          assert len(metadata["images"]) == 32
+          (out / "meteofox_ecmwf_manifest.json").write_text(
+              json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+          )
+          print("Manifesto do ciclo ECMWF publicado:", run)
+          (out / ".nojekyll").write_text("")
+          print("Site e animação prontos:", len(list(out.glob("*.png"))), "mapas; Run", run)
+          PY
+          echo "- Validar interface e preparar Pages: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validar e completar recursos obrigatórios do site
+        run: python3 scripts/validate_pages_assets.py public
+
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publicar pacote para o GitHub Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public
+          retention-days: 1
+
+  publicar:
+    concurrency:
+      group: meteofox-pages
+      cancel-in-progress: false
+    name: Atualizar site MeteoFox
+    needs: preparar
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Publicar site completo com novos mapas
+        id: deploy
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Aguardar antes de repetir publicação
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 60
+      - name: Segunda tentativa
+        id: retry
+        if: steps.deploy.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Aguardar segunda recuperação
+        if: steps.retry.outcome == 'failure'
+        run: sleep 120
+      - name: Terceira tentativa
+        if: steps.retry.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+      - name: Obter código para validação pós-publicação
+        uses: actions/checkout@v4
+      - name: Confirmar recursos publicados no site público
+        run: python3 scripts/check_published_assets.py
