@@ -71,6 +71,10 @@ class MeteoFoxSatellite{
   this.sat=add('button',host,'☀ VIS: desligado',{'type':'button','aria-pressed':'false','title':'GeoColour RGB'});
   this.fog=add('button',host,'☾ RGB Fog: desligado',{'type':'button','aria-pressed':'false'});
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
+  this.liOn=false;this.liLayers=[];this.liSeq=0;this.liTimes=null;this.liChecked=0;
+  this.liButton=add('button',host,'⚡ Descargas: desligado',{type:'button','aria-pressed':'false',title:'MTG Lightning Imager · atividade elétrica observada'});
+  this.liStatus=add('span',host,'',{class:'sat-status','aria-live':'polite'});
+  this.liButton.onclick=()=>{this.liOn=!this.liOn;this.liButton.textContent='⚡ Descargas: '+(this.liOn?'ligado':'desligado');this.liButton.setAttribute('aria-pressed',String(this.liOn));this.syncLightning();};
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
   this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
   this.opacityButton=add('button',host,'◐ Opacidade',{'type':'button','aria-expanded':'true','title':'Mostrar ou ocultar opções de opacidade'});
@@ -120,6 +124,50 @@ class MeteoFoxSatellite{
   map.on('zoomstart movestart',()=>{this.tileWarmEpoch++;this.dropPrefetch();});
  }
  state(s){this.status.textContent=s;}
+ async syncLightning(){
+  const seq=++this.liSeq;
+  for(const l of this.liLayers)this.map.removeLayer(l);
+  this.liLayers=[];
+  if(!this.liOn){this.liStatus.textContent='';return;}
+  const t=this.satOn?this.satRenderedTime:(this.radarOn?this.timeline[this.index]:null);
+  if(!Number.isFinite(t)){this.liStatus.textContent='LI: ativa VIS, Fog ou Radar';return;}
+  const end=Math.floor(t/300000)*300000, times=[end-600000,end-300000];
+  this.liStatus.textContent='LI: a verificar '+fmt(times[0])+' – '+fmt(end);
+  try{
+   if(!this.liTimes||Date.now()-this.liChecked>300000||!times.every(v=>this.liTimes.includes(v))){
+    if(!this.liRequest)this.liRequest=(async()=>{
+     let values=[];
+     try{
+      const r=await fetch(SAT_MANIFEST+'?v='+Date.now(),{cache:'no-store'});
+      if(!r.ok)throw Error('manifest');
+      const d=await r.json();
+      if(Date.now()-Date.parse(d.checked_utc)<90*60000)values=(d.lightning_times_utc||[]).map(DATE).filter(Number.isFinite);
+     }catch(e){}
+     if(!times.every(v=>values.includes(v))){
+      try{values=[...new Set([...values,...await actualSatelliteTimesDirect('mtg_fd:li_afa')])];}catch(e){}
+     }
+     this.liTimes=values;this.liChecked=Date.now();
+    })().finally(()=>{this.liRequest=null;});
+    await this.liRequest;
+   }
+   if(seq!==this.liSeq||!this.liOn)return;
+   if(!times.every(v=>this.liTimes.includes(v))||end>Date.now()){this.liStatus.textContent='LI: dados indisponíveis para '+fmt(times[0])+' – '+fmt(end);return;}
+   const pane=this.map.getPane('meteofoxLightning')||this.map.createPane('meteofoxLightning');
+   pane.style.zIndex='640';pane.style.pointerEvents='none';
+   const layers=times.map(v=>L.tileLayer.wms(WMS,{layers:'mtg_fd:li_afa',styles:'',format:'image/png',transparent:true,version:'1.1.1',time:new Date(v).toISOString().replace('.000Z','Z'),pane:'meteofoxLightning',tileSize:512,opacity:1,attribution:'Lightning Imager © EUMETSAT',keepBuffer:0,updateWhenIdle:true}));
+   this.liLayers=layers;
+   await Promise.all(layers.map(l=>new Promise((resolve,reject)=>{
+    let bad=false;const timer=setTimeout(()=>reject(Error('timeout')),15000);
+    l.on('tileerror',()=>{bad=true;});
+    l.once('load',()=>{clearTimeout(timer);bad?reject(Error('WMS')):resolve();});
+    l.once('add',()=>{const c=l.getContainer();if(c)c.style.visibility='hidden';});
+    l.addTo(this.map);
+   })));
+   if(seq!==this.liSeq||!this.liOn)return;
+   for(const l of layers){const c=l.getContainer();if(c)c.style.visibility='visible';}
+   this.liStatus.textContent='LI observado · '+fmt(times[0])+' – '+fmt(end)+' · 10 min (áreas)';
+  }catch(e){if(seq!==this.liSeq)return;for(const l of this.liLayers)this.map.removeLayer(l);this.liLayers=[];this.liStatus.textContent='LI: dados indisponíveis para '+fmt(end);}
+ }
  async readFogStatus(){
   const r=await fetch(FOG_STATUS+'?v='+Date.now(),{cache:'no-store'});
   if(!r.ok)throw Error('Diagnóstico Fog HTTP '+r.status);
@@ -176,7 +224,7 @@ class MeteoFoxSatellite{
    const active=on&&mode===key;button.textContent=label+': '+(active?'ligado':'desligado');button.setAttribute('aria-pressed',String(active));
   }
   this.syncSatelliteBorders();
-  if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satRenderedMode=null;this.fogRenderedTime=null;if(this.fogLayer&&this.map.hasLayer(this.fogLayer))this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.refreshTimeline();return;}
+  if(!on){this.satRequestSeq++;this.satRenderedTime=null;this.satRenderedMode=null;this.fogRenderedTime=null;if(this.fogLayer&&this.map.hasLayer(this.fogLayer))this.map.removeLayer(this.fogLayer);this.fogLayer=null;this.satPendingTime=null;if(this.satPendingLayer&&this.map.hasLayer(this.satPendingLayer))this.map.removeLayer(this.satPendingLayer);this.satPendingLayer=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satKnown=false;this.satTimes=[];this.syncLightning();this.refreshTimeline();return;}
 
   if(changed){this.satKnown=false;this.satTimes=[];this.satRenderedMode=null;if(this.satLayer&&this.map.hasLayer(this.satLayer))this.map.removeLayer(this.satLayer);this.satLayer=null;this.satRenderedTime=null;}
   this.ensureRadarAbove();
@@ -451,7 +499,7 @@ class MeteoFoxSatellite{
    if(oldRadar&&this.map.hasLayer(oldRadar))this.map.removeLayer(oldRadar);
    this.radarLayers.clear();if(radarLayer)this.radarLayers.add(radarLayer);
    this.satLayer=satLayer;this.radarLayer=radarLayer;this.fogLayer=null;this.satRenderedTime=satTime;this.satRenderedMode=mode;
-   this.transition=null;this.syncSatelliteBorders();
+   this.transition=null;this.syncSatelliteBorders();this.syncLightning();
    const info=[];if(satLayer)info.push((mode==='fog'?'RGB Fog':'GeoColour RGB')+' · '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
    if(radFrame)info.push('Radar '+fmt(radFrame.time*1000));
    this.state(info.join(' · ')+' · carregado');if(satLayer)this.warmTiles(satLayer);return true;

@@ -28,7 +28,7 @@ def period_ms(p):
     seconds = sum(int(n or 0)*scale for n,scale in zip(match.groups(),[3600,60,1]))
     return timedelta(seconds=seconds) if seconds else None
 
-def parse_dimension(raw, now):
+def parse_dimension(raw, now, limit=36):
     found=set()
     for part in raw.replace('\n','').split(','):
         part=part.strip()
@@ -45,7 +45,7 @@ def parse_dimension(raw, now):
             for _ in range(200):
                 if t < begin or t < now-timedelta(hours=6): break
                 found.add(t);t-=step
-    return sorted((v for v in found if now-timedelta(hours=6)<=v<=now+timedelta(minutes=2)))[-36:]
+    return sorted((v for v in found if now-timedelta(hours=6)<=v<=now+timedelta(minutes=2)))[-limit:]
 
 def local(tag):return tag.rsplit('}',1)[-1]
 
@@ -83,6 +83,10 @@ def main():
         payload['fog_times_utc']=[iso(t) for t in parse_dimension(dimension_for(root,'mtg_fd:rgb_fog'),now)]
     except RuntimeError:
         payload['fog_times_utc']=[]
+    try:
+        payload['lightning_times_utc']=[iso(t) for t in parse_dimension(dimension_for(root,'mtg_fd:li_afa'),now,72) if t+timedelta(minutes=5)<=now]
+    except RuntimeError:
+        payload['lightning_times_utc']=[]
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('Instantes Meteosat confirmados:',len(times),iso(times[0]),iso(times[-1]))
