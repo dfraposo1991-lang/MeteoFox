@@ -73,6 +73,13 @@ class MeteoFoxSatellite{
   this.radar=add('button',host,'🌧 Radar: desligado',{'type':'button','aria-pressed':'false'});
   this.liOn=false;this.liLayers=[];this.liSeq=0;this.liTimes=null;this.liChecked=0;
   this.liButton=add('button',host,'⚡ Descargas: desligado',{type:'button','aria-pressed':'false',title:'MTG Lightning Imager · atividade elétrica observada'});
+  const timelineControls=add('div',host,null,{class:'mf-observation-timeline',role:'group','aria-label':'Cursor temporal de observação UTC'});
+  timelineControls.style.cssText='display:inline-flex;align-items:center;gap:6px;flex:0 1 auto;max-width:100%;white-space:nowrap';
+  this.back=add('button',timelineControls,'◀',{'type':'button','title':'Imagem anterior'});this.back.disabled=true;
+  this.start=add('span',timelineControls,'—',{'class':'sat-clock'});
+  this.slider=add('input',timelineControls,null,{type:'range',min:'0',max:'0',step:'1',value:'0','aria-label':'Navegação temporal UTC'});this.slider.disabled=true;this.slider.style.cssText='width:min(270px,30vw);min-width:70px;accent-color:#07518b';
+  this.end=add('span',timelineControls,'—',{'class':'sat-clock'});
+  this.forward=add('button',timelineControls,'▶',{'type':'button','title':'Imagem seguinte'});this.forward.disabled=true;
   this.liStatus=add('span',host,'',{class:'sat-status','aria-live':'polite'});
   this.liButton.onclick=()=>{this.liOn=!this.liOn;this.liButton.textContent='⚡ Descargas: '+(this.liOn?'ligado':'desligado');this.liButton.setAttribute('aria-pressed',String(this.liOn));this.syncLightning();};
   this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
@@ -108,11 +115,6 @@ class MeteoFoxSatellite{
   };
   this.satOpacitySlider=makeOpacity('Satélite',100,'sat');
   this.radarOpacitySlider=makeOpacity('Radar',66,'radar');
-  this.back=add('button',host,'◀',{'type':'button','title':'Imagem anterior'});this.back.disabled=true;
-  this.start=add('span',host,'—',{'class':'sat-clock'});
-  this.slider=add('input',host,null,{type:'range',min:'0',max:'0',step:'1',value:'0','aria-label':'Navegação temporal UTC'});this.slider.disabled=true;this.slider.style.cssText='width:min(270px,40vw);accent-color:#07518b';
-  this.end=add('span',host,'—',{'class':'sat-clock'});
-  this.forward=add('button',host,'▶',{'type':'button','title':'Imagem seguinte'});this.forward.disabled=true;
   this.status=add('span',host,'Ativa o radar e/ou o satélite. As horas apresentadas são UTC verificadas.',{'class':'sat-status','aria-live':'polite'});
   this.attr=add('span',host,'Fonte: Meteosat MTG GeoColour / Fog RGB © EUMETSAT/NASA · Radar © RainViewer · dados de observação. ',{'class':'sat-attribution'});
   const a=add('a',this.attr,'EUMETView',{href:'https://view.eumetsat.int/',target:'_blank',rel:'noopener noreferrer'});a.style.color='#07518b';
