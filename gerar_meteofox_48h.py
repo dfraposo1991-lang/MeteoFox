@@ -59,22 +59,18 @@ def ler_passo(path):
                 lon = codes_get_array(gid, "longitudes").reshape(ny, nx)
                 val = codes_get_array(gid, "values").reshape(ny, nx)
                 lon = np.where(lon > 180, lon-360, lon)
-                selected = (
-                    (lon >= -16.15) & (lon <= -5.85) &
-                    (lat >= 34.35) & (lat <= 45.15)
-                )
-                rr, cc = np.where(selected)
-                if not len(rr):
-                    raise RuntimeError(f"Domínio 16W-6W fora do GRIB: {name}")
-                r0, r1 = int(rr.min()), int(rr.max())
-                c0, c1 = int(cc.min()), int(cc.max())
-                x = lon[r0, c0:c1+1].copy()
-                y = lat[r0:r1+1, c0].copy()
-                data = val[r0:r1+1, c0:c1+1].astype(float).copy()
-                if y[0] > y[-1]:
-                    y, data = y[::-1], data[::-1, :]
-                if x[0] > x[-1]:
-                    x, data = x[::-1], data[:, ::-1]
+                # Selecionar colunas individualmente: o domínio cruza Greenwich.
+                rows = np.flatnonzero((lat[:,0] >= 25-1e-6) & (lat[:,0] <= 50+1e-6))
+                cols = np.flatnonzero((lon[0,:] >= -40-1e-6) & (lon[0,:] <= 1e-6))
+                rows = rows[np.argsort(lat[rows,0])]
+                cols = cols[np.argsort(lon[0,cols])]
+                if len(rows)<2 or len(cols)<2:
+                    raise RuntimeError(f"Domínio regional fora do GRIB: {name}")
+                x = lon[0,cols].copy()
+                y = lat[rows,0].copy()
+                data = val[np.ix_(rows,cols)].astype(float).copy()
+                if not (np.all(np.diff(x)>0) and np.all(np.diff(y)>0)):
+                    raise RuntimeError("Grelha regional não monotónica")
                 cycle = datetime.strptime(
                     f"{date}{hour:04d}", "%Y%m%d%H%M"
                 ).replace(tzinfo=timezone.utc)
@@ -206,6 +202,12 @@ def main():
             gust=np.round(data["10fg"]["value"]*CONV_KT,2).tolist(),
             u=np.round(data["10u"]["value"],2).tolist(), v=np.round(data["10v"]["value"],2).tolist()))
         previous = current
+        # Preservar exatamente o recorte das cartas aprovadas.
+        ix = np.flatnonzero((current["x"] >= -16.15) & (current["x"] <= -5.85))
+        iy = np.flatnonzero((current["y"] >= 34.35) & (current["y"] <= 45.15))
+        data = {k: dict(d, x=d["x"][ix], y=d["y"][iy], value=d["value"][np.ix_(iy,ix)]) for k,d in data.items()}
+        current = data["tp"]
+        rain_3h = rain_3h[np.ix_(iy,ix)]
 
         # Injetar dados processados nas funções originais aprovadas:
         # cores, tamanho das cartas, vetores, etiquetas e coordenadas ficam iguais.
