@@ -197,7 +197,7 @@ class MeteoFoxSatellite{
  }
  borderStyle(){return {color:'#343b43',weight:1.6,opacity:.95,fill:false,lineCap:'round',lineJoin:'round'};}
  async syncSatelliteBorders(){
-  if(!this.satOn){
+  if(!this.satOn&&!this.forecastBordersOn){
    if(this.bordersLayer&&this.map.hasLayer(this.bordersLayer))this.map.removeLayer(this.bordersLayer);
    return;
   }
@@ -217,7 +217,7 @@ class MeteoFoxSatellite{
     pane:'meteofoxCountryBorders',renderer:borderRenderer,interactive:false,
     style:()=>this.borderStyle()
    });
-   if(this.satOn){this.bordersLayer.setStyle(this.borderStyle());this.bordersLayer.addTo(this.map);}
+   if(this.satOn||this.forecastBordersOn){this.bordersLayer.setStyle(this.borderStyle());this.bordersLayer.addTo(this.map);}
   }).catch(e=>{console.warn('MeteoFox: contornos de países indisponíveis:',e.message)})
   .finally(()=>{this.bordersRequest=null});
  }
