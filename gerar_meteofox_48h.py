@@ -246,6 +246,12 @@ def main():
         keys = ("step", "resolution", "valid_utc", "x", "y") + fields
         payload = dict(run_utc=run.isoformat(), frames=[{k: frame[k] for k in keys} for frame in interactive])
         (out / f"forecast_A_{product}.json").write_text(json.dumps(payload, allow_nan=False, separators=(",", ":")), encoding="utf-8")
+        index = dict(run_utc=payload["run_utc"], frames=[])
+        for frame in payload["frames"]:
+            name = f"forecast_A_{product}_{frame['step']:03d}.json"
+            (out / name).write_text(json.dumps(dict(run_utc=payload["run_utc"], frame=frame), allow_nan=False, separators=(",", ":")), encoding="utf-8")
+            index["frames"].append(dict(step=frame["step"], valid_utc=frame["valid_utc"], file=name))
+        (out / f"forecast_A_{product}_index.json").write_text(json.dumps(index, separators=(",", ":")), encoding="utf-8")
     criar_html(run.strftime("%d/%m/%Y %H:%M"), [p for p in steps if p<=54], out)
     print("\nCONCLUÍDO")
     print("Ficheiros PNG:", len([p for p in steps if p<=54]) * 2)

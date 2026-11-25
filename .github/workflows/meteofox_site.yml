@@ -213,6 +213,12 @@ jobs:
                       keys = ('step','resolution','valid_utc','x','y') + fields
                       payload = dict(run_utc=grid['run_utc'], frames=[{k: frame[k] for k in keys if k in frame} for frame in grid['frames']])
                       (public / f'forecast_A_{product}.json').write_text(json.dumps(payload,separators=(',',':')),encoding='utf-8')
+                      index = dict(run_utc=payload['run_utc'], frames=[])
+                      for frame in payload['frames']:
+                          name = f"forecast_A_{product}_{frame['step']:03d}.json"
+                          (public / name).write_text(json.dumps(dict(run_utc=payload['run_utc'], frame=frame),separators=(',',':')),encoding='utf-8')
+                          index['frames'].append(dict(step=frame['step'],valid_utc=frame['valid_utc'],file=name))
+                      (public / f'forecast_A_{product}_index.json').write_text(json.dumps(index,separators=(',',':')),encoding='utf-8')
           except Exception as exc:
               print('Grelha interativa ainda indisponível:', exc)
           (public / '.nojekyll').write_text('', encoding='utf-8')

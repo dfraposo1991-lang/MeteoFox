@@ -383,7 +383,7 @@ let grid=null, mode='', layer=null, timer=null, pending=null, barbs=null;
 const rasterCache=new Map();
 function cacheRaster(key,value){rasterCache.delete(key);rasterCache.set(key,value);while(rasterCache.size>8)rasterCache.delete(rasterCache.keys().next().value);return value;}
 function drawBarbs(f){const pane=appMap.getPane('forecastBarbs')||appMap.createPane('forecastBarbs');pane.style.zIndex='620';pane.style.pointerEvents='none';barbs=L.layerGroup().addTo(appMap);const x=f.x,y=f.y;const spacing=Math.max(1,Math.ceil(52/Math.max(1,Math.abs(appMap.latLngToContainerPoint([y[0],x[1]]).x-appMap.latLngToContainerPoint([y[0],x[0]]).x))));const bounds=appMap.getBounds().pad(.1);const first=(a,min)=>{const i=a.findIndex(v=>v>=min);return i<0?a.length:Math.ceil(i/spacing)*spacing;};for(let j=first(y,bounds.getSouth());j<y.length&&y[j]<=bounds.getNorth();j+=spacing)for(let i=first(x,bounds.getWest());i<x.length&&x[i]<=bounds.getEast();i+=spacing){const u=f.u[j][i],v=f.v[j][i];if(!Number.isFinite(u)||!Number.isFinite(v))continue;let k=Math.round(Math.hypot(u,v)*1.9438444924406/5)*5;const angle=Math.atan2(-u,v)*180/Math.PI;let paths=k===0?'<circle cx="0" cy="0" r="3" fill="none"/>':'<path d="M0 0V-25"/>';let p=-25;while(k>=50){paths+='<path d="M0 '+p+' L10 '+(p+4)+' L0 '+(p+8)+' Z" fill="#172B3D"/>';p+=8;k-=50;}while(k>=10){paths+='<path d="M0 '+p+' l10 -4"/>';p+=4;k-=10;}if(k===5){if(p===-25)p+=4;paths+='<path d="M0 '+p+' l5 -2"/>';}const svg='<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="-32 -32 64 64" style="opacity:'+opacity.value/100+'"><g transform="rotate('+angle+')" stroke="#172B3D" stroke-width="1.6" fill="none" stroke-linecap="round">'+paths+'</g></svg>';L.marker([y[j],x[i]],{pane:'forecastBarbs',interactive:false,keyboard:false,icon:L.divIcon({className:'mf-wind-barb',html:svg,iconSize:[64,64],iconAnchor:[32,32]})}).addTo(barbs);}}
-function refreshBarbs(){if(barbs){appMap.removeLayer(barbs);barbs=null;}if(mode==='gust'&&grid&&appMap)drawBarbs(grid.frames[+time.value]);}
+function refreshBarbs(){if(barbs){appMap.removeLayer(barbs);barbs=null;}if(mode==='gust'&&grid&&appMap&&grid.frames[+time.value]?.u)drawBarbs(grid.frames[+time.value]);}
 const scales={gust:{levels:[0,5,8,10,12,14,15,16,17,18,19,20,21,22,23,24,25,26,28,30,32,34,36,38,40,45,50,55,60,70,80,90,100],colors:["#ECECEC","#D7E7EE","#B9D4E4","#A4C6DA","#7FB3D7","#4CA3DC","#B5D9B8","#8FD58F","#57D84B","#24C914","#F2EDC6","#EEE7B0","#E7DEA1","#E4D88B","#E9D061","#E9C542","#F0BB1E","#F2D5D5","#E9A1A1","#EE7272","#FF4B4B","#FF2020","#D3B5E1","#C08ED4","#A567B6","#82428F","#C59A46","#B3822C","#996200","#7F5200","#B6B6B6","#9E9E9E","#7C7C7C"],unit:'kt'},rain:{levels:[0.2,0.5,1,2,3,4,5,7,10,15,20,50],colors:["#48D0EF","#17BCCC","#19AA80","#21A54A","#57B913","#9AD90B","#DBF000","#FFE324","#FF9D1C","#EF482C","#C8131C","#710A0C"],unit:'mm / 3h'}};
 toggle.onclick=()=>{body.hidden=!body.hidden;el('forecastPanel').classList.toggle('is-collapsed',body.hidden);toggle.setAttribute('aria-expanded',String(!body.hidden));toggle.textContent=(body.hidden?'+':'−')+' Previsão ECMWF';};
 function stop(){clearInterval(timer);timer=null;el('fcPlay').textContent='▶ Animar';}
@@ -392,7 +392,7 @@ async function load(product){
  if(productCache.has(product))return productCache.get(product);
  if(!productPending.has(product)){
  const fetchJSON=async url=>{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('Sem grelha publicada');return r.json();};
- const request=fetchJSON('./forecast_A_'+product+'.json').catch(()=>fetchJSON('./forecast_grid.json')).then(d=>{
+ const request=fetchJSON('./forecast_A_'+product+'_index.json').catch(()=>fetchJSON('./forecast_A_'+product+'.json')).catch(()=>fetchJSON('./forecast_grid.json')).then(d=>{
  if(!Array.isArray(d.frames)||!d.frames.length||!Number.isFinite(Date.parse(d.run_utc)))throw Error('Grelha inválida');
  productCache.set(product,d);return d;
  }).finally(()=>productPending.delete(product));
@@ -401,7 +401,22 @@ async function load(product){
  return productPending.get(product);
 }
 function clear(){if(barbs&&appMap){appMap.removeLayer(barbs);barbs=null;}if(layer&&appMap)appMap.removeLayer(layer);layer=null;}
-function draw(){clear();if(!mode||!grid||!appMap)return;const f=grid.frames[+time.value], z=scales[mode];if(!f)return;valid.textContent='Run '+grid.run_utc.slice(0,16)+' UTC | +'+f.step+'h | '+f.valid_utc.slice(0,16)+' UTC';if(!f[mode]){status.textContent=mode==='gust'?'Rajadas indisponíveis neste prazo · barbelas: vento médio 10 m (kt)':'Acumulado 3h indisponível neste prazo';if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}return;}
+const framePending=new Map();
+async function ensureFrame(d,i){
+ const meta=d.frames[i];if(!meta||!meta.file)return meta;
+ const key=d.run_utc+'|'+meta.file;
+ if(!framePending.has(key)){
+ const req=fetch('./'+meta.file+'?run='+encodeURIComponent(d.run_utc),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Fotograma indisponível');return r.json();}).then(p=>{if(p.run_utc!==d.run_utc||p.frame?.step!==meta.step||!Array.isArray(p.frame.x)||!Array.isArray(p.frame.y))throw Error('Fotograma incompatível');d.frames[i]=p.frame;return p.frame;}).finally(()=>framePending.delete(key));
+ framePending.set(key,req);
+ }
+ return framePending.get(key);
+}
+let drawSequence=0;
+async function draw(){const seq=++drawSequence;if(!mode||!grid||!appMap)return;const d=grid,i=+time.value,product=mode;let f;
+ try{f=await ensureFrame(d,i);}catch(e){if(seq===drawSequence&&grid===d&&mode===product){stop();status.textContent='Fotograma indisponível';}return;}
+ if(seq!==drawSequence||grid!==d||mode!==product||+time.value!==i||!f)return;
+ clear();const z=scales[mode];
+ for(const j of [i+1,i+2])if(j<d.frames.length)ensureFrame(d,j).catch(()=>{});valid.textContent='Run '+grid.run_utc.slice(0,16)+' UTC | +'+f.step+'h | '+f.valid_utc.slice(0,16)+' UTC';if(!f[mode]){status.textContent=mode==='gust'?'Rajadas indisponíveis neste prazo · barbelas: vento médio 10 m (kt)':'Acumulado 3h indisponível neste prazo';if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}return;}
 const pane=appMap.getPane('forecastGrid')||appMap.createPane('forecastGrid');pane.style.zIndex='610';pane.style.pointerEvents='none';
 const key=grid.run_utc+'|'+mode+'|'+f.step;let raster=rasterCache.get(key);if(raster)cacheRaster(key,raster);if(!raster){const c=document.createElement('canvas');c.width=1200;c.height=900;const ctx=c.getContext('2d'), x=f.x,y=f.y, west=x[0],east=x.at(-1),south=y[0],north=y.at(-1);const merc=v=>Math.log(Math.tan(Math.PI/4+v*Math.PI/360));const sy=merc(south),ny=merc(north);const px=v=>(v-west)/(east-west)*c.width,py=v=>(ny-merc(v))/(ny-sy)*c.height;
 for(let j=0;j<y.length-1;j++)for(let i=0;i<x.length-1;i++){const v=f[mode][j][i];if(!Number.isFinite(v)||(mode==='rain'&&v<=.2))continue;let k=z.levels.findIndex(n=>v<n)-1;if(v>=z.levels.at(-1))k=z.colors.length-1;if(k<0)continue;ctx.fillStyle=z.colors[k];ctx.fillRect(px(x[i]),py(y[j+1]),px(x[i+1])-px(x[i])+.5,py(y[j])-py(y[j+1])+.5);}
