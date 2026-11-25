@@ -394,6 +394,8 @@ async function load(product){
  const fetchJSON=async url=>{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('Sem grelha publicada');return r.json();};
  const request=fetchJSON('./forecast_A_'+product+'_index.json').catch(()=>fetchJSON('./forecast_A_'+product+'.json')).catch(()=>fetchJSON('./forecast_grid.json')).then(d=>{
  if(!Array.isArray(d.frames)||!d.frames.length||!Number.isFinite(Date.parse(d.run_utc)))throw Error('Grelha inválida');
+ d.frames=d.frames.filter(f=>Number.isInteger(f.step)&&f.step>=9&&f.step<=93&&f.step%3===0).sort((a,b)=>a.step-b.step);
+ if(!d.frames.length)throw Error('Sem prazos válidos');
  productCache.set(product,d);return d;
  }).finally(()=>productPending.delete(product));
  productPending.set(product,request);
