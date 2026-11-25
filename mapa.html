@@ -337,9 +337,9 @@ function initialize(){
  else{$('satTools').textContent='Os controlos de satélite estão indisponíveis: confirma se meteofox_satelite.js foi publicado.';}
  paintMarkers();refresh();
  $('refresh').addEventListener('click',refresh);
- $('all').addEventListener('click',()=>appMap.fitBounds(L.latLngBounds(Object.entries(OBS_AIRPORT_POS).filter(([id])=>id!=='LEVC').map(([,p])=>p)).pad(.12),{maxZoom:8}));
+ $('all').addEventListener('click',()=>appMap.fitBounds([[25,-40],[50,0]]));
  $('valencia').addEventListener('click',()=>appMap.setView(OBS_AIRPORT_POS.LEVC,9));
- $('mainland').addEventListener('click',()=>appMap.setView([39.65,-8.3],7));
+ $('mainland').addEventListener('click',()=>appMap.fitBounds([[36.9,-10],[42.2,-6]]));
  $('islands').addEventListener('click',()=>appMap.setView([37.7,-25.5],7));
  $('madeira').addEventListener('click',()=>appMap.setView([32.8,-16.7],9));
 }
