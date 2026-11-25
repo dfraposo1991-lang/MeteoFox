@@ -15,7 +15,7 @@ await page.route(/\/(chuva|rajadas)_\d{3}\.png(?:\?.*)?$/,respondPNG);
 await page.route('**/meteofox_ecmwf_manifest.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cycle_utc:mockCycleUTC,images:Object.fromEntries(Array.from({length:16},(_,i)=>'chuva_'+String(9+i*3).padStart(3,'0')+'.png').map(k=>[k,'ok']))})}));
 await page.route('**/api.rainviewer.com/**',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({host:'https://tilecache.rainviewer.com',radar:{past:frames.map((t,i)=>({time:Math.floor(t/1000),path:'/mock'+i}))}})}));
 await page.route('**/raw.githubusercontent.com/**/data/satellite_fog_status.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ready:true,checked_utc:new Date().toISOString(),geo_layer:'mtg_fd:rgb_geocolour',fog_layer:'mtg_fd:rgb_fog',matching_time_utc:new Date().toISOString()})}));
-await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString())})}));
+await page.route('**/raw.githubusercontent.com/**/data/satellite_times.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({layer:'mtg_fd:rgb_geocolour',checked_utc:new Date().toISOString(),times_utc:frames.map(t=>new Date(t).toISOString()),fog_times_utc:frames.map(t=>new Date(t).toISOString())})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({metar:{LPPT:{raw:'METAR LPPT 191100Z 27007KT 9999 BKN030 16/12 Q1022'}},taf:{},speci:{},metar_checked_utc:new Date().toISOString()})}));
 await page.route('**/raw.githubusercontent.com/**/data/aviation_valencia.json*',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({
  checked_utc:new Date().toISOString(),source:'NOAA',metar:{LEVC:{raw:'METAR LEVC 201900Z 28012G20KT 9999 FEW030 18/10 Q1018',utc:new Date().toISOString()}},
@@ -281,11 +281,10 @@ try{
  assert.equal(await speedControl.innerText(),'Velocidade: 0.5×');
  await speedControl.click();
  assert.equal(await speedControl.innerText(),'Velocidade: 1×');
- assert.equal(await page.locator('#satTools button').filter({hasText:'RGB: GeoColour'}).count(),0,'Não deve existir seletor separado de RGB');
- const autoButton=page.locator('#satTools button').filter({hasText:'🌗 VIS / FOG Auto:'});
- assert.equal(await autoButton.count(),1,'Auto é o único botão de satélite');
- assert.equal(await autoButton.getAttribute('aria-pressed'),'true','Satélite Auto deve iniciar ligado');
- assert.ok((await autoButton.innerText()).includes('Auto: ligado'),'Botão Auto indica estado ligado');
+ const visButton=page.getByRole('button',{name:/VIS: ligado/});
+ assert.equal(await visButton.count(),1);
+ assert.equal(await visButton.getAttribute('aria-pressed'),'true');
+ assert.equal(await page.getByRole('button',{name:/RGB Fog: desligado/}).count(),1);
  await page.getByRole('button',{name:/Radar: desligado/}).click();
  await page.waitForFunction(()=>{const slider=document.querySelector('#satTools input[aria-label="Navegação temporal UTC"]');return slider&&!slider.disabled&&Number(slider.max)>=1;},{timeout:15000});
  // Esperar a conclusão de ambas as consultas e da transição inicial;
@@ -317,169 +316,49 @@ try{
  await page.keyboard.press('ArrowRight');
  assert.equal(await mapTimeline.inputValue(),'1','Mapa com radar/Meteosat deve navegar pelo teclado sem cursor focado');
 
- // Regressão anti-piscar: a imagem antiga nunca perde opacidade
- // durante o carregamento da nova; só sai após o fade do novo container.
- await page.waitForTimeout(550);
- const fadeCheck=await page.evaluate(async()=>{
-  const previous=sat.satLayer;
-  if(!previous||!sat.timeline.length)return {available:false};
-  const prior=previous.getContainer();
-  const next=sat.index===0?Math.min(1,sat.timeline.length-1):0;
-  const swap=sat.select(next);
-  const oldStillOpaque=prior.style.opacity!=='0'&&getComputedStyle(prior).opacity==='1';
-  const ok=await swap;
-  const current=sat.satLayer;
-  const newContainer=current?.getContainer();
-  const oldStillMounted=sat.map.hasLayer(previous);
-  // O fade de 280 ms termina após o Promise da troca e dois RAF.
-  // Verificar a opacidade final só depois do fade, não no seu início.
-  // CI pode atrasar os RAF: esperar pelo estado final, sem aliviar critérios.
-  const deadline=performance.now()+3000;
-  while(performance.now()<deadline){
-   if(newContainer&&getComputedStyle(newContainer).opacity==='1'&&!sat.map.hasLayer(previous))break;
-   await new Promise(resolve=>setTimeout(resolve,60));
+ // Sample every animation frame, including tile opacity and actual coverage.
+ await page.waitForFunction(()=>!sat.transition&&!!sat.satLayer);
+ const audit=await page.evaluate(async()=>{
+  const results=[];
+  for(const mode of ['geo','fog']){
+   await sat.setSatellite(true,mode);
+   sat.satOpacitySlider.value='100';
+   sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
+   if(!sat.satLayer)throw Error('Missing initial '+mode);
+   for(let i=0;i<Math.min(4,sat.timeline.length);i++){
+    let running=true,blank=0,samples=0;
+    const start=performance.now();
+    const sample=()=>{
+     if(!running)return;
+     samples++;
+     const layers=[sat.satLayer,...(sat.transition?.layers||[])].filter(Boolean);
+     const visible=layers.some(l=>{
+      if(!l.wmsParams)return false;
+      const c=l.getContainer();if(!c||!c.isConnected)return false;
+      const style=getComputedStyle(c);
+      if(style.visibility==='hidden'||Number(style.opacity)<.99)return false;
+      return [...c.querySelectorAll('.leaflet-tile-loaded')].some(tile=>Number(getComputedStyle(tile).opacity)>.99);
+     });
+     if(!visible)blank++;
+     requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+    const ok=await sat.select(i);
+    running=false;
+    results.push({mode,i,ok,blank,samples,ms:Math.round(performance.now()-start),time:sat.satRenderedTime,requested:sat.nearestSat(sat.timeline[i]),layer:sat.satLayer?.wmsParams?.layers,wmsTime:Date.parse(sat.satLayer?.wmsParams?.time)});
+   }
   }
-  return {available:true,ok,oldStillOpaque,oldStillMounted,
-   newOpaque:!!newContainer&&getComputedStyle(newContainer).opacity==='1',
-   oldRemoved:!sat.map.hasLayer(previous),
-   currentOpacity:newContainer?getComputedStyle(newContainer).opacity:null,
-   pendingFade:!!sat.fadeTimer};
+  return results;
  });
- assert.equal(fadeCheck.available,true,'Camada Meteosat indisponível para teste');
- assert.equal(fadeCheck.ok,true,'Troca de fotograma falhou: '+JSON.stringify(fadeCheck));
- assert.equal(fadeCheck.oldStillOpaque,true,'A imagem anterior não pode esbater durante a troca');
- assert.equal(fadeCheck.oldStillMounted,true,'Não retirar a imagem antes de revelar a nova');
- assert.equal(fadeCheck.newOpaque,true,'Imagem nova deve terminar totalmente opaca');
- assert.equal(fadeCheck.oldRemoved,true,'Imagem antiga deve sair após a transição');
- // Modo VIS / FOG Auto com máscara dia/noite: mantém GeoColour como fallback.
- const solarMask=await page.evaluate(()=>{
-  const mask=window.MeteoFoxFogMask;
-  const noon=mask.sun(Date.parse('2026-06-21T12:00:00Z'));
-  const night=mask.sun(Date.parse('2026-06-21T00:00:00Z'));
-  return {loaded:!!mask,
-   daytime:mask.fogWeight(mask.elevation(39,-9,noon)),
-   nighttime:mask.fogWeight(mask.elevation(39,-9,night)),
-   png:mask.tileMask(Date.parse('2026-06-21T00:00:00Z'),{z:6,x:30,y:24}).startsWith('data:image/png;base64,')};
- });
- assert.equal(solarMask.loaded,true,'Módulo de máscara solar disponível');
- assert.equal(solarMask.daytime,0,'Fog completamente oculto durante o dia');
- assert.equal(solarMask.nighttime,1,'Fog totalmente visível durante a noite');
- assert.equal(solarMask.png,true,'Máscara por mosaico renderizada');
- const blendQuality=await page.evaluate(async()=>{
-  const M=window.MeteoFoxFogMask,a=.8,t=Date.parse('2026-11-20T17:00:00Z'),coords={z:6,x:30,y:24};
-  const read=async kind=>{
-   const im=new Image();im.src=M.tileMask(t,coords,64,kind,a);await im.decode();
-   const c=document.createElement('canvas');c.width=c.height=64;
-   const ctx=c.getContext('2d');ctx.drawImage(im,0,0);
-   return ctx.getImageData(0,0,64,64).data;
-  };
-  const f=await read('fog'),g=await read('geo');
-  let err=0,mixed=0;
-  for(let i=3;i<f.length;i+=4){
-   const x=f[i]/255,y=g[i]/255;
-   err=Math.max(err,Math.abs(a*x+a*y*(1-a*x)-a));
-   if(x>.01&&x<.99)mixed++;
-  }
-  return {err,mixed};
- });
- assert.ok(blendQuality.err<.005,'Mistura deve conservar opacidade com máscara complementar: '+JSON.stringify(blendQuality));
- const selective=await page.evaluate(()=>{
-  const M=window.MeteoFoxFogMask,coord=L.point(30,24);coord.z=6;
-  const day=Date.parse('2026-11-20T12:00:00Z'),night=Date.parse('2026-11-20T22:00:00Z');
-  const orig=sat.satMode, wmsMethod=L.TileLayer.WMS.prototype.getTileUrl;
-  // Espiar a chamada original evita adicionar camadas só para testar
-  // se a seleção por mosaico efetua ou evita uma consulta WMS.
-  L.TileLayer.WMS.prototype.getTileUrl=function(){return 'https://view.eumetsat.int/qa-wms-stub'};
-  sat.satMode='auto';
-  try{
-   return {day:M.tileLighting(day,coord),night:M.tileLighting(night,coord),
-    dayGeo:sat.createSatLayer(day).getTileUrl(coord),
-    dayFog:sat.createFogOverlay(day).getTileUrl(coord),
-    nightGeo:sat.createSatLayer(night).getTileUrl(coord),
-    nightFog:sat.createFogOverlay(night).getTileUrl(coord)};
-  }finally{
-   sat.satMode=orig;
-   L.TileLayer.WMS.prototype.getTileUrl=wmsMethod;
-  }
- });
- assert.equal(selective.day,'day','Mosaico português de dia');
- assert.equal(selective.night,'night','Mosaico português à noite');
- assert.ok(selective.dayGeo.includes('view.eumetsat.int'),'GeoColour deve ser pedido de dia');
- assert.ok(selective.dayFog.startsWith('data:image/svg+xml'),'Fog desnecessário não deve pedir WMS de dia');
- assert.ok(selective.nightGeo.startsWith('data:image/svg+xml'),'GeoColour oculto não deve pedir WMS à noite');
- assert.ok(selective.nightFog.includes('view.eumetsat.int'),'Fog deve ser pedido à noite');
-
-
- const modes=await page.evaluate(async()=>{
-  const initial=sat.satMode;
-  const ready=await sat.select(sat.index);
-  const fogLayer=sat.fogLayer;
-  return {
-   initial,ready,button:sat.sat.textContent,hasSelector:!!sat.modeButton,
-   fogRendered:!!fogLayer&&sat.map.hasLayer(fogLayer),
-   fogWms:fogLayer?.wmsParams?.layers,
-   geoUTC:sat.satLayer?.wmsParams?.time,
-   fogUTC:fogLayer?.wmsParams?.time,
-   maskUTC:sat.fogRenderedTime,
-   geoBaseUTC:sat.satRenderedTime,
-   tileMasks:fogLayer?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0,
-   geoLayer:sat.satLayer?.wmsParams?.layers
-  };
- });
- assert.equal(modes.initial,'auto','VIS / FOG Auto tem de ser o único modo predefinido');
- assert.equal(modes.hasSelector,false,'Retirar botão de escolha GeoColour/Fog da interface');
- assert.ok(modes.button.includes('VIS / FOG Auto: ligado'),'Botão único apresenta nome Auto');
- assert.equal(modes.ready,true,'Fotograma VIS / FOG Auto deve ficar preparado');
- assert.equal(modes.fogRendered,true,'Modo híbrido deve montar camada MTG Fog');
- assert.equal(modes.fogWms,'mtg_fd:rgb_fog','Camada Fog verificada em WMS');
- assert.equal(modes.geoUTC,modes.fogUTC,'GeoColour e Fog têm de pedir o MESMO instante UTC ao WMS');
- assert.equal(Date.parse(modes.geoUTC),modes.geoBaseUTC,'Hora UTC pedida deve coincidir com a referência GeoColour');
- assert.equal(modes.maskUTC,modes.geoBaseUTC,'Máscara solar usa o mesmo instante UTC');
- assert.ok(modes.tileMasks>=1,'Máscara solar aplicada pelo menos a um mosaico Fog');
- assert.equal(modes.geoLayer,'mtg_fd:rgb_geocolour','GeoColour mantém-se componente interna');
-
- const dualMasks=await page.evaluate(async()=>{
-  const ok=await sat.select(sat.index);
-  const geo=sat.satLayer,fog=sat.fogLayer;
-  const maskedGeo=geo?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
-  const maskedFog=fog?.getContainer?.()?.querySelectorAll('img[style*="mask-image"]').length||0;
-  let refreshCount=0;
-  const origRefresh=sat.refreshAutoMasks;
-  sat.refreshAutoMasks=function(){refreshCount++;return origRefresh.call(this);};
-  const time=Date.parse('2026-11-20T17:00:00Z'),coord={z:6,x:30,y:24};
-  const before=window.MeteoFoxFogMask.tileMask(time,coord,64,'geo',.8);
-  sat.satOpacitySlider.value='50';
-  sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
-  const after=window.MeteoFoxFogMask.tileMask(time,coord,64,'geo',.5);
-  sat.satOpacitySlider.value='80';
-  sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
-  sat.refreshAutoMasks=origRefresh;
-  return {ok,maskedGeo,maskedFog,refreshCount,changed:before!==after};
- });
- assert.equal(dualMasks.ok,true,'Modo Auto continua a carregar');
- assert.ok(dualMasks.maskedGeo>0&&dualMasks.maskedFog>0,'Geo e Fog têm máscaras complementares: '+JSON.stringify(dualMasks));
- assert.ok(dualMasks.refreshCount>=2,'Mudança de opacidade recalcula máscaras');
- assert.equal(dualMasks.changed,true,'Máscara Geo no crepúsculo depende da opacidade');
-
- // Falha do Fog não deve expor seletor adicional nem desligar o radar.
- const fallback=await page.evaluate(async()=>{
-  sat.fallbackToGeoColour('teste controlado');
-  const safeMode=sat.satMode;
-  const button=sat.sat.textContent;
-  const radarStillOn=sat.radarOn;
-  await sat.setSatellite(false);
-  await sat.setSatellite(true);
-  const restoredMode=sat.satMode;
-  const restoredButton=sat.sat.textContent;
-  return {safeMode,button,radarStillOn,restoredMode,restoredButton,hasSelector:!!sat.modeButton};
- });
- assert.equal(fallback.safeMode,'geo','GeoColour é a alternativa interna');
- assert.equal(fallback.radarStillOn,true,'O radar mantém-se quando Fog falha');
- assert.equal(fallback.hasSelector,false,'Não apresentar seletor em modo de segurança');
- assert.ok(fallback.button.includes('GeoColour') && fallback.button.includes('Fog indisponível'),'O botão identifica GeoColour e indisponibilidade Fog');
- assert.equal(fallback.restoredMode,'auto','Ao reativar, voltar a tentar VIS / FOG Auto');
- assert.ok(fallback.restoredButton.includes('VIS / FOG Auto: ligado'),'Botão mantém-se simples');
-
+ console.log('SATELLITE FRAME AUDIT',JSON.stringify(audit));
+ for(const r of audit){
+  assert.equal(r.ok,true,JSON.stringify(r));
+  assert.equal(r.blank,0,'Blank render sample: '+JSON.stringify(r));
+  assert.equal(r.time,r.requested);
+  assert.equal(r.wmsTime,r.requested);
+  assert.equal(r.layer,r.mode==='fog'?'mtg_fd:rgb_fog':'mtg_fd:rgb_geocolour');
+ }
+ await page.evaluate(()=>sat.setSatellite(true,'geo'));
  // Scroll rápido de zoom: evita excesso de atualizações e mantém as layers ativas.
  const beforeZoom=await page.evaluate(()=>appMap.getZoom());
  await page.locator('#largeMap').hover();

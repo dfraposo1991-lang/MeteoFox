@@ -370,7 +370,7 @@ class MeteoFoxSatellite{
   // primeiro. Caso contrário a remoção da imagem antiga expõe o mapa vazio.
   for(const layer of [this.satLayer,this.fogLayer,this.radarLayer]){
    const container=layer?.getContainer?.();
-   if(container){container.style.transition='none';container.style.opacity='1';}
+   if(container){container.style.transition='none';container.style.opacity=String(layer===this.radarLayer?this.radarOpacity:this.satOpacity);}
   }
   for(const layer of this.fadeOutLayers){
    if(this.map.hasLayer(layer))this.map.removeLayer(layer);
