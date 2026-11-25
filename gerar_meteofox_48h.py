@@ -39,6 +39,7 @@ def carregar_modulo(path, name):
 
 def ler_passo(path):
     dados = {}
+    inventory = []
     with path.open("rb") as f:
         while True:
             gid = codes_grib_new_from_file(f)
@@ -46,6 +47,7 @@ def ler_passo(path):
                 break
             try:
                 name = str(codes_get(gid, "shortName"))
+                inventory.append((name, str(codes_get(gid, "paramId")), str(codes_get(gid, "stepRange"))))
                 if name not in CAMPOS:
                     continue
                 unit = str(codes_get(gid, "units"))
@@ -90,7 +92,10 @@ def ler_passo(path):
 
     missing = CAMPOS - dados.keys()
     if missing:
-        raise RuntimeError(f"Faltam parâmetros em {path.name}: {sorted(missing)}")
+        print(f"Inventário GRIB {path.name}: {inventory}", flush=True)
+        if not (path.stem.endswith("_025") and missing == {"10fg"}):
+            raise RuntimeError(f"Faltam parâmetros em {path.name}: {sorted(missing)}")
+        print(f"Rajadas indisponíveis em {path.name}; sem substituição", flush=True)
     first = dados["tp"]
     for n, d in dados.items():
         if d["cycle"] != first["cycle"] or d["step"] != first["step"]:
@@ -191,6 +196,8 @@ def main():
         if current["cycle"] != run or current["step"] != step:
             raise RuntimeError(f"Run ou passo diferente dentro de {grib_file.name}")
         for n in ("10fg", "10u", "10v"):
+            if n not in data and n == "10fg" and step > 54:
+                continue
             if data[n]["cycle"] != run or data[n]["step"] != step:
                 raise RuntimeError(f"Diferenca de Run/passo em {grib_file.name} ({n})")
 
@@ -207,7 +214,7 @@ def main():
         interactive.append(dict(step=step, resolution=0.25 if step>54 else 0.1, valid_utc=(run+timedelta(hours=step)).isoformat(),
             x=current["x"].tolist(), y=current["y"].tolist(),
             rain=np.round(rain_3h,2).tolist() if previous is not None else None,
-            gust=np.round(data["10fg"]["value"]*CONV_KT,2).tolist(),
+            gust=np.round(data["10fg"]["value"]*CONV_KT,2).tolist() if "10fg" in data else None,
             u=np.round(data["10u"]["value"],2).tolist(), v=np.round(data["10v"]["value"],2).tolist()))
         previous = current
         if step > 54:
