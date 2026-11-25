@@ -204,6 +204,13 @@ jobs:
               else:
                   raise
 
+          try:
+              with urlopen(Request(base + 'forecast_grid.json', headers={'User-Agent':'MeteoFox'}), timeout=30) as reply:
+                  grid = json.loads(reply.read())
+              if 'metadata' in locals() and grid.get('run_utc','').replace('+00:00','Z') == metadata.get('cycle_utc'):
+                  (public / 'forecast_grid.json').write_text(json.dumps(grid,separators=(',',':')),encoding='utf-8')
+          except Exception as exc:
+              print('Grelha interativa ainda indisponível:', exc)
           (public / '.nojekyll').write_text('', encoding='utf-8')
           assert len([p for p in public.glob('*.png') if p.name.startswith(('chuva_', 'rajadas_'))]) == 32, 'Faltam mapas ECMWF'
           print('Site pronto: index.html, mapa.html, meteofox_satelite.js, animacao e 32 mapas ECMWF')

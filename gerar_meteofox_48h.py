@@ -176,6 +176,7 @@ def main():
     out = BASE / f"MeteoFox_48h_{run:%Y%m%d_%H}UTC"
     out.mkdir(exist_ok=True)
     previous = None
+    interactive = []
 
     print(f"Run ECMWF: {run} | {len(steps)} passos")
     for step in steps:
@@ -198,6 +199,12 @@ def main():
                     np.array_equal(current["y"], previous["y"])):
                 raise RuntimeError("Grelha da precipitação alterou entre passos")
             rain_3h = np.maximum(current["value"] - previous["value"], 0)
+        # Primeiro prazo sem acumulado anterior: não rotular como 3h.
+        interactive.append(dict(step=step, valid_utc=(run+timedelta(hours=step)).isoformat(),
+            x=current["x"].tolist(), y=current["y"].tolist(),
+            rain=np.round(rain_3h,2).tolist() if previous is not None else None,
+            gust=np.round(data["10fg"]["value"]*CONV_KT,2).tolist(),
+            u=np.round(data["10u"]["value"],2).tolist(), v=np.round(data["10v"]["value"],2).tolist()))
         previous = current
 
         # Injetar dados processados nas funções originais aprovadas:
@@ -218,6 +225,7 @@ def main():
         wind_module.make_map()
         del data
 
+    (out / "forecast_grid.json").write_text(json.dumps(dict(run_utc=run.isoformat(),frames=interactive),allow_nan=False,separators=(",",":")),encoding="utf-8")
     criar_html(run.strftime("%d/%m/%Y %H:%M"), steps, out)
     print("\nCONCLUÍDO")
     print("Ficheiros PNG:", len(steps) * 2)

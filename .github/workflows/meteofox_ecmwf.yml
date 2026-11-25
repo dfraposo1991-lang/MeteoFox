@@ -146,6 +146,7 @@ jobs:
           animation = folder / "MeteoFox_animacao_48h.html"
           assert animation.is_file() and animation.stat().st_size > 1000
           shutil.copy2(animation, out / animation.name)
+          shutil.copy2(folder / "forecast_grid.json", out / "forecast_grid.json")
           (out / "cycle.txt").write_text(run + "\n", encoding="utf-8")
           assert len(list(out.glob("*.png"))) == 32
           print("Pacote independente validado: 32 PNG e animação |", run)
@@ -196,6 +197,7 @@ jobs:
                   f = source / f"{kind}_{step:03d}.png"
                   assert f.exists() and f.stat().st_size > 1000, f"Falta {f}"
                   shutil.copy2(f, out / f.name)
+          shutil.copy2(source / "forecast_grid.json", out / "forecast_grid.json")
           animation = source / "MeteoFox_animacao_48h.html"
           assert animation.exists() and animation.stat().st_size > 1000
           # Guardar a animação separadamente, para nunca substituir o site principal.
