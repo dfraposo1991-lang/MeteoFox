@@ -163,7 +163,9 @@ def main():
     run = datetime.strptime(manifest["run"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     run_folder = DATOS / manifest["pasta"]
     steps = [int(v) for v in manifest["passos"]]
-    absent = [p for p in steps if not (run_folder / f"step_{p:03d}.grib2").exists()]
+    def path(p):
+        return run_folder / f"step_{p:03d}{'_025' if p>54 else ''} .grib2".replace(" ", "")
+    absent = [p for p in steps if not path(p).exists()]
     if absent:
         raise FileNotFoundError(f"Faltam os GRIB2 dos passos {absent}. Repete o descarregamento.")
 
@@ -171,13 +173,19 @@ def main():
     wind_module = carregar_modulo(FONTE_RAJADAS, "meteofx_rajadas_aprovadas")
     out = BASE / f"MeteoFox_48h_{run:%Y%m%d_%H}UTC"
     out.mkdir(exist_ok=True)
-    previous = None
+    previous = ler_passo(path(6))["tp"]
+    if previous["cycle"] != run or previous["step"] != 6:
+        raise RuntimeError("Acumulado +6h inválido")
     interactive = []
 
     print(f"Run ECMWF: {run} | {len(steps)} passos")
     for step in steps:
         print(f"Passo +{step:02d} h: a ler GRIB2...", flush=True)
-        grib_file = run_folder / f"step_{step:03d}.grib2"
+        grib_file = path(step)
+        if step == 57:
+            previous = ler_passo(run_folder / "step_054_025.grib2")["tp"]
+            if previous["cycle"] != run or previous["step"] != 54:
+                raise RuntimeError("Acumulado +54h 0.25 inválido")
         data = ler_passo(grib_file)
         current = data["tp"]
         if current["cycle"] != run or current["step"] != step:
@@ -196,18 +204,20 @@ def main():
                 raise RuntimeError("Grelha da precipitação alterou entre passos")
             rain_3h = np.maximum(current["value"] - previous["value"], 0)
         # Primeiro prazo sem acumulado anterior: não rotular como 3h.
-        interactive.append(dict(step=step, valid_utc=(run+timedelta(hours=step)).isoformat(),
+        interactive.append(dict(step=step, resolution=0.25 if step>54 else 0.1, valid_utc=(run+timedelta(hours=step)).isoformat(),
             x=current["x"].tolist(), y=current["y"].tolist(),
             rain=np.round(rain_3h,2).tolist() if previous is not None else None,
             gust=np.round(data["10fg"]["value"]*CONV_KT,2).tolist(),
             u=np.round(data["10u"]["value"],2).tolist(), v=np.round(data["10v"]["value"],2).tolist()))
         previous = current
+        if step > 54:
+            continue
         # Preservar exatamente o recorte das cartas aprovadas.
         ix = np.flatnonzero((current["x"] >= -16.15) & (current["x"] <= -5.85))
         iy = np.flatnonzero((current["y"] >= 34.35) & (current["y"] <= 45.15))
         data = {k: dict(d, x=d["x"][ix], y=d["y"][iy], value=d["value"][np.ix_(iy,ix)]) for k,d in data.items()}
         current = data["tp"]
-        rain_3h = rain_3h[np.ix_(iy,ix)]
+        rain_3h = (current["value"] if step==9 else rain_3h[np.ix_(iy,ix)])
 
         # Injetar dados processados nas funções originais aprovadas:
         # cores, tamanho das cartas, vetores, etiquetas e coordenadas ficam iguais.
@@ -228,9 +238,9 @@ def main():
         del data
 
     (out / "forecast_grid.json").write_text(json.dumps(dict(run_utc=run.isoformat(),frames=interactive),allow_nan=False,separators=(",",":")),encoding="utf-8")
-    criar_html(run.strftime("%d/%m/%Y %H:%M"), steps, out)
+    criar_html(run.strftime("%d/%m/%Y %H:%M"), [p for p in steps if p<=54], out)
     print("\nCONCLUÍDO")
-    print("Ficheiros PNG:", len(steps) * 2)
+    print("Ficheiros PNG:", len([p for p in steps if p<=54]) * 2)
     print("Abrir no navegador:", out / "MeteoFox_animacao_48h.html")
 
 

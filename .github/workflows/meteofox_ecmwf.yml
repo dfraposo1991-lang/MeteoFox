@@ -98,11 +98,11 @@ jobs:
           .venv/bin/python -m pip install 'ecmwf-opendata>=0.3,<1'
           echo "- Ambiente Python de geração: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Descarregar 16 passos do mesmo Run
+      - name: Descarregar 38 prazos híbridos do mesmo Run
         run: |
           start=$(date +%s)
           .venv/bin/python descarregar_meteofox_48h.py
-          echo "- Descarregar 16 GRIB ECMWF: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Descarregar GRIB ECMWF híbridos: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verificar todos os GRIB2
         run: |

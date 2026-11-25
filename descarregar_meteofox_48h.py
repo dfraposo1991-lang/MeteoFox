@@ -17,14 +17,14 @@ from ecmwf.opendata import Client
 BASE = Path(__file__).resolve().parent
 RAIZ = BASE / "dados_meteofox_48h"
 RAIZ.mkdir(exist_ok=True)
-PASSOS = list(range(9, 55, 3))
+PASSOS = list(range(9, 121, 3))
 PARAMETROS = ["tp", "10fg", "10u", "10v"]
 
 
 def descarregar():
     print("MeteoFox | ECMWF IFS 0,1° | 9 h a 54 h")
     print("Campos:", ", ".join(PARAMETROS))
-    print("16 passos, um unico Run, com 3h de intervalo")
+    print("38 prazos, um unico Run, com 3h de intervalo")
     client = Client(source="ecmwf", model="ifs", resol="0p1")
 
     # Primeiro passo determina o Run disponivel. Não misturar ciclos.
@@ -71,20 +71,22 @@ def descarregar():
         json.dumps(manifesto, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
+    coarse = Client(source="ecmwf", model="ifs", resol="0p25")
     falhas = []
-    for passo in PASSOS[1:]:
-        destino = pasta_run / f"step_{passo:03d}.grib2"
+    for passo, low in [(p, False) for p in [6]+list(range(12,55,3))] + [(p, True) for p in range(54,121,3)]:
+        suffix = "_025" if low else ""
+        destino = pasta_run / f"step_{passo:03d}{suffix}.grib2"
         if destino.exists() and destino.stat().st_size > 100000:
             print(f"+{passo:02d} h: já descarregado")
             continue
-        temporario = pasta_run / f"step_{passo:03d}.part"
+        temporario = pasta_run / f"step_{passo:03d}{suffix}.part"
         print(f"+{passo:02d} h: a descarregar...", flush=True)
         ok = False
         for tentativa in range(1, 4):
             try:
                 if temporario.exists():
                     temporario.unlink()
-                client.retrieve(
+                (coarse if low else client).retrieve(
                     date=ciclo.strftime("%Y%m%d"),
                     time=ciclo.hour,
                     stream="oper", type="fc", levtype="sfc",
@@ -106,9 +108,9 @@ def descarregar():
     print("\nDiretorio:", pasta_run)
     if falhas:
         print("ATENÇÃO: falharam os passos", falhas)
-        print("Volta a executar este programa para tentar novamente.")
+        raise RuntimeError(f"GRIB em falta: {falhas}")
     else:
-        print("Todos os 16 passos descarregados!")
+        print("Todos os prazos descarregados!")
         print("Agora, no Ubuntu: python3 gerar_meteofox_48h.py")
 
 
