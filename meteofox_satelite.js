@@ -273,7 +273,7 @@ class MeteoFoxSatellite{
    tileSize:512,keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
   const originalUrl=layer.getTileUrl.bind(layer);
-  layer.getTileUrl=coords=>{const url=new URL(originalUrl(coords));url.searchParams.set('time',new Date(time).toISOString().replace('.000Z','Z'));url.searchParams.set('width','512');url.searchParams.set('height','512');return url.toString();};
+  layer.getTileUrl=coords=>{const url=new URL(originalUrl(coords));url.searchParams.set('time',new Date(layer.meteofoxTime??time).toISOString().replace('.000Z','Z'));url.searchParams.set('width','512');url.searchParams.set('height','512');return url.toString();};
   if(mode==='auto'){
    const original=layer.getTileUrl.bind(layer);
    layer.getTileUrl=coords=>window.MeteoFoxFogMask?.tileLighting(time,coords)==='night'?BLANK_TILE:original(coords);
@@ -282,14 +282,14 @@ class MeteoFoxSatellite{
   layer.createTile=(coords,done)=>{
    const url=layer.getTileUrl(coords),tile=document.createElement('canvas');
    tile.width=512;tile.height=512;
-   tile.setAttribute('aria-hidden','true');
+   tile.setAttribute('aria-hidden','true');tile.style.setProperty('transition','none','important');tile.style.setProperty('opacity','1','important');
    this.cachedTile(url).promise.then(img=>{
     tile.getContext('2d').drawImage(img,0,0,512,512);done(null,tile);
    }).catch(error=>done(error,tile));
    return tile;
   };
   layer.meteofoxAutoGeo=mode==='auto';
-  layer.meteofoxTime=time;
+  layer.meteofoxTime=time;layer.meteofoxMode=mode;
   return layer;
  }
  applyAutoGeoMask(tile,coords,time){
@@ -398,70 +398,68 @@ class MeteoFoxSatellite{
   // Os símbolos METAR permanecem sobre as imagens meteorológicas.
   if(this.radarLayer&&this.map.hasLayer(this.radarLayer))this.radarLayer.setZIndex(350);
  }
- stageFrame(time){
-  this.tileWarmEpoch++;this.dropPrefetch();this.cancelTransition();
-  const seq=this.transitionSeq;
+ // Persistent canvas grid: prepare pixels offscreen, then replace all visible
+ // tile contents in one synchronous paint transaction, without replacing the layer.
+ async stageFrame(time){
+  this.dropPrefetch();this.cancelTransition();
+  const seq=this.transitionSeq,mode=this.satMode;
   const satTime=this.satOn?this.nearestSat(time):null;
   const radFrame=this.radarOn?this.nearestRadar(time):null;
-  if((this.satOn&&satTime===null)||(this.radarOn&&!radFrame)){this.state('Sem imagem confirmada para '+fmt(time));return Promise.resolve(false);}
-  // Keep exactly one committed frame visible until its replacement is complete.
-  const old=[this.satLayer,this.fogLayer,this.radarLayer].filter(Boolean);
-  const previousTime=this.satRenderedTime;
-  const jobs=[];
-  if(this.satOn)jobs.push({kind:'sat',layer:this.createSatLayer(satTime)});
-  if(this.radarOn){
-   const url=this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png';
-   jobs.push({kind:'radar',layer:L.tileLayer(url,{opacity:this.radarOpacity,zIndex:350,maxNativeZoom:10,maxZoom:18,attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true})});
-  }
-  this.state('A carregar '+fmt(time)+(previousTime!==null?' · visível: '+fmt(previousTime):''));
-  return new Promise(resolve=>{
-   let remaining=jobs.length,settled=false,committing=false;
-   const job={layers:jobs.map(x=>x.layer),timeout:null,abort:()=>{if(!settled){settled=true;resolve(false);}}};
-   this.transition=job;
-   const finish=ok=>{
-    if(settled||committing)return;clearTimeout(job.timeout);
-    if(seq!==this.transitionSeq||this.transition!==job){settled=true;resolve(false);return;}
-    for(const x of jobs){x.layer.off('load');x.layer.off('tileerror');}
-    if(!ok){
-     settled=true;this.transition=null;
-     for(const x of jobs)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);
-     this.state('Falha ao carregar '+fmt(time)+(previousTime!==null?' · mantém-se '+fmt(previousTime):' · imagem não apresentada'));resolve(false);return;
-    }
-    committing=true;
-    // Leaflet load precedes its tile fade completion. Force opaque tile pixels
-    // while retaining the configured opacity on the layer container.
-    for(const x of jobs){const c=x.layer.getContainer();if(c){c.style.transition='none';for(const tile of c.querySelectorAll('.leaflet-tile')){tile.style.setProperty('transition','none','important');tile.style.setProperty('opacity','1','important');}}}
-    requestAnimationFrame(()=>{
-     if(settled||seq!==this.transitionSeq||this.transition!==job)return;
-     for(const x of jobs){const c=x.layer.getContainer();if(c)c.style.visibility='visible';}
-     requestAnimationFrame(()=>{
-      if(settled||seq!==this.transitionSeq||this.transition!==job)return;
-      settled=true;this.transition=null;
-      for(const layer of old){if(this.map.hasLayer(layer))this.map.removeLayer(layer);this.radarLayers.delete(layer);}
-    this.satLayer=null;this.fogLayer=null;this.radarLayer=null;this.satRenderedTime=null;
-    for(const x of jobs){
-     const container=x.layer.getContainer();if(container)container.style.visibility='visible';
-     if(x.kind==='sat'){this.satLayer=x.layer;this.satRenderedTime=satTime;this.satRenderedMode=this.satMode;}
-     else{this.radarLayer=x.layer;this.radarLayers.add(x.layer);}
-    }
-    this.syncSatelliteBorders();
-    const info=[];
-    if(this.satOn)info.push((this.satMode==='fog'?'RGB Fog':'GeoColour RGB')+' · '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
-    if(this.radarOn)info.push('Radar '+fmt(radFrame.time*1000));
-    this.state(info.join(' · ')+' · carregado');if(this.satLayer)this.warmTiles(this.satLayer);resolve(true);
-     });
-    });
-   };
-   if(!remaining){finish(true);return;}
-   job.timeout=setTimeout(()=>finish(false),20000);
-   for(const x of jobs){
-    let loaded=0,errors=0;
-    x.layer.on('tileload',()=>loaded++);
-    x.layer.on('tileerror',()=>errors++);
-    x.layer.once('load',()=>{if(!loaded||errors){finish(false);return;}if(--remaining===0)finish(true);});
-   }
-   for(const x of jobs){if(settled)break;x.layer.once('add',()=>{const c=x.layer.getContainer();if(c){c.style.visibility='hidden';c.style.transition='none';}});x.layer.addTo(this.map);}
+  if((this.satOn&&satTime===null)||(this.radarOn&&!radFrame))return false;
+  const oldSat=this.satLayer,oldRadar=this.radarLayer;
+  const persistent=!!(this.satOn&&oldSat&&this.map.hasLayer(oldSat)&&oldSat.meteofoxMode===mode);
+  const satLayer=this.satOn?(persistent?oldSat:this.createSatLayer(satTime)):null;
+  const radarLayer=this.radarOn?L.tileLayer(this.radarHost+radFrame.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:this.radarOpacity,zIndex:350,maxNativeZoom:10,maxZoom:18,attribution:'Radar © RainViewer',keepBuffer:0,updateWhenIdle:true}):null;
+  const fresh=[persistent?null:satLayer,radarLayer].filter(Boolean);
+  const job={layers:fresh,timeout:null,abort:()=>{}};this.transition=job;
+  const valid=()=>this.transition===job&&seq===this.transitionSeq;
+  const mount=layer=>new Promise((resolve,reject)=>{
+   let errors=0;
+   layer.on('tileerror',()=>errors++);
+   layer.once('load',()=>errors?reject(Error('tile error')):resolve());
+   layer.once('add',()=>{const c=layer.getContainer();if(c)c.style.visibility='hidden';});
+   layer.addTo(this.map);
   });
+  const prepare=async()=>{
+   if(!persistent)return [];
+   const tiles=Object.values(satLayer._tiles||{}).filter(t=>t.current&&t.coords&&t.el);
+   if(!tiles.length)throw Error('No visible tiles');
+   return Promise.all(tiles.map(async t=>{
+    const url=new URL(satLayer.getTileUrl(t.coords));url.searchParams.set('time',new Date(satTime).toISOString().replace('.000Z','Z'));
+    const img=await this.cachedTile(url.toString()).promise;
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=512;
+    canvas.getContext('2d').drawImage(img,0,0,512,512);
+    return {tile:t,canvas};
+   }));
+  };
+  try{
+   const [prepared]=await Promise.race([
+    Promise.all([prepare(),...fresh.map(mount)]),
+    new Promise((_,reject)=>{job.timeout=setTimeout(()=>reject(Error('timeout')),20000);job.abort=()=>reject(Error('cancelled'));})
+   ]);
+   clearTimeout(job.timeout);
+   if(!valid())return false;
+   if(persistent){
+    const current=Object.values(satLayer._tiles||{}).filter(t=>t.current&&t.coords&&t.el);
+    if(current.length!==prepared.length||current.some(t=>!prepared.some(p=>p.tile===t)))throw Error('Viewport changed');
+    // No await or clear of the displayed canvas between tile updates.
+    for(const p of prepared){const ctx=p.tile.el.getContext('2d');ctx.globalCompositeOperation='copy';ctx.drawImage(p.canvas,0,0);ctx.globalCompositeOperation='source-over';}
+    satLayer.meteofoxTime=satTime;satLayer.wmsParams.time=new Date(satTime).toISOString().replace('.000Z','Z');
+   }
+   for(const layer of fresh){const c=layer.getContainer();if(c){for(const tile of c.querySelectorAll('.leaflet-tile')){tile.style.setProperty('transition','none','important');tile.style.setProperty('opacity','1','important');}c.style.visibility='visible';}}
+   if(oldSat&&oldSat!==satLayer&&this.map.hasLayer(oldSat))this.map.removeLayer(oldSat);
+   if(oldRadar&&this.map.hasLayer(oldRadar))this.map.removeLayer(oldRadar);
+   this.radarLayers.clear();if(radarLayer)this.radarLayers.add(radarLayer);
+   this.satLayer=satLayer;this.radarLayer=radarLayer;this.fogLayer=null;this.satRenderedTime=satTime;this.satRenderedMode=mode;
+   this.transition=null;this.syncSatelliteBorders();
+   const info=[];if(satLayer)info.push((mode==='fog'?'RGB Fog':'GeoColour RGB')+' · '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
+   if(radFrame)info.push('Radar '+fmt(radFrame.time*1000));
+   this.state(info.join(' · ')+' · carregado');if(satLayer)this.warmTiles(satLayer);return true;
+  }catch(e){
+   clearTimeout(job.timeout);if(!valid())return false;
+   for(const layer of fresh)if(this.map.hasLayer(layer))this.map.removeLayer(layer);
+   this.transition=null;this.state('Imagem anterior mantida · '+e.message);return false;
+  }
  }
  select(i){
   if(!this.timeline.length)return Promise.resolve(false);
