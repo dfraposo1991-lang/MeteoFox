@@ -415,19 +415,29 @@ class MeteoFoxSatellite{
   }
   this.state('A carregar '+fmt(time)+(previousTime!==null?' · visível: '+fmt(previousTime):''));
   return new Promise(resolve=>{
-   let remaining=jobs.length,settled=false;
+   let remaining=jobs.length,settled=false,committing=false;
    const job={layers:jobs.map(x=>x.layer),timeout:null,abort:()=>{if(!settled){settled=true;resolve(false);}}};
    this.transition=job;
    const finish=ok=>{
-    if(settled)return;settled=true;clearTimeout(job.timeout);
-    if(seq!==this.transitionSeq||this.transition!==job){resolve(false);return;}
-    this.transition=null;
+    if(settled||committing)return;clearTimeout(job.timeout);
+    if(seq!==this.transitionSeq||this.transition!==job){settled=true;resolve(false);return;}
     for(const x of jobs){x.layer.off('load');x.layer.off('tileerror');}
     if(!ok){
+     settled=true;this.transition=null;
      for(const x of jobs)if(this.map.hasLayer(x.layer))this.map.removeLayer(x.layer);
      this.state('Falha ao carregar '+fmt(time)+(previousTime!==null?' · mantém-se '+fmt(previousTime):' · imagem não apresentada'));resolve(false);return;
     }
-    for(const layer of old){if(this.map.hasLayer(layer))this.map.removeLayer(layer);this.radarLayers.delete(layer);}
+    committing=true;
+    // Leaflet load precedes its tile fade completion. Force opaque tile pixels
+    // while retaining the configured opacity on the layer container.
+    for(const x of jobs){const c=x.layer.getContainer();if(c){c.style.transition='none';for(const tile of c.querySelectorAll('.leaflet-tile')){tile.style.setProperty('transition','none','important');tile.style.setProperty('opacity','1','important');}}}
+    requestAnimationFrame(()=>{
+     if(settled||seq!==this.transitionSeq||this.transition!==job)return;
+     for(const x of jobs){const c=x.layer.getContainer();if(c)c.style.visibility='visible';}
+     requestAnimationFrame(()=>{
+      if(settled||seq!==this.transitionSeq||this.transition!==job)return;
+      settled=true;this.transition=null;
+      for(const layer of old){if(this.map.hasLayer(layer))this.map.removeLayer(layer);this.radarLayers.delete(layer);}
     this.satLayer=null;this.fogLayer=null;this.radarLayer=null;this.satRenderedTime=null;
     for(const x of jobs){
      const container=x.layer.getContainer();if(container)container.style.visibility='visible';
@@ -439,6 +449,8 @@ class MeteoFoxSatellite{
     if(this.satOn)info.push((this.satMode==='fog'?'RGB Fog':'GeoColour RGB')+' · '+fmt(satTime)+' · idade '+Math.max(0,Math.round((Date.now()-satTime)/60000))+' min');
     if(this.radarOn)info.push('Radar '+fmt(radFrame.time*1000));
     this.state(info.join(' · ')+' · carregado');if(this.satLayer)this.warmTiles(this.satLayer);resolve(true);
+     });
+    });
    };
    if(!remaining){finish(true);return;}
    job.timeout=setTimeout(()=>finish(false),20000);
@@ -448,7 +460,7 @@ class MeteoFoxSatellite{
     x.layer.on('tileerror',()=>errors++);
     x.layer.once('load',()=>{if(!loaded||errors){finish(false);return;}if(--remaining===0)finish(true);});
    }
-   for(const x of jobs){if(settled)break;x.layer.once('add',()=>{const c=x.layer.getContainer();if(c)c.style.visibility='hidden';});x.layer.addTo(this.map);}
+   for(const x of jobs){if(settled)break;x.layer.once('add',()=>{const c=x.layer.getContainer();if(c){c.style.visibility='hidden';c.style.transition='none';}});x.layer.addTo(this.map);}
   });
  }
  select(i){
