@@ -98,11 +98,11 @@ jobs:
           .venv/bin/python -m pip install 'ecmwf-opendata>=0.3,<1'
           echo "- Ambiente Python de geração: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Descarregar 38 prazos híbridos do mesmo Run
+      - name: Descarregar 29 prazos a 0,25° do mesmo Run
         run: |
           start=$(date +%s)
           .venv/bin/python descarregar_meteofox_48h.py
-          echo "- Descarregar GRIB ECMWF híbridos: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Descarregar GRIB ECMWF 0,25°: $(($(date +%s)-start)) s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verificar todos os GRIB2
         run: |
@@ -112,10 +112,10 @@ jobs:
           base = Path("dados_meteofox_48h")
           manifest = json.loads((base / "ultimo_run.json").read_text())
           run_folder = base / manifest["pasta"]
-          for step in range(9,55,3):
-              p = run_folder / f"step_{step:03d}.grib2"
+          for step in [6]+list(range(9,94,3)):
+              p = run_folder / f"step_{step:03d}_025.grib2"
               assert p.exists() and p.stat().st_size > 100_000, f"Incompleto: {p}"
-          print("16 GRIB2 completos:", manifest["run"])
+          print("30 GRIB2 completos:", manifest["run"])
           PY
 
       - name: Gerar os 32 mapas e o HTML
@@ -232,7 +232,7 @@ jobs:
               json.loads(obs_source.read_text(encoding="utf-8"))
               shutil.copy2(obs_source, obs_target / name)
           # Manter igualmente o laboratório e o respetivo ciclo ECMWF 0p25
-          # em cada publicação automática dos 32 mapas 0p1.
+          # em cada publicação automática dos 32 mapas 0p25.
           import json
           lab_page = Path("laboratorio.html")
           lab_data = Path("produtos_experimentais/previsao_ecmwf.json")
@@ -266,7 +266,7 @@ jobs:
           metadata = {
               "schema": 1,
               "model": "ECMWF IFS Open Data",
-              "resolution": "0p1",
+              "resolution": "0p25",
               "cycle_utc": run,
               "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
               "images": {

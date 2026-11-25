@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MeteoFox: confirmar os 16 passos do ciclo IFS 0,1° antes de produzir cartas.
+"""MeteoFox: confirmar os 29 passos do ciclo IFS 0,25° antes de produzir cartas.
 
 Não descarrega ficheiros GRIB nem publica o site. Cada execução verifica a
 data/hora devolvida pelo cliente ECMWF para todos os prazos solicitados.
@@ -11,11 +11,11 @@ import os
 from pathlib import Path
 import time
 
-STEPS = tuple(range(9, 55, 3))
+STEPS = tuple(range(9, 94, 3))
 PARAMETERS = ("tp", "10fg", "10u", "10v")
 UTC = timezone.utc
 
-# Horários UTC de início da VERIFICAÇÃO, tendo em conta a latência do IFS 0p1.
+# Horários UTC de início da VERIFICAÇÃO, tendo em conta a latência do IFS 0p25.
 # Chave = hora:minuto de início; valor = hora UTC do run esperado.
 CHECKS = (("02:40", 18), ("09:45", 0), ("14:40", 6), ("21:45", 12))
 
@@ -44,10 +44,10 @@ def normalize_date(value):
 
 
 def cycle_ready(client, expected):
-    """False se qualquer um dos 16 prazos ainda aponta para outro ciclo."""
+    """False se qualquer um dos 29 prazos ainda aponta para outro ciclo."""
     for step in STEPS:
         result = client.latest(stream="oper", type="fc", levtype="sfc",
-                               step=step, param=list(PARAMETERS))
+                               step=step, param=list(PARAMETERS if step <= 90 else ('tp','10u','10v')))
         found = normalize_date(result)
         print(f"  +{step:02d} h: último run {found:%Y-%m-%d %HZ}", flush=True)
         if found != expected:
@@ -66,10 +66,10 @@ def main():
     expected = normalize_date(args.cycle) if args.cycle else expected_cycle(datetime.now(UTC))
     if expected.hour not in (0, 6, 12, 18):
         parser.error("ciclo inválido")
-    print(f"MeteoFox: aguardar o ciclo IFS 0p1 {expected.isoformat()} (16 passos)", flush=True)
+    print(f"MeteoFox: aguardar o ciclo IFS 0p25 {expected.isoformat()} (29 passos)", flush=True)
 
     from ecmwf.opendata import Client
-    client = Client(source="ecmwf", model="ifs", resol="0p1")
+    client = Client(source="ecmwf", model="ifs", resol="0p25")
     for attempt in range(1, args.tries + 1):
         print(f"Verificação {attempt}/{args.tries} em {datetime.now(UTC):%H:%M:%S} UTC", flush=True)
         try:
@@ -79,7 +79,7 @@ def main():
             print(f"  ECMWF ainda indisponível ou erro de ligação: {exc}", flush=True)
         if ready:
             value = expected.strftime("%Y-%m-%dT%H:%M:%SZ")
-            print(f"CONFIRMADO: 16 passos do ciclo {value}. Pode iniciar a produção.", flush=True)
+            print(f"CONFIRMADO: 29 passos do ciclo {value}. Pode iniciar a produção.", flush=True)
             env_file = os.getenv("GITHUB_ENV")
             if env_file:
                 with Path(env_file).open("a", encoding="utf-8") as handle:

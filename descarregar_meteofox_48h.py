@@ -17,15 +17,15 @@ from ecmwf.opendata import Client
 BASE = Path(__file__).resolve().parent
 RAIZ = BASE / "dados_meteofox_48h"
 RAIZ.mkdir(exist_ok=True)
-PASSOS = list(range(9, 121, 3))
+PASSOS = list(range(9, 94, 3))
 PARAMETROS = ["tp", "10fg", "10u", "10v"]
 
 
 def descarregar():
-    print("MeteoFox | ECMWF IFS 0,1° | 9 h a 54 h")
+    print("MeteoFox | ECMWF IFS 0,25° | 9 h a 93 h")
     print("Campos:", ", ".join(PARAMETROS))
-    print("38 prazos, um unico Run, com 3h de intervalo")
-    client = Client(source="ecmwf", model="ifs", resol="0p1")
+    print("29 prazos, um unico Run, com 3h de intervalo")
+    client = Client(source="ecmwf", model="ifs", resol="0p25")
 
     # Primeiro passo determina o Run disponivel. Não misturar ciclos.
     temporario = RAIZ / "_primeiro_passo.grib2"
@@ -53,14 +53,14 @@ def descarregar():
             raise RuntimeError(f"Ciclo inesperado: pedido {expected}, recebido {ciclo}")
     pasta_run = RAIZ / ciclo.strftime("run_%Y%m%d_%H")
     pasta_run.mkdir(parents=True, exist_ok=True)
-    destino = pasta_run / "step_009.grib2"
+    destino = pasta_run / "step_009_025.grib2"
     temporario.replace(destino)
     print("Run encontrado:", ciclo, "UTC")
     print("+09 h: OK —", round(destino.stat().st_size / 1048576, 2), "MB", flush=True)
 
     # Manifesto é gravado no inicio (e atualizado) para retomar downloads.
     manifesto = {
-        "modelo": "ECMWF IFS", "resolucao": "0p1",
+        "modelo": "ECMWF IFS", "resolucao": "0p25",
         "run": ciclo.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "pasta": pasta_run.name,
         "passos": PASSOS,
@@ -71,10 +71,9 @@ def descarregar():
         json.dumps(manifesto, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
-    coarse = Client(source="ecmwf", model="ifs", resol="0p25")
     falhas = []
-    for passo, low in [(p, False) for p in [6]+list(range(12,55,3))] + [(p, True) for p in range(54,121,3)]:
-        suffix = "_025" if low else ""
+    for passo in [6]+list(range(12,94,3)):
+        suffix = "_025"
         destino = pasta_run / f"step_{passo:03d}{suffix}.grib2"
         if destino.exists() and destino.stat().st_size > 100000:
             print(f"+{passo:02d} h: já descarregado")
@@ -86,7 +85,7 @@ def descarregar():
             try:
                 if temporario.exists():
                     temporario.unlink()
-                (coarse if low else client).retrieve(
+                client.retrieve(
                     date=ciclo.strftime("%Y%m%d"),
                     time=ciclo.hour,
                     stream="oper", type="fc", levtype="sfc",

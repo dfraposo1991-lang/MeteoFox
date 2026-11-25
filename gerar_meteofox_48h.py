@@ -169,7 +169,7 @@ def main():
     run_folder = DATOS / manifest["pasta"]
     steps = [int(v) for v in manifest["passos"]]
     def path(p):
-        return run_folder / f"step_{p:03d}{'_025' if p>54 else ''} .grib2".replace(" ", "")
+        return run_folder / f"step_{p:03d}_025.grib2"
     absent = [p for p in steps if not path(p).exists()]
     if absent:
         raise FileNotFoundError(f"Faltam os GRIB2 dos passos {absent}. Repete o descarregamento.")
@@ -187,10 +187,6 @@ def main():
     for step in steps:
         print(f"Passo +{step:02d} h: a ler GRIB2...", flush=True)
         grib_file = path(step)
-        if step == 57:
-            previous = ler_passo(run_folder / "step_054_025.grib2")["tp"]
-            if previous["cycle"] != run or previous["step"] != 54:
-                raise RuntimeError("Acumulado +54h 0.25 inválido")
         data = ler_passo(grib_file)
         current = data["tp"]
         if current["cycle"] != run or current["step"] != step:
@@ -211,7 +207,7 @@ def main():
                 raise RuntimeError("Grelha da precipitação alterou entre passos")
             rain_3h = np.maximum(current["value"] - previous["value"], 0)
         # Primeiro prazo sem acumulado anterior: não rotular como 3h.
-        interactive.append(dict(step=step, resolution=0.25 if step>54 else 0.1, valid_utc=(run+timedelta(hours=step)).isoformat(),
+        interactive.append(dict(step=step, resolution=0.25, valid_utc=(run+timedelta(hours=step)).isoformat(),
             x=current["x"].tolist(), y=current["y"].tolist(),
             rain=np.round(rain_3h,2).tolist() if previous is not None else None,
             gust=np.round(data["10fg"]["value"]*CONV_KT,2).tolist() if "10fg" in data else None,
