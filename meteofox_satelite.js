@@ -63,7 +63,7 @@ async function actualSatelliteTimes(product=LAYER){
 class MeteoFoxSatellite{
  constructor(map,host){this.map=map;this.host=host;this.satOn=false;this.radarOn=false;this.satTimes=[];this.radarFrames=[];this.timeline=[];this.index=0;this.interval=null;this.satLayer=null;this.radarLayer=null;this.pending=0;this.satKnown=false;this.ready=false;this.radarLayers=new Set();this.radarEpoch=0;this.satRequestSeq=0;this.satRenderedTime=null;this.satPendingTime=null;this.satPendingLayer=null;this.transition=null;this.transitionSeq=0;this.frameTimeout=null;this.playing=false;this.fadeTimer=null;this.fadeOutLayers=[];this.prefetchSat=null;this.prefetchTimer=null;this.speedIndex=1;this.speeds=[.5,1,1.5,2,3];this.satOpacity=1;this.radarOpacity=.66;this.satMode='geo';this.satRenderedMode=null;this.fogLayer=null;this.fogRenderedTime=null;this.fogStatus=null;
   // Fronteiras discretas sobre a nebulosidade: só com satélite ativo.
-  this.tileCache=new Map();this.tileWarmEpoch=0;this.tileCacheLimit=192;
+  this.tileCache=new Map();this.tileWarmEpoch=0;this.tileCacheLimit=128;
   this.bordersLayer=null;this.bordersRequest=null;
   this.bordersPane=map.getPane('meteofoxCountryBorders')||map.createPane('meteofoxCountryBorders');
   this.bordersPane.style.zIndex='650';
@@ -141,7 +141,7 @@ class MeteoFoxSatellite{
   this.state('Fog RGB indisponível ('+reason+'). Reposição segura do GeoColour.');
   if(this.satOn&&this.timeline.length)this.select(this.index);
  }
- borderStyle(){return {color:this.satMode==='fog'?'#e0e5eb':'#69717a',weight:this.satMode==='fog'?1.4:1.05,opacity:this.satMode==='fog'?.9:.57,fill:false,lineCap:'round',lineJoin:'round'};}
+ borderStyle(){return {color:'#69717a',weight:1.05,opacity:.57,fill:false,lineCap:'round',lineJoin:'round'};}
  async syncSatelliteBorders(){
   if(!this.satOn){
    if(this.bordersLayer&&this.map.hasLayer(this.bordersLayer))this.map.removeLayer(this.bordersLayer);
@@ -247,7 +247,7 @@ class MeteoFoxSatellite{
  }
  warmTiles(layer){
   const epoch=++this.tileWarmEpoch;
-  if(!this.playing||document.hidden||!this.satOn)return;
+  if(document.hidden||!this.satOn)return;
   const urls=[];
   for(let offset=1;offset<=Math.min(2,this.timeline.length-1);offset++){
    const time=this.nearestSat(this.timeline[(this.index+offset)%this.timeline.length]);
@@ -260,17 +260,17 @@ class MeteoFoxSatellite{
    }
   }
   let cursor=0;
-  const worker=async()=>{while(epoch===this.tileWarmEpoch&&this.playing&&!document.hidden&&cursor<urls.length){
+  const worker=async()=>{while(epoch===this.tileWarmEpoch&&this.satOn&&!document.hidden&&cursor<urls.length){
    const url=urls[cursor++];try{await this.cachedTile(url).promise;}catch(e){}
   }};
-  for(let i=0;i<4;i++)worker();
+  for(let i=0;i<6;i++)worker();
  }
  createSatLayer(time){
   const mode=this.modeForTime(time);
   const layer=L.tileLayer.wms(WMS,{
    layers:mode==='fog'?FOG_LAYER:LAYER,styles:'',format:'image/png',transparent:true,version:'1.1.1',detectRetina:false,
    time:new Date(time).toISOString().replace('.000Z','Z'),opacity:this.satOpacity,zIndex:300,maxZoom:16,
-   keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
+   tileSize:512,keepBuffer:0,updateWhenIdle:true,attribution:'© EUMETSAT / NASA'
   });
   const originalUrl=layer.getTileUrl.bind(layer);
   layer.getTileUrl=coords=>{const url=new URL(originalUrl(coords));url.searchParams.set('time',new Date(time).toISOString().replace('.000Z','Z'));url.searchParams.set('width','512');url.searchParams.set('height','512');return url.toString();};
@@ -469,7 +469,7 @@ class MeteoFoxSatellite{
    if(!this.playing)return;
    const i=this.index>=this.timeline.length-1?0:this.index+1;
    await this.select(i);
-   if(this.playing)this.frameTimeout=setTimeout(tick,Math.round(1100/this.speeds[this.speedIndex]));
+   if(this.playing)this.frameTimeout=setTimeout(tick,Math.round(650/this.speeds[this.speedIndex]));
   };
   tick();
  }
