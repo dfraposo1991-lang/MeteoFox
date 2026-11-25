@@ -72,7 +72,7 @@ header{flex:none;position:relative;z-index:1100}
 #toggleMapControls:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .map-overlays{top:53px}
 .map-overlays[hidden]{display:none!important}
-#satTools .mf-opacity-controls{display:flex;flex-wrap:wrap;gap:8px 13px;align-items:center;width:100%;padding:8px;background:rgba(4,30,51,.34);border:1px solid rgba(255,255,255,.22);border-radius:8px}
+#satTools .mf-opacity-controls{display:flex;flex-wrap:wrap;gap:8px 13px;align-items:center;width:auto;max-width:100%;flex:0 1 auto;padding:8px;background:rgba(4,30,51,.34);border:1px solid rgba(255,255,255,.22);border-radius:8px}
 #satTools .mf-opacity-controls[hidden]{display:none!important}
 #satTools .mf-opacity-item{display:flex;gap:7px;align-items:center;white-space:nowrap;color:#fff;font-size:11px}
 #satTools .mf-opacity-item input{width:105px;max-width:28vw;min-width:65px}
@@ -125,7 +125,7 @@ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:700 15px Inter,
 </tbody></table></section></div><p class="metar-caveat">Categoria determinada pela condição mais restritiva de visibilidade e teto. SM = milha terrestre. Classificação indicativa baseada no METAR disponível; não substitui informação aeronáutica oficial.</p>
 
 </aside>
-</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./meteofox_fog_mask.js"></script><script src="./meteofox_satelite.js?v=20261125-timeline-right-2"></script><script src="./meteofox_ru_aviation.js"></script><script>
+</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./meteofox_fog_mask.js"></script><script src="./meteofox_satelite.js?v=20261125-opacity-inline-1"></script><script src="./meteofox_ru_aviation.js"></script><script>
 const $=id=>document.getElementById(id);
 let airportRenderer=null;
 const DATA_URL='https://raw.githubusercontent.com/dfraposo1991-lang/MeteoFox/main/data/aviation.json';

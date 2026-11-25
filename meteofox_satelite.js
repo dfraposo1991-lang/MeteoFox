@@ -84,10 +84,12 @@ class MeteoFoxSatellite{
   this.forward=add('button',timelineControls,'▶',{'type':'button','title':'Imagem seguinte'});this.forward.disabled=true;
   this.liStatus=add('span',host,'',{class:'sat-status','aria-live':'polite'});
   this.liButton.onclick=()=>{this.liOn=!this.liOn;this.liButton.textContent='⚡ Descargas: '+(this.liOn?'ligado':'desligado');this.liButton.setAttribute('aria-pressed',String(this.liOn));this.syncLightning();};
-  this.play=add('button',host,'▶ Animar',{'type':'button'});this.play.disabled=true;
-  this.speedButton=add('button',host,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
-  this.opacityButton=add('button',host,'◐ Opacidade',{'type':'button','aria-expanded':'true','title':'Mostrar ou ocultar opções de opacidade'});
-  const opacityControls=add('div',host,null,{'class':'mf-opacity-controls','role':'group','aria-label':'Opacidade das camadas'});
+  const animationRow=add('div',host,null,{class:'mf-observation-animation'});
+  animationRow.style.cssText='display:flex;align-items:center;flex-wrap:wrap;gap:7px;width:100%';
+  this.play=add('button',animationRow,'▶ Animar',{'type':'button'});this.play.disabled=true;
+  this.speedButton=add('button',animationRow,'Velocidade: 1×',{'type':'button','title':'Alterar velocidade da animação','aria-label':'Velocidade da animação: 1 vez'});
+  this.opacityButton=add('button',animationRow,'◐ Opacidade',{'type':'button','aria-expanded':'true','title':'Mostrar ou ocultar opções de opacidade'});
+  const opacityControls=add('div',animationRow,null,{'class':'mf-opacity-controls','role':'group','aria-label':'Opacidade das camadas'});
   this.opacityButton.onclick=()=>{
    const hide=!opacityControls.hidden;
    opacityControls.hidden=hide;
