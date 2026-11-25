@@ -331,9 +331,21 @@ try{
    if(sat.transition||!sat.satLayer||sat.satRenderedMode!==mode)throw Error('Missing initial '+mode+' after waiting for committed frame');
    sat.satOpacitySlider.value='100';
    sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
-   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   const coverage=()=>{
+    const l=sat.satLayer,c=l?.getContainer();
+    if(!c?.isConnected||getComputedStyle(c).visibility==='hidden')return [];
+    const opacity=Number(getComputedStyle(c).opacity);
+    return Object.values(l._tiles||{}).filter(t=>t.current&&t.loaded&&t.el instanceof HTMLCanvasElement&&t.el.isConnected&&t.el.width>0&&t.el.height>0).map(t=>opacity*Number(getComputedStyle(t.el).opacity));
+   };
+   const settleDeadline=performance.now()+5000;
+   while(performance.now()<settleDeadline){
+    const values=coverage();
+    if(values.length&&values.every(v=>v>=.99))break;
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+   }
+   if(!coverage().length||!coverage().every(v=>v>=.99))throw Error('Initial opacity did not settle: '+mode+' '+JSON.stringify(coverage()));
    for(let i=0;i<Math.min(4,sat.timeline.length);i++){
-    let running=true,blank=0,samples=0;const diagnostics=[];
+    let running=true,blank=0,samples=0,dimmed=0;const diagnostics=[];
     const start=performance.now();
     const sample=()=>{
      if(!running)return;
@@ -346,13 +358,15 @@ try{
       if(style.visibility==='hidden'||Number(style.opacity)<.99)return false;
       return Object.values(l._tiles||{}).some(t=>t.current&&t.loaded&&t.el instanceof HTMLCanvasElement&&t.el.width>0&&t.el.height>0&&t.el.isConnected&&Number(getComputedStyle(t.el).opacity)>.99);
      });
-     if(!visible){blank++;if(diagnostics.length<3)diagnostics.push({opacity:sat.satOpacity,layers:layers.map(l=>{const c=l.getContainer();return {mode:l.meteofoxMode,opacity:c&&getComputedStyle(c).opacity,visibility:c&&getComputedStyle(c).visibility,tiles:Object.values(l._tiles||{}).map(t=>({current:t.current,loaded:!!t.loaded,tag:t.el?.tagName,connected:t.el?.isConnected,opacity:t.el&&getComputedStyle(t.el).opacity}))};})});}
+     const values=coverage();
+     if(!values.some(v=>v>0))blank++;
+     if(!visible||values.some(v=>v<.99)){dimmed++;if(diagnostics.length<3)diagnostics.push({opacity:sat.satOpacity,layers:layers.map(l=>{const c=l.getContainer();return {mode:l.meteofoxMode,opacity:c&&getComputedStyle(c).opacity,visibility:c&&getComputedStyle(c).visibility,tiles:Object.values(l._tiles||{}).map(t=>({current:t.current,loaded:!!t.loaded,tag:t.el?.tagName,connected:t.el?.isConnected,opacity:t.el&&getComputedStyle(t.el).opacity}))};})});}
      requestAnimationFrame(sample);
     };
     sample();
     const ok=await sat.select(i);
-    running=false;
-    results.push({mode,i,ok,blank,samples,diagnostics,ms:Math.round(performance.now()-start),time:sat.satRenderedTime,requested:sat.nearestSat(sat.timeline[i]),layer:sat.satLayer?.wmsParams?.layers,wmsTime:Date.parse(sat.satLayer?.wmsParams?.time)});
+    sample();running=false;
+    results.push({mode,i,ok,blank,samples,dimmed,diagnostics,ms:Math.round(performance.now()-start),time:sat.satRenderedTime,requested:sat.nearestSat(sat.timeline[i]),layer:sat.satLayer?.wmsParams?.layers,wmsTime:Date.parse(sat.satLayer?.wmsParams?.time)});
    }
   }
   return results;
@@ -362,6 +376,7 @@ try{
   assert.equal(r.ok,true,JSON.stringify(r));
   assert.ok(r.samples>0,'No render samples: '+JSON.stringify(r));
   assert.equal(r.blank,0,'Blank render sample: '+JSON.stringify(r));
+  assert.equal(r.dimmed,0,'Opacity instability after initial settling: '+JSON.stringify(r));
   assert.equal(r.time,r.requested);
   assert.equal(r.wmsTime,r.requested);
   assert.equal(r.layer,r.mode==='fog'?'mtg_fd:rgb_fog':'mtg_fd:rgb_geocolour');
