@@ -324,7 +324,11 @@ try{
    await sat.setSatellite(true,mode);
    sat.satOpacitySlider.value='100';
    sat.satOpacitySlider.dispatchEvent(new Event('input',{bubbles:true}));
-   if(!sat.satLayer)throw Error('Missing initial '+mode);
+   // setSatellite resolves after scheduling refreshTimeline, not after tile commit.
+   const deadline=performance.now()+25000;
+   while((sat.transition||!sat.satLayer||sat.satRenderedMode!==mode)&&performance.now()<deadline)
+    await new Promise(resolve=>setTimeout(resolve,25));
+   if(sat.transition||!sat.satLayer||sat.satRenderedMode!==mode)throw Error('Missing initial '+mode+' after waiting for committed frame');
    for(let i=0;i<Math.min(4,sat.timeline.length);i++){
     let running=true,blank=0,samples=0;
     const start=performance.now();
@@ -337,12 +341,12 @@ try{
       const c=l.getContainer();if(!c||!c.isConnected)return false;
       const style=getComputedStyle(c);
       if(style.visibility==='hidden'||Number(style.opacity)<.99)return false;
-      return [...c.querySelectorAll('.leaflet-tile-loaded')].some(tile=>Number(getComputedStyle(tile).opacity)>.99);
+      return Object.values(l._tiles||{}).some(t=>t.current&&t.loaded&&t.el instanceof HTMLCanvasElement&&t.el.width>0&&t.el.height>0&&t.el.isConnected&&Number(getComputedStyle(t.el).opacity)>.99);
      });
      if(!visible)blank++;
      requestAnimationFrame(sample);
     };
-    requestAnimationFrame(sample);
+    sample();
     const ok=await sat.select(i);
     running=false;
     results.push({mode,i,ok,blank,samples,ms:Math.round(performance.now()-start),time:sat.satRenderedTime,requested:sat.nearestSat(sat.timeline[i]),layer:sat.satLayer?.wmsParams?.layers,wmsTime:Date.parse(sat.satLayer?.wmsParams?.time)});
@@ -353,6 +357,7 @@ try{
  console.log('SATELLITE FRAME AUDIT',JSON.stringify(audit));
  for(const r of audit){
   assert.equal(r.ok,true,JSON.stringify(r));
+  assert.ok(r.samples>0,'No render samples: '+JSON.stringify(r));
   assert.equal(r.blank,0,'Blank render sample: '+JSON.stringify(r));
   assert.equal(r.time,r.requested);
   assert.equal(r.wmsTime,r.requested);
