@@ -152,6 +152,8 @@ jobs:
               shutil.copy2(folder / name, out / name)
               for frame_file in folder.glob(f"forecast_A_{product}_*.json"):
                   shutil.copy2(frame_file, out / frame_file.name)
+          for frame_file in folder.glob("forecast_B_*.json"):
+              shutil.copy2(frame_file, out / frame_file.name)
           (out / "cycle.txt").write_text(run + "\n", encoding="utf-8")
           assert len(list(out.glob("*.png"))) == 32
           print("Pacote independente validado: 32 PNG e animação |", run)
@@ -208,6 +210,8 @@ jobs:
               shutil.copy2(source / name, out / name)
               for frame_file in source.glob(f"forecast_A_{product}_*.json"):
                   shutil.copy2(frame_file, out / frame_file.name)
+          for frame_file in source.glob("forecast_B_*.json"):
+              shutil.copy2(frame_file, out / frame_file.name)
           animation = source / "MeteoFox_animacao_48h.html"
           assert animation.exists() and animation.stat().st_size > 1000
           # Guardar a animação separadamente, para nunca substituir o site principal.

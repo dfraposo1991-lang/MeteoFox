@@ -219,6 +219,32 @@ jobs:
                           (public / name).write_text(json.dumps(dict(run_utc=payload['run_utc'], frame=frame),separators=(',',':')),encoding='utf-8')
                           index['frames'].append(dict(step=frame['step'],valid_utc=frame['valid_utc'],file=name))
                       (public / f'forecast_A_{product}_index.json').write_text(json.dumps(index,separators=(',',':')),encoding='utf-8')
+                  for product in ('rain','gust'):
+                      try:
+                          name = f'forecast_B_{product}_index.json'
+                          with urlopen(Request(base+name,headers={'User-Agent':'MeteoFox'}),timeout=20) as reply:
+                              idx = json.load(reply)
+                          if idx['run_utc'] != grid['run_utc']:
+                              continue
+                          retained = []
+                          for meta in idx['frames']:
+                              step = int(meta['step'])
+                              filename = f'forecast_B_{product}_{step:03d}.json'
+                              if step not in range(9,55,3) or meta['file'] != filename:
+                                  continue
+                              try:
+                                  with urlopen(Request(base+filename,headers={'User-Agent':'MeteoFox'}),timeout=20) as reply:
+                                      frame = json.load(reply)
+                                  if frame['run_utc'] != idx['run_utc'] or frame['frame']['step'] != step:
+                                      continue
+                                  (public / filename).write_text(json.dumps(frame,separators=(',',':')),encoding='utf-8')
+                                  retained.append(meta)
+                              except Exception as exc:
+                                  print('Região B:',filename,exc)
+                          idx['frames'] = retained
+                          (public / name).write_text(json.dumps(idx,separators=(',',':')),encoding='utf-8')
+                      except Exception as exc:
+                          print('Região B indisponível:',exc)
           except Exception as exc:
               print('Grelha interativa ainda indisponível:', exc)
           (public / '.nojekyll').write_text('', encoding='utf-8')

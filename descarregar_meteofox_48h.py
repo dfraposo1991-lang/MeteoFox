@@ -110,7 +110,23 @@ def descarregar():
         raise RuntimeError(f"GRIB em falta: {falhas}")
     else:
         print("Todos os prazos descarregados!")
-        print("Agora, no Ubuntu: python3 gerar_meteofox_48h.py")
+    # Region B is optional: failure must not block the regional forecast.
+    high = Client(source="ecmwf", model="ifs", resol="0p1")
+    for passo in range(6,55,3):
+        destino = pasta_run / f"step_{passo:03d}_01.grib2"
+        temp = destino.with_suffix(".part")
+        try:
+            high.retrieve(date=ciclo.strftime("%Y%m%d"), time=ciclo.hour,
+                stream="oper", type="fc", levtype="sfc", step=passo,
+                param=PARAMETROS, target=str(temp))
+            if temp.stat().st_size < 100000:
+                raise RuntimeError("GRIB incompleto")
+            temp.replace(destino)
+        except Exception as exc:
+            temp.unlink(missing_ok=True)
+            print(f"Região B +{passo}h indisponível: {exc}", flush=True)
+    print("Região B: descarregamento terminado")
+    print("Agora, no Ubuntu: python3 gerar_meteofox_48h.py")
 
 
 if __name__ == "__main__":

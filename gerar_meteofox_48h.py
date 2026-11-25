@@ -37,7 +37,8 @@ def carregar_modulo(path, name):
     return module
 
 
-def ler_passo(path):
+def ler_passo(path, bounds=(-40, 0, 25, 50)):
+    west, east, south, north = bounds
     dados = {}
     inventory = []
     with path.open("rb") as f:
@@ -62,8 +63,8 @@ def ler_passo(path):
                 val = codes_get_array(gid, "values").reshape(ny, nx)
                 lon = np.where(lon > 180, lon-360, lon)
                 # Selecionar colunas individualmente: o domínio cruza Greenwich.
-                rows = np.flatnonzero((lat[:,0] >= 25-1e-6) & (lat[:,0] <= 50+1e-6))
-                cols = np.flatnonzero((lon[0,:] >= -40-1e-6) & (lon[0,:] <= 1e-6))
+                rows = np.flatnonzero((lat[:,0] >= south-1e-6) & (lat[:,0] <= north+1e-6))
+                cols = np.flatnonzero((lon[0,:] >= west-1e-6) & (lon[0,:] <= east+1e-6))
                 rows = rows[np.argsort(lat[rows,0])]
                 cols = cols[np.argsort(lon[0,cols])]
                 if len(rows)<2 or len(cols)<2:
@@ -252,6 +253,35 @@ def main():
             (out / name).write_text(json.dumps(dict(run_utc=payload["run_utc"], frame=frame), allow_nan=False, separators=(",", ":")), encoding="utf-8")
             index["frames"].append(dict(step=frame["step"], valid_utc=frame["valid_utc"], file=name))
         (out / f"forecast_A_{product}_index.json").write_text(json.dumps(index, separators=(",", ":")), encoding="utf-8")
+    # Region B: separate same-cycle frames, never interpolate coarse data.
+    local = []
+    previous_b = None
+    for step in range(6,55,3):
+        try:
+            data_b = ler_passo(run_folder / f"step_{step:03d}_01.grib2", (-10,-6,36.9,42.2))
+            c = data_b["tp"]
+            if c["cycle"] != run or c["step"] != step or not np.allclose(np.diff(c["x"]), .1) or not np.allclose(np.diff(c["y"]), .1):
+                raise RuntimeError("Ciclo, prazo ou resolução B inválidos")
+            if step >= 9 and previous_b is not None and previous_b["step"] == step-3:
+                if not (np.array_equal(c["x"],previous_b["x"]) and np.array_equal(c["y"],previous_b["y"])):
+                    raise RuntimeError("Grelha B alterada")
+                local.append(dict(step=step,resolution=.1,valid_utc=(run+timedelta(hours=step)).isoformat(),
+                    x=c["x"].tolist(),y=c["y"].tolist(),
+                    rain=np.round(np.maximum(c["value"]-previous_b["value"],0),2).tolist(),
+                    gust=np.round(data_b["10fg"]["value"]*CONV_KT,2).tolist(),
+                    u=np.round(data_b["10u"]["value"],2).tolist(),v=np.round(data_b["10v"]["value"],2).tolist()))
+            previous_b = c
+        except Exception as exc:
+            previous_b = None
+            print(f"Região B +{step}h: {exc}",flush=True)
+    for product, fields in (("rain",("rain",)),("gust",("gust","u","v"))):
+        index = dict(run_utc=run.isoformat(),frames=[])
+        for frame in local:
+            name = f"forecast_B_{product}_{frame['step']:03d}.json"
+            keys = ("step","resolution","valid_utc","x","y")+fields
+            (out / name).write_text(json.dumps(dict(run_utc=run.isoformat(),frame={k:frame[k] for k in keys}),allow_nan=False,separators=(",",":")),encoding="utf-8")
+            index["frames"].append(dict(step=frame["step"],valid_utc=frame["valid_utc"],file=name))
+        (out / f"forecast_B_{product}_index.json").write_text(json.dumps(index,separators=(",",":")),encoding="utf-8")
     criar_html(run.strftime("%d/%m/%Y %H:%M"), [p for p in steps if p<=54], out)
     print("\nCONCLUÍDO")
     print("Ficheiros PNG:", len([p for p in steps if p<=54]) * 2)
