@@ -45,7 +45,7 @@ def main():
     m=json.loads(Path("dados_meteofox_48h/ultimo_run.json").read_text())
     run=datetime.fromisoformat(m["run"].replace("Z","+00:00"))
     out=Path("MeteoFox_48h_"+run.strftime("%Y%m%d_%HUTC"))
-    for region,h,res,bounds,last in [("A",.25,"0p25",(-40,0,25,50),93),("B",.1,"0p1",(-10,-6,36.9,42.2),54)]:
+    for region,h,res,bounds,last in [("A",.25,"0p25",(-40,0,25,50),93)]:
         client=Client(source="ecmwf",model="ifs",resol=res)
         indexes={"cloud":[],"snow":[]}
         previous=None
