@@ -318,7 +318,7 @@ async function refresh(){
 }
 function initialize(){
  if(!window.L){$('count').textContent='Biblioteca cartográfica indisponível';return;}
- appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true,zoomControl:false}).setView([37.5,-14.8],5);L.control.zoom({position:'bottomright'}).addTo(appMap);
+ appMap=L.map('largeMap',{preferCanvas:true,scrollWheelZoom:true,zoomControl:false,zoomSnap:0}).setView([37.5,-14.8],5);L.control.zoom({position:'bottomright'}).addTo(appMap);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(appMap);
  // Pane dedicado acima das fronteiras (550), incluindo quando o mapa prefere Canvas.
  const airportsPane=appMap.getPane('meteofoxAirports')||appMap.createPane('meteofoxAirports');
@@ -337,11 +337,36 @@ function initialize(){
  else{$('satTools').textContent='Os controlos de satélite estão indisponíveis: confirma se meteofox_satelite.js foi publicado.';}
  paintMarkers();refresh();
  $('refresh').addEventListener('click',refresh);
- $('all').addEventListener('click',()=>appMap.fitBounds([[25,-40],[50,0]]));
- $('valencia').addEventListener('click',()=>appMap.setView(OBS_AIRPORT_POS.LEVC,9));
- $('mainland').addEventListener('click',()=>appMap.fitBounds([[36.9,-10],[42.2,-6]]));
- $('islands').addEventListener('click',()=>appMap.setView([37.7,-25.5],7));
- $('madeira').addEventListener('click',()=>appMap.setView([32.8,-16.7],9));
+ // Fit the complete selected domain, hiding only geographic space outside it.
+ let selectedDomain=null;
+ const mapElement=$('largeMap');
+ function updateDomainClip(){
+   if(!selectedDomain){mapElement.style.clipPath='';return;}
+   const nw=appMap.latLngToContainerPoint(selectedDomain.getNorthWest());
+   const se=appMap.latLngToContainerPoint(selectedDomain.getSouthEast());
+   const size=appMap.getSize();
+   const left=Math.max(0,Math.min(size.x,nw.x)),right=Math.max(0,Math.min(size.x,se.x));
+   const top=Math.max(0,Math.min(size.y,nw.y)),bottom=Math.max(0,Math.min(size.y,se.y));
+   // Clip map panes, not controls, so zoom and forecast controls remain accessible.
+   const pane=appMap.getPane('mapPane');
+   const origin=appMap.containerPointToLayerPoint([0,0]);
+   pane.style.clipPath='polygon('+[[left,top],[right,top],[right,bottom],[left,bottom]].map(([x,y])=>(x+origin.x)+'px '+(y+origin.y)+'px').join(',')+')';
+ }
+ function clearDomain(){selectedDomain=null;appMap.getPane('mapPane').style.clipPath='';}
+ function selectDomain(bounds){
+   selectedDomain=L.latLngBounds(bounds);
+   appMap.fitBounds(selectedDomain,{animate:false,padding:[0,0]});
+   updateDomainClip();
+ }
+ appMap.on('move zoom moveend zoomend resize',updateDomainClip);
+ appMap.on('dragstart zoomstart',()=>{if(!fittingDomain)clearDomain();});
+ let fittingDomain=false;
+ function fitDomain(bounds){fittingDomain=true;try{selectDomain(bounds);}finally{fittingDomain=false;}}
+ $('all').addEventListener('click',()=>fitDomain([[25,-40],[50,0]]));
+ $('valencia').addEventListener('click',()=>{clearDomain();appMap.setView(OBS_AIRPORT_POS.LEVC,9);});
+ $('mainland').addEventListener('click',()=>fitDomain([[36.9,-10],[42.2,-6]]));
+ $('islands').addEventListener('click',()=>{clearDomain();appMap.setView([37.7,-25.5],7);});
+ $('madeira').addEventListener('click',()=>{clearDomain();appMap.setView([32.8,-16.7],9);});
 }
 
 function setupMapLegends(){
