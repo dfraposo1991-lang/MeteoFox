@@ -476,29 +476,37 @@ const key=grid.run_utc+'|'+mode+'|'+f.step+'|'+(local?'B':'A')+'|'+(f.resampled?
 function paint(field){
  const values=field[mode];if(!values)return;
  const x=field.x,y=field.y;
- // Interpolate scalar values in geographic coordinates before classifying colours.
- // Four visual subdivisions per native cell; never modify the source grid.
- const n=4, palette=z.colors;
- for(let j=0;j<y.length-1;j++)for(let i=0;i<x.length-1;i++){
-   const a=values[j][i],b=values[j][i+1],d=values[j+1][i],e=values[j+1][i+1];
-   if(![a,b,d,e].every(Number.isFinite))continue;
-   if(mode==='rain'&&Math.max(a,b,d,e)<=.2)continue;
-   for(let q=0;q<n;q++){
-     const t=(q+.5)/n,lo=a+(d-a)*t,hi=b+(e-b)*t;
-     const bottom=py(y[j]+(y[j+1]-y[j])*q/n),top=py(y[j]+(y[j+1]-y[j])*(q+1)/n);
-     for(let p=0;p<n;p++){
-       const v=lo+(hi-lo)*(p+.5)/n;
-       if(mode==='rain'&&v<=.2)continue;
-       let k=z.levels.findIndex(level=>v<level)-1;
-       if(v>=z.levels.at(-1))k=palette.length-1;
-       if(k<0)continue;
-       const left=px(x[i]+(x[i+1]-x[i])*p/n),right=px(x[i]+(x[i+1]-x[i])*(p+1)/n);
-       ctx.fillStyle=palette[k];ctx.fillRect(Math.round(left),Math.round(top),Math.round(right)-Math.round(left),Math.round(bottom)-Math.round(top));
-     }
+ const left=Math.max(0,Math.round(px(x[0]))),right=Math.min(c.width,Math.round(px(x.at(-1))));
+ const top=Math.max(0,Math.round(py(y.at(-1)))),bottom=Math.min(c.height,Math.round(py(y[0])));
+ const w=right-left,h=bottom-top;if(w<=0||h<=0)return;
+ const image=ctx.createImageData(w,h),data=image.data;
+ const palette=z.colors.map(hex=>parseInt(hex.slice(1),16)),levels=z.levels,rain=mode==='rain';
+ function axisLookup(axis,count,coordinate){
+   const indices=new Int32Array(count),weights=new Float64Array(count);
+   for(let p=0;p<count;p++){
+     const v=coordinate(p);let lo=0,hi=axis.length-1;
+     while(hi-lo>1){const mid=(lo+hi)>>1;if(axis[mid]<=v)lo=mid;else hi=mid;}
+     indices[p]=lo;weights[p]=Math.max(0,Math.min(1,(v-axis[lo])/(axis[lo+1]-axis[lo])));
+   }return {indices,weights};
+ }
+ const xx=axisLookup(x,w,p=>west+(left+p+.5)/c.width*(east-west));
+ const yy=axisLookup(y,h,p=>Math.atan(Math.sinh(ny-(top+p+.5)/c.height*(ny-sy)))*180/Math.PI);
+ for(let q=0;q<h;q++){
+   const j=yy.indices[q],t=yy.weights[q],row0=values[j],row1=values[j+1];
+   for(let p=0;p<w;p++){
+     const i=xx.indices[p],s=xx.weights[p],a=row0[i],b=row0[i+1],d=row1[i],e=row1[i+1];
+     if(!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||!Number.isFinite(e))continue;
+     const v=(a+(b-a)*s)*(1-t)+(d+(e-d)*s)*t;
+     if((rain&&v<=.2)||v<levels[0])continue;
+     let lo=0,hi=levels.length;while(hi-lo>1){const mid=(lo+hi)>>1;if(levels[mid]<=v)lo=mid;else hi=mid;}
+     const rgb=palette[Math.min(lo,palette.length-1)],k=(q*w+p)*4;
+     data[k]=rgb>>16&255;data[k+1]=rgb>>8&255;data[k+2]=rgb&255;data[k+3]=255;
    }
  }
+ // putImageData replaces the local rectangle, including transparent rain pixels.
+ ctx.putImageData(image,left,top);
 }
-paint(f);if(local){const lx=local.x,ly=local.y;const left=px(lx[0]),top=py(ly.at(-1)),width=px(lx.at(-1))-left,height=py(ly[0])-top;ctx.save();ctx.beginPath();ctx.rect(left,top,width,height);ctx.clip();ctx.clearRect(left,top,width,height);paint(local);ctx.restore();}
+paint(f);if(local&&local[mode])paint(local);
 raster=cacheRaster(key,{canvas:c,bounds:[[south,west],[north,east]]});}
 if(!layer)layer=new ForecastCanvas().addTo(appMap);layer.setRaster(raster);layer.setOpacity(+opacity.value/100);renderedFrame=f;renderedLocal=local;if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}status.textContent='ECMWF IFS · '+(local?'0,25° / 0,1° · ':'0,25° · ')+(f.resampled?'Região A reamostrada (run anterior) · ':'')+(mode==='gust'?'barbelas: vento médio 10 m (kt)':'precipitação 3h');}
 async function select(m){stop();mode=mode===m?'':m;if(sat){sat.forecastBordersOn=!!mode;sat.syncSatelliteBorders();}el('fcRain').setAttribute('aria-pressed',String(mode==='rain'));el('fcGust').setAttribute('aria-pressed',String(mode==='gust'));clear();grid=null;el('fcLegend').replaceChildren();if(!mode){status.textContent='';valid.textContent='';return;}const z=scales[mode];for(let i=0;i<z.colors.length;i++){const a=document.createElement('span');a.style.cssText='background:'+z.colors[i]+';color:#172b3d;padding:2px 4px;border-radius:2px';a.textContent=z.levels[i]+' '+z.unit;el('fcLegend').append(a);}try{status.textContent='A carregar previsão…';const requested=mode;const d=await load(requested);if(mode!==requested)return;grid=d;time.max=d.frames.length-1;time.value=Math.min(+time.value,+time.max);draw();}catch(e){status.textContent='Previsão indisponível: aguarda publicação do próximo run';}}
