@@ -53,7 +53,8 @@ def main():
                 for p in ("r","t"):
                     assert np.array_equal(x,fields[p][0]) and np.array_equal(y,fields[p][1])
                 rh=fields["r"][2];temp=fields["t"][2]
-                assert cape.min()>=-1 and rh.min()>=0 and rh.max()<=110 and temp.min()>150 and temp.max()<330
+                if not (cape.min()>=-1 and rh.min()>=0 and rh.max()<=110 and temp.min()>150 and temp.max()<330):
+                    raise ValueError(f"Physical range: CAPE {cape.min()}..{cape.max()}, RH {rh.min()}..{rh.max()}, T {temp.min()}..{temp.max()}")
                 # Heuristic environmental scores, not parcel depth, cloud occurrence or flash density.
                 moist=np.clip((rh-35)/40,0,1)
                 buoy=np.clip(cape/1500,0,1)
@@ -67,7 +68,9 @@ def main():
                     (out/name).write_text(json.dumps(dict(run_utc=run.isoformat(),frame=frame),separators=(",",":"),allow_nan=False))
                     indexes[product].append(dict(step=step,valid_utc=valid,file=name))
             except Exception as exc:
-                print("Convection",step,exc,flush=True)
+                import traceback
+                print("Convection",step,repr(exc),flush=True)
+                traceback.print_exc()
     for product,frames in indexes.items():
         (out/f"forecast_A_{product}_index.json").write_text(json.dumps(dict(run_utc=run.isoformat(),frames=frames,experimental=True)))
 if __name__=="__main__": main()
