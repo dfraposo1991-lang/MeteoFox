@@ -13,6 +13,7 @@ on:
       - 'gerar_thetae.py'
       - 'gerar_visibilidade_ceiling.py'
       - 'gerar_indices_conveccao.py'
+      - 'verificar_produtos_opcionais.py'
       - 'verificar_ecmwf_48h.py'
       - 'mapa_chuva_meteofox_v15_16W_6W_run.py'
       - 'mapa_rajadas_meteofox_v4.py'
@@ -142,6 +143,9 @@ jobs:
         timeout-minutes: 20
         run: .venv/bin/python gerar_indices_conveccao.py
 
+      - name: Auditar produtos opcionais
+        run: .venv/bin/python verificar_produtos_opcionais.py | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Guardar 32 cartas e animação como artefacto independente
         shell: bash
         run: |
@@ -166,6 +170,7 @@ jobs:
           shutil.copy2(animation, out / animation.name)
           shutil.copy2(folder / "forecast_grid.json", out / "forecast_grid.json")
           shutil.copy2(folder / "ecmwf_quality.json", out / "ecmwf_quality.json")
+          shutil.copy2(folder / "optional_quality.json", out / "optional_quality.json")
           for product in ("rain", "gust"):
               name = f"forecast_A_{product}.json"
               shutil.copy2(folder / name, out / name)
