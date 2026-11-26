@@ -28,7 +28,7 @@ def read(path,run,step):
                 x,y=lon[ix],lat[iy]
                 assert len(x)==161 and len(y)==101 and np.allclose(np.diff(x),.25) and np.allclose(np.diff(y),.25)
                 a=codes_get_array(g,"values").reshape(ny,nx)[np.ix_(iy,ix)]
-                assert np.isfinite(a).all() and (abs(a)<1e8).all()
+                a=np.where(np.isfinite(a)&(abs(a)<1e8),a,np.nan)
                 fields[p]=(x,y,a)
             finally: codes_release(g)
     return fields
@@ -53,8 +53,10 @@ def main():
                 for p in ("r","t"):
                     assert np.array_equal(x,fields[p][0]) and np.array_equal(y,fields[p][1])
                 rh=fields["r"][2];temp=fields["t"][2]
-                if not (cape.min()>=-1 and rh.min()>=0 and rh.max()<=110 and temp.min()>150 and temp.max()<330):
-                    raise ValueError(f"Physical range: CAPE {cape.min()}..{cape.max()}, RH {rh.min()}..{rh.max()}, T {temp.min()}..{temp.max()}")
+                good=np.isfinite(cape)&np.isfinite(rh)&np.isfinite(temp)&(cape>=-1)&(rh>=-1)&(rh<=150)&(temp>150)&(temp<330)
+                print("Valid cells",step,int(good.sum()),"/",good.size,flush=True)
+                if not good.any(): raise ValueError("No physically valid cells")
+                cape=np.maximum(cape,0);rh=np.clip(rh,0,100)
                 # Heuristic environmental scores, not parcel depth, cloud occurrence or flash density.
                 moist=np.clip((rh-35)/40,0,1)
                 buoy=np.clip(cape/1500,0,1)
@@ -64,7 +66,7 @@ def main():
                     name=f"forecast_A_{product}_{step:03d}.json"
                     valid=(run+timedelta(hours=step)).isoformat()
                     frame=dict(step=step,resolution=.25,valid_utc=valid,x=x.tolist(),y=y.tolist(),experimental=True)
-                    frame[product]=np.round(a,1).tolist()
+                    frame[product]=np.where(good,np.round(a,1),None).tolist()
                     (out/name).write_text(json.dumps(dict(run_utc=run.isoformat(),frame=frame),separators=(",",":"),allow_nan=False))
                     indexes[product].append(dict(step=step,valid_utc=valid,file=name))
             except Exception as exc:
