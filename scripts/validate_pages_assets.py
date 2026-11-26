@@ -65,7 +65,10 @@ def preserve_forecasts(public):
             fields = (product,"u","v") if product == "gust" else (product,)
             for field in fields:
                 values = f[field]
-                if len(values)!=len(y) or any(len(row)!=len(x) for row in values):
+                # IFS may omit 10fg beyond +54h; preserve explicit missing data.
+                if values is None and product == 'gust' and field == 'gust' and region == 'A' and step > 54:
+                    continue
+                if not isinstance(values, list) or len(values)!=len(y) or any(len(row)!=len(x) for row in values):
                     raise ValueError("Invalid field shape")
                 if any(v is not None and (not isinstance(v,(int,float)) or not math.isfinite(v)) for row in values for v in row):
                     raise ValueError("Invalid field values")
@@ -75,7 +78,8 @@ def preserve_forecasts(public):
         with ThreadPoolExecutor(max_workers=6) as pool:
             files = dict(pool.map(check, frames))
         files[prefix+"_index.json"] = index
-        return cycle, files
+        missing = sum(data['frame'].get(product) is None for name,data in files.items() if name != prefix+'_index.json')
+        return cycle, files, missing
     def local(name):
         p = public / name
         return json.loads(p.read_text()) if p.is_file() else None
@@ -90,11 +94,11 @@ def preserve_forecasts(public):
                 try:
                     result = collect(region,product,reader)
                     if result:
-                        candidates.append((result[0],origin,result[1]))
+                        candidates.append((result[0],origin,result[1],result[2]))
                 except (ValueError,KeyError,TypeError,AttributeError) as exc:
                     print(f"{prefix} {origin}: {exc}")
             if candidates:
-                chosen[region] = max(candidates,key=lambda v:v[0])
+                chosen[region] = max(candidates,key=lambda v:(v[3]==0,v[0],-v[3]))
             elif any(public.glob(prefix+"_*.json")):
                 raise RuntimeError(f"No complete valid replacement or fallback for {prefix}")
         if "A" not in chosen:
@@ -102,7 +106,7 @@ def preserve_forecasts(public):
             continue
         # B is usable only when it matches A. Prefer a previous matching pair
         # over mixing regional cycles; an unmatched B remains archived on Pages.
-        for region,(cycle,origin,files) in chosen.items():
+        for region,(cycle,origin,files,missing) in chosen.items():
             prefix = f"forecast_{region}_{product}"
             for p in public.glob(prefix+"_*.json"):
                 p.unlink()
@@ -112,8 +116,8 @@ def preserve_forecasts(public):
                 aggregate = public / (prefix+".json")
                 if aggregate.exists():
                     aggregate.write_text(json.dumps({"run_utc":files[prefix+"_index.json"]["run_utc"],"frames":[files[m["file"]]["frame"] for m in files[prefix+"_index.json"]["frames"]]},separators=(",",":")))
-        cycle,origin,_ = chosen["A"]
-        report[product] = {"cycle_utc":cycle.isoformat(),"status":"retained" if origin=="previous" else "new","region_b_cycle_utc":chosen["B"][0].isoformat() if "B" in chosen else None}
+        cycle,origin,_,missing = chosen["A"]
+        report[product] = {"cycle_utc":cycle.isoformat(),"status":"partial" if missing else ("retained" if origin=="previous" else "new"),"missing_frames":missing,"region_b_cycle_utc":chosen["B"][0].isoformat() if "B" in chosen else None}
         print(product,report[product])
     (public/"forecast_products_status.json").write_text(json.dumps(report,indent=2))
 
