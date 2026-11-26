@@ -30,11 +30,11 @@ def main():
                         lon=codes_get_array(g,"longitudes").reshape(ny,nx)[0,:]
                         lon=np.where(lon>180,lon-360,lon)
                         assert np.allclose(np.abs(np.diff(lat)),.25)
-                        ix=np.where((lon>=-40)&(lon<=0)&np.isclose(lon*2,np.round(lon*2)))[0]
-                        iy=np.where((lat>=25)&(lat<=50)&np.isclose(lat*2,np.round(lat*2)))[0]
+                        ix=np.where((lon>=-65)&(lon<=25)&np.isclose(lon*2,np.round(lon*2)))[0]
+                        iy=np.where((lat>=25)&(lat<=65)&np.isclose(lat*2,np.round(lat*2)))[0]
                         ix=ix[np.argsort(lon[ix])];iy=iy[np.argsort(lat[iy])]
                         x,y=lon[ix],lat[iy]
-                        assert len(x)==81 and len(y)==51 and np.allclose(np.diff(x),.5) and np.allclose(np.diff(y),.5)
+                        assert len(x)==181 and len(y)==81 and np.allclose(np.diff(x),.5) and np.allclose(np.diff(y),.5)
                         fields[name]=(x,y,codes_get_array(g,"values").reshape(ny,nx)[np.ix_(iy,ix)])
                     finally: codes_release(g)
             x,y,t=fields["t"]; xx,yy,q=fields["q"]
