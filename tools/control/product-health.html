@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MeteoFox Control — Produtos</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui;background:#101b2b;color:#e3edf8}body{max-width:1050px;margin:30px auto;padding:0 16px}h1{font-size:24px}section{background:#17283c;border:1px solid #30445d;border-radius:12px;padding:16px;margin:16px 0}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:12px 8px;border-bottom:1px solid #30445d}th{color:#a6b8cc;font-size:12px}button{background:#254b75;color:white;border:0;border-radius:6px;padding:10px;cursor:pointer}.ok{color:#77d8ac}.old{color:#f0c57b}.bad{color:#ff9e9e}.muted{color:#a6b8cc}.scroll{overflow:auto}#summary{font-size:20px}small{display:block;margin-top:8px}
+</style>
+<h1>MeteoFox Control · Produtos</h1><p class="muted">Diagnóstico privado local · dados públicos de produção</p>
+<button id="refresh">Atualizar diagnóstico</button>
+<section><div id="summary" role="status">A consultar dados…</div><small id="detail"></small></section>
+<section class="scroll"><table><thead><tr><th>Produto</th><th>Ciclo UTC</th><th>Estado</th><th>Fotogramas A</th><th>Resolução A / B</th><th>Região B</th></tr></thead><tbody id="rows"></tbody></table></section>
+<section><h2>Última execução</h2><p id="execution">Sem dados administrativos locais. Não é possível determinar a duração ou causa da falha a partir do manifesto público.</p></section>
+<script>
+const base='https://dfraposo1991-lang.github.io/MeteoFox/';
+const products=[['rain','Precipitação'],['gust','Rajadas'],['thetae','Theta-E 850 hPa'],['visibility','Visibilidade'],['ceiling','Ceiling'],['tcucb','TCU/CB'],['lightning','Lightning']];
+const date=v=>{const d=new Date(v||'');return Number.isFinite(+d)?d:null};
+const fmt=v=>date(v)?.toISOString().slice(0,16).replace('T',' ')+'Z';
+const same=(a,b)=>date(a)&&date(b)&&+date(a)===+date(b);
+async function get(name){const r=await fetch(base+name,{cache:'no-store',signal:AbortSignal.timeout(20000)});if(r.status===404)return null;if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+function add(values,cls){const tr=document.createElement('tr');values.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===2)td.className=cls;tr.append(td)});document.querySelector('#rows').append(tr)}
+async function refresh(){const btn=document.querySelector('#refresh');btn.disabled=true;const summary=document.querySelector('#summary'),detail=document.querySelector('#detail');summary.textContent='A consultar dados…';document.querySelector('#rows').replaceChildren();try{
+const [manifest,status]=await Promise.all([get('meteofox_ecmwf_manifest.json'),get('forecast_products_status.json')]);const reference=manifest?.cycle_utc;let counts=[0,0,0,0];
+const results=await Promise.all(products.map(async ([key,label])=>{try{const regional=['rain','gust','visibility','ceiling'].includes(key);const [a,b]=await Promise.all([get('forecast_A_'+key+'_index.json'),regional?get('forecast_B_'+key+'_index.json'):null]);const cycle=a?.run_utc;const n=new Set((a?.frames||[]).map(f=>f.step).filter(s=>Number.isInteger(s)&&s>=9&&s<=93&&s%3===0)).size;const usable=date(cycle)&&n===29;let state=!usable?2:!date(reference)?3:+date(cycle)<+date(reference)?1:same(cycle,reference)?0:3;const bCount=new Set((b?.frames||[]).map(f=>f.step).filter(s=>Number.isInteger(s)&&s>=9&&s<=54&&s%3===0)).size;return {state,values:[label,date(cycle)?fmt(cycle):'—',['Atualizado','Conservado','Incompleto / indisponível','Ciclo por confirmar'][state],n+'/29 (índice)',key==='thetae'?'0,5° (prevista)':regional?'0,25° / 0,1° (previstas)':'0,25° (prevista)',!regional?'—':bCount===16&&same(b?.run_utc,cycle)?'16/16 · mesmo ciclo':bCount?bCount+'/16 · verificar ciclo':'Indisponível']}}catch(e){return {state:3,values:[label,'—','Consulta falhou','—','—',String(e.message)]}}}));
+for(const r of results){counts[r.state]++;add(r.values,['ok','old','bad','muted'][r.state])}
+summary.textContent=counts[0]+' atualizados · '+counts[1]+' conservados · '+counts[2]+' indisponíveis/incompletos · '+counts[3]+' por confirmar';
+detail.textContent='Ciclo de referência publicado: '+(date(reference)?fmt(reference):'desconhecido')+'. Manifesto individual: '+(status?'disponível':'ausente')+'. Contagem de índices, não validação dos ficheiros individuais. Resoluções previstas, não medidas.';
+add(['Satélite simulado','—','Por integrar','—','—','—'],'muted');
+}catch(e){summary.textContent='Não foi possível consultar o estado: '+e.message;detail.textContent='Uma falha de rede não prova ausência de dados.'}finally{btn.disabled=false}}
+document.querySelector('#refresh').addEventListener('click',refresh);refresh();
+</script></html>
