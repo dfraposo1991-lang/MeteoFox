@@ -37,6 +37,9 @@ def carregar_modulo(path, name):
     return module
 
 
+GRIB_QUALITY = []
+
+
 def ler_passo(path, bounds=(-40, 0, 25, 50)):
     west, east, south, north = bounds
     dados = {}
@@ -84,6 +87,9 @@ def ler_passo(path, bounds=(-40, 0, 25, 50)):
                         raise ValueError(f"Unidade inesperada para tp: {unit}")
                 elif unit not in ("m s**-1", "m s-1", "m/s", "m s^-1"):
                     raise ValueError(f"Unidade inesperada para {name}: {unit}")
+                GRIB_QUALITY.append({"file":path.name,"field":name,"cycle":cycle.isoformat(),"step":step,
+                    "nx":nx,"ny":ny,"points":nx*ny,"dx":float(np.median(np.diff(x))),"dy":float(np.median(np.diff(y))),
+                    "nonfinite":int(np.count_nonzero(~np.isfinite(data))),"unit":unit})
                 dados[name] = {
                     "x": x, "y": y, "value": data,
                     "cycle": cycle, "step": step
@@ -105,6 +111,38 @@ def ler_passo(path, bounds=(-40, 0, 25, 50)):
                 np.array_equal(d["y"], first["y"])):
             raise RuntimeError(f"Grelha diferente em {n}: {path.name}")
     return dados
+
+
+def quality_report(run, regional, local, inventory):
+    result = {"run_utc": run.isoformat(), "grib": inventory, "regions": {}, "overlap": [], "warnings": []}
+    for region, frames, last, spacing in (("A", regional, 93, .25), ("B", local, 54, .1)):
+        summary = {"expected_steps": list(range(9,last+1,3)), "fields": {}, "grids": []}
+        for field in ("rain","gust","u","v"):
+            summary["fields"][field] = {"available": [f["step"] for f in frames if f[field] is not None],
+                "missing": [s for s in summary["expected_steps"] if not any(f["step"] == s and f[field] is not None for f in frames)]}
+        for f in frames:
+            x,y = np.asarray(f["x"]),np.asarray(f["y"])
+            valid = bool(np.allclose(np.diff(x),spacing) and np.allclose(np.diff(y),spacing))
+            summary["grids"].append({"step":f["step"],"nx":len(x),"ny":len(y),"points":len(x)*len(y),"spacing_valid":valid})
+            if not valid: result["warnings"].append(f"Região {region} +{f['step']}h: resolução inesperada")
+        for field, status in summary["fields"].items():
+            if status["missing"]: result["warnings"].append(f"Região {region}: {field} indisponível em {status['missing']}")
+        result["regions"][region] = summary
+    by_step = {f["step"]:f for f in regional}
+    for b in local:
+        a = by_step.get(b["step"])
+        if a is None: continue
+        ax,ay,bx,by = map(np.asarray,(a["x"],a["y"],b["x"],b["y"]))
+        if bx[0]<ax[0] or bx[-1]>ax[-1] or by[0]<ay[0] or by[-1]>ay[-1]: continue
+        for field in ("rain","gust","u","v"):
+            if a[field] is None or b[field] is None: continue
+            coarse = np.asarray(a[field]); fine = np.asarray(b[field])
+            interpolated = np.array([np.interp(bx,ax,row) for row in coarse])
+            interpolated = np.array([np.interp(by,ay,col) for col in interpolated.T]).T
+            diff = fine-interpolated
+            edge = np.ones(diff.shape,dtype=bool); edge[1:-1,1:-1]=False
+            result["overlap"].append({"step":b["step"],"field":field,"bias":float(diff.mean()),"mae":float(np.abs(diff).mean()),"max_abs":float(np.abs(diff).max()),"boundary_mae":float(np.abs(diff[edge]).mean())})
+    return result
 
 
 def criar_html(run, steps, output):
@@ -282,6 +320,9 @@ def main():
             (out / name).write_text(json.dumps(dict(run_utc=run.isoformat(),frame={k:frame[k] for k in keys}),allow_nan=False,separators=(",",":")),encoding="utf-8")
             index["frames"].append(dict(step=frame["step"],valid_utc=frame["valid_utc"],file=name))
         (out / f"forecast_B_{product}_index.json").write_text(json.dumps(index,separators=(",",":")),encoding="utf-8")
+    quality = quality_report(run, interactive, local, GRIB_QUALITY)
+    (out / "ecmwf_quality.json").write_text(json.dumps(quality,allow_nan=False,indent=2),encoding="utf-8")
+    print("ECMWF QUALITY:", json.dumps({"run":quality["run_utc"],"warnings":quality["warnings"]}),flush=True)
     criar_html(run.strftime("%d/%m/%Y %H:%M"), [p for p in steps if p<=54], out)
     print("\nCONCLUÍDO")
     print("Ficheiros PNG:", len([p for p in steps if p<=54]) * 2)
