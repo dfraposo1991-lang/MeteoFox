@@ -1,4 +1,4 @@
-"""Experimental direct-field availability probe for visibility and ceiling; no proxy values."""
+"""Uncalibrated moisture visibility proxy and conditional LCL proxy; not operational aviation forecasts."""
 import json
 from pathlib import Path
 from datetime import datetime,timedelta
@@ -33,14 +33,14 @@ def read(path,run,step,param,bounds,h):
                     assert unit=="m"
                     assert a.min()>=0
                     if param=="ceil": a=a*3.280839895
-                elif param=="tcc":
+                elif param in ("tcc","lcc"):
                     assert unit in ("(0 - 1)","0-1","1","%")
                     if unit!="%": a=a*100
                     assert a.min()>=-.01 and a.max()<=100.01
                     a=np.clip(a,0,100)
-                else:
-                    assert unit in ("m","m of water equivalent","kg m**-2","kg m-2","mm")
-                    if unit.startswith("m") and unit!="mm": a=a*1000
+                elif param in ("2t","2d"):
+                    assert unit=="K" and a.min()>150 and a.max()<350
+                else: raise ValueError("Unsupported field")
                 return x,y,a,int(codes_get(g,"startStep"))
             finally: codes_release(g)
     raise ValueError("Missing "+param)
@@ -53,33 +53,40 @@ def main():
         client=Client(source="ecmwf",model="ifs",resol=res)
         indexes={"visibility":[],"ceiling":[]}
         with TemporaryDirectory() as tmp:
-            available=[]
-            for param,product in [("vis","visibility"),("ceil","ceiling")]:
-                try:
-                    probe=Path(tmp)/"probe.grib2"
-                    probe.unlink(missing_ok=True)
-                    client.retrieve(date=run.strftime("%Y%m%d"),time=run.hour,stream="oper",type="fc",levtype="sfc",step=9,param=param,target=str(probe))
-                    read(probe,run,9,param,bounds,h)
-                    available.append((param,product))
-                except Exception as exc:
-                    print(region,product,"unavailable:",exc,flush=True)
             for step in range(9,last+1,3):
-                for param,product in available:
-                    
-                    path=Path(tmp)/"field.grib2"
+                fields={}
+                for params in [("2t","2d"),("lcc",)]:
+                    path=Path(tmp)/"fields.grib2"
                     try:
                         path.unlink(missing_ok=True)
-                        client.retrieve(date=run.strftime("%Y%m%d"),time=run.hour,stream="oper",type="fc",levtype="sfc",step=step,param=param,target=str(path))
-                        x,y,a,start=read(path,run,step,param,bounds,h)
-                        name=f"forecast_{region}_{product}_{step:03d}.json"
-                        valid=(run+timedelta(hours=step)).isoformat()
-                        frame=dict(step=step,resolution=h,valid_utc=valid,x=x.tolist(),y=y.tolist())
-                        frame[product]=np.round(a,2).tolist()
-                        (out/name).write_text(json.dumps(dict(run_utc=run.isoformat(),frame=frame),separators=(",",":"),allow_nan=False))
-                        indexes[product].append(dict(step=step,valid_utc=valid,file=name))
+                        client.retrieve(date=run.strftime("%Y%m%d"),time=run.hour,stream="oper",type="fc",levtype="sfc",step=step,param=list(params),target=str(path))
+                        for p in params: fields[p]=read(path,run,step,p,bounds,h)
                     except Exception as exc:
-                        print(region,product,step,str(exc),flush=True)
-
+                        print(region,step,params,repr(exc),flush=True)
+                if not all(p in fields for p in ("2t","2d")): continue
+                x,y,t,_=fields["2t"]
+                xd,yd,td,_=fields["2d"]
+                if not (np.array_equal(x,xd) and np.array_equal(y,yd)): continue
+                good=td<=t+0.5
+                delta=np.maximum(t-td,0)
+                # Empirical screening proxy, not an extinction calculation.
+                # Scale from saturation to dry air; capped at 10 km.
+                vis=np.clip(200*np.exp(np.minimum(delta,20)*0.8),200,10000)
+                products={"visibility":(vis,good,"uncalibrated_dewpoint_depression_proxy")}
+                if "lcc" in fields:
+                    xl,yl,lcc,_=fields["lcc"]
+                    if np.array_equal(x,xl) and np.array_equal(y,yl):
+                        # Surface parcel LCL, conditional on extensive low cloud.
+                        # Not a direct BKN/OVC base; no estimate elsewhere.
+                        products["ceiling"]=(125*delta*3.280839895,good&(lcc>=62.5),"conditional_surface_lcl_proxy")
+                valid=(run+timedelta(hours=step)).isoformat()
+                for product,(a,mask,method) in products.items():
+                    if not mask.any(): continue
+                    name=f"forecast_{region}_{product}_{step:03d}.json"
+                    frame=dict(step=step,resolution=h,valid_utc=valid,x=x.tolist(),y=y.tolist(),experimental=True,method=method)
+                    frame[product]=np.where(mask,np.round(a,1),None).tolist()
+                    (out/name).write_text(json.dumps(dict(run_utc=run.isoformat(),frame=frame),separators=(",",":"),allow_nan=False))
+                    indexes[product].append(dict(step=step,valid_utc=valid,file=name))
         for product,frames in indexes.items():
-            (out/f"forecast_{region}_{product}_index.json").write_text(json.dumps(dict(run_utc=run.isoformat(),frames=frames)))
+            (out/f"forecast_{region}_{product}_index.json").write_text(json.dumps(dict(run_utc=run.isoformat(),frames=frames,experimental=True)))
 if __name__=="__main__": main()
