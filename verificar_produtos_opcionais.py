@@ -12,7 +12,7 @@ def main():
     for product in ("visibility","ceiling","tcucb","lightning"):
         for region in (("A","B") if product in ("visibility","ceiling") else ("A",)):
             expected=list(range(9,55 if region=="B" else 94,3))
-            valid=[];errors={}
+            valid=[];errors={};coverage={}
             h=.1 if region=="B" else .25
             for step in expected:
                 name=f"forecast_{region}_{product}_{step:03d}.json"
@@ -21,13 +21,18 @@ def main():
                     assert datetime.fromisoformat(p["run_utc"].replace("Z","+00:00"))==datetime.fromisoformat(run.replace("Z","+00:00")), "cycle"
                     f=p["frame"];x=np.array(f["x"]);y=np.array(f["y"]);a=np.array(f[product],dtype=float)
                     assert f["step"]==step and f["resolution"]==h,"step or resolution"
-                    assert a.shape==(len(y),len(x)) and np.isfinite(a).all(),"invalid values"
+                    assert a.shape==(len(y),len(x)),"invalid shape"
+                    mask=np.isfinite(a)&(a>=0)
+                    if product in ("tcucb","lightning"): mask &= a<=100
+                    coverage[str(step)]=round(float(mask.mean())*100,3)
+                    assert mask.any(),"no valid cells"
+                    assert np.all(mask | np.isnan(a)),"invalid non-null values"
                     assert len(x)>1 and len(y)>1 and np.allclose(np.diff(x),h) and np.allclose(np.diff(y),h),"grid spacing"
                     assert np.allclose([x[0],x[-1],y[0],y[-1]],[-10,-6,36.9,42.2] if region=="B" else [-40,0,25,50]),"bounds"
                     valid.append(step)
                 except Exception as exc: errors[str(step)]=str(exc) or type(exc).__name__
-            status="complete" if valid==expected else "partial" if valid else "unavailable"
-            report["products"][region+"_"+product]={"status":status,"available":valid,"expected":expected,"errors":errors}
+            status="complete" if valid==expected and all(v==100 for v in coverage.values()) else "partial" if valid else "unavailable"
+            report["products"][region+"_"+product]={"status":status,"available":valid,"expected":expected,"errors":errors,"coverage_percent":coverage}
             print(region,product,status,len(valid),"/",len(expected),flush=True)
     (out/"optional_quality.json").write_text(json.dumps(report,indent=2))
 if __name__=="__main__": main()
