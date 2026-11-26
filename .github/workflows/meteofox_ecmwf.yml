@@ -147,6 +147,7 @@ jobs:
           assert animation.is_file() and animation.stat().st_size > 1000
           shutil.copy2(animation, out / animation.name)
           shutil.copy2(folder / "forecast_grid.json", out / "forecast_grid.json")
+          shutil.copy2(folder / "ecmwf_quality.json", out / "ecmwf_quality.json")
           for product in ("rain", "gust"):
               name = f"forecast_A_{product}.json"
               shutil.copy2(folder / name, out / name)
