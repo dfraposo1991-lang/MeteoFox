@@ -341,16 +341,9 @@ function initialize(){
  let selectedDomain=null;
  const mapElement=$('largeMap');
  function updateDomainClip(){
-   if(!selectedDomain){mapElement.style.clipPath='';return;}
-   const nw=appMap.latLngToContainerPoint(selectedDomain.getNorthWest());
-   const se=appMap.latLngToContainerPoint(selectedDomain.getSouthEast());
-   const size=appMap.getSize();
-   const left=Math.max(0,Math.min(size.x,nw.x)),right=Math.max(0,Math.min(size.x,se.x));
-   const top=Math.max(0,Math.min(size.y,nw.y)),bottom=Math.max(0,Math.min(size.y,se.y));
-   // Clip map panes, not controls, so zoom and forecast controls remain accessible.
-   const pane=appMap.getPane('mapPane');
-   const origin=appMap.containerPointToLayerPoint([0,0]);
-   pane.style.clipPath='polygon('+[[left,top],[right,top],[right,bottom],[left,bottom]].map(([x,y])=>(x+origin.x)+'px '+(y+origin.y)+'px').join(',')+')';
+   if(!selectedDomain){appMap.getPane('mapPane').style.clipPath='';return;}
+   // Keep the basemap continuous; forecast rasters retain their own geographic bounds.
+   appMap.getPane('mapPane').style.clipPath='';
  }
  function clearDomain(){selectedDomain=null;appMap.getPane('mapPane').style.clipPath='';}
  function selectDomain(bounds){
@@ -510,7 +503,7 @@ function paint(field){
 paint(f);if(local&&local[mode])paint(local);
 raster=cacheRaster(key,{canvas:c,bounds:[[south,west],[north,east]]});}
 if(!layer)layer=new ForecastCanvas().addTo(appMap);layer.setRaster(raster);layer.setOpacity(+opacity.value/100);renderedFrame=f;renderedLocal=local;if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}status.textContent=mode==='thetae'?'ECMWF IFS · Theta-E 850 hPa · 0,5° (subamostragem de 0,25°)': 'ECMWF IFS · '+(local?'0,25° / 0,1° · ':'0,25° · ')+(f.resampled?'Região A reamostrada (run anterior) · ':'')+(mode==='gust'?'barbelas: vento médio 10 m (kt)':'precipitação 3h');}
-async function select(m){stop();mode=mode===m?'':m;if(sat){sat.forecastBordersOn=!!mode;sat.syncSatelliteBorders();}el('fcRain').setAttribute('aria-pressed',String(mode==='rain'));el('fcGust').setAttribute('aria-pressed',String(mode==='gust'));el('fcTheta').setAttribute('aria-pressed',String(mode==='thetae'));clear();grid=null;el('fcLegend').replaceChildren();if(!mode){status.textContent='';valid.textContent='';return;}const z=scales[mode];for(let i=0;i<z.colors.length;i++){const a=document.createElement('span');a.style.cssText='background:'+z.colors[i]+';color:#172b3d;padding:2px 4px;border-radius:2px';a.textContent=z.levels[i]+' '+z.unit;el('fcLegend').append(a);}try{status.textContent='A carregar previsão…';const requested=mode;const d=await load(requested);if(mode!==requested)return;grid=d;time.max=d.frames.length-1;time.value=Math.min(+time.value,+time.max);draw();}catch(e){status.textContent='Previsão indisponível: aguarda publicação do próximo run';}}
+async function select(m){stop();mode=mode===m?'':m;if(sat){sat.forecastBordersOn=false;sat.syncSatelliteBorders();}el('fcRain').setAttribute('aria-pressed',String(mode==='rain'));el('fcGust').setAttribute('aria-pressed',String(mode==='gust'));el('fcTheta').setAttribute('aria-pressed',String(mode==='thetae'));clear();grid=null;valid.textContent='';el('fcLegend').replaceChildren();if(!mode){status.textContent='';valid.textContent='';return;}const z=scales[mode];for(let i=0;i<z.colors.length;i++){const a=document.createElement('span');a.style.cssText='background:'+z.colors[i]+';color:#172b3d;padding:2px 4px;border-radius:2px';a.textContent=z.levels[i]+' '+z.unit;el('fcLegend').append(a);}try{status.textContent='A carregar previsão…';const requested=mode;const d=await load(requested);if(mode!==requested)return;if(sat){sat.forecastBordersOn=true;sat.syncSatelliteBorders();}grid=d;time.max=d.frames.length-1;time.value=Math.min(+time.value,+time.max);draw();}catch(e){if(!grid){valid.textContent='';status.textContent='Previsão indisponível: aguarda publicação do próximo run';}}}
 document.addEventListener('keydown',e=>{if(e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||!['ArrowLeft','ArrowRight'].includes(e.key)||e.target?.closest?.('input,textarea,select,[contenteditable=true]'))return;const delta=e.key==='ArrowLeft'?-1:1;if(mode&&grid){e.preventDefault();e.stopImmediatePropagation();stop();time.value=Math.max(0,Math.min(+time.max,+time.value+delta));draw();}else if(sat&&(sat.satOn||sat.radarOn)){const button=delta<0?sat.back:sat.forward;if(button){e.preventDefault();e.stopImmediatePropagation();button.click();}}},true);
 el('fcTheta').onclick=()=>select('thetae');el('fcRain').onclick=()=>select('rain');el('fcGust').onclick=()=>select('gust');time.oninput=()=>{stop();draw();};el('fcBack').onclick=()=>{stop();time.value=Math.max(0,+time.value-1);draw();};el('fcNext').onclick=()=>{stop();time.value=Math.min(+time.max,+time.value+1);draw();};opacity.oninput=()=>{if(layer)layer.setOpacity(+opacity.value/100);refreshBarbs();};el('fcPlay').onclick=()=>{if(timer){stop();return;}if(!grid||!mode)return;el('fcPlay').textContent='⏸ Pausar';let busy=false;timer=setInterval(async()=>{if(busy||!grid||!mode)return;busy=true;try{time.value=(+time.value+1)%grid.frames.length;await draw();}finally{busy=false;}},900);};
 })();
