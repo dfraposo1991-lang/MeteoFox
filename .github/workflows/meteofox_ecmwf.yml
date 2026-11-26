@@ -88,6 +88,9 @@ jobs:
       - name: Instalar dependências meteorológicas
         run: |
           start=$(date +%s)
+          # O runner inclui ocasionalmente fontes de terceiros indisponíveis (Microsoft 403).
+          # Desativar apenas fontes Microsoft antes de atualizar os índices Ubuntu.
+          sudo find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*microsoft*.list' -o -name '*microsoft*.sources' \) -print -delete
           sudo apt-get update
           sudo apt-get install -y \
             python3-venv python3-eccodes python3-numpy \
