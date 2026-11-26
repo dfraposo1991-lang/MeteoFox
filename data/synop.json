@@ -4126,7 +4126,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "history": {
@@ -7097,7 +7097,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -8950,7 +8950,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -11429,7 +11429,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 73,
       "dry_reports": 5,
       "history": {
@@ -12460,7 +12460,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -14258,7 +14258,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -16682,7 +16682,7 @@
       "station": "08536",
       "name": "Lisboa / Portela",
       "periods": {},
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -17732,7 +17732,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -19530,7 +19530,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -22095,7 +22095,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -24660,7 +24660,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 73,
       "dry_reports": 0,
       "history": {
@@ -26998,7 +26998,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -29422,7 +29422,7 @@
       "station": "08558",
       "name": "Évora",
       "periods": {},
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -29590,7 +29590,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -31758,14 +31758,240 @@
     {
       "station": "08520",
       "name": "Selvagem Grande",
-      "periods": {},
-      "latest_utc": "2026-11-26T20:00:00Z",
-      "reports": 56,
+      "periods": {
+        "6": {
+          "hours": 6,
+          "mm": 0,
+          "trace": false,
+          "contains_trace": false,
+          "method": "calculated",
+          "components": 6,
+          "lower_bound": false,
+          "uncertainty_mm": 3.0,
+          "quality": "VALID",
+          "provenance": [
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T15:00:00Z",
+              "end_utc": "2026-11-26T16:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T16:00:00Z",
+              "end_utc": "2026-11-26T17:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T17:00:00Z",
+              "end_utc": "2026-11-26T18:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T18:00:00Z",
+              "end_utc": "2026-11-26T19:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T19:00:00Z",
+              "end_utc": "2026-11-26T20:00:00Z"
+            },
+            {
+              "mm": 0.0,
+              "hours": 1,
+              "trace": false,
+              "method": "reported",
+              "group": "60005",
+              "section": 3,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T20:00:00Z",
+              "end_utc": "2026-11-26T21:00:00Z"
+            }
+          ],
+          "utc": "2026-11-26T21:00:00Z"
+        },
+        "12": {
+          "mm": 0.0,
+          "hours": 12,
+          "trace": false,
+          "method": "reported",
+          "group": "60002",
+          "section": 1,
+          "resolution_mm": 1.0,
+          "uncertainty_mm": 0.5,
+          "quality": "VALID",
+          "provenance": [
+            {
+              "mm": 0.0,
+              "hours": 12,
+              "trace": false,
+              "method": "reported",
+              "group": "60002",
+              "section": 1,
+              "resolution_mm": 1.0,
+              "uncertainty_mm": 0.5,
+              "start_utc": "2026-11-26T09:00:00Z",
+              "end_utc": "2026-11-26T21:00:00Z"
+            }
+          ],
+          "utc": "2026-11-26T21:00:00Z"
+        }
+      },
+      "latest_utc": "2026-11-26T22:00:00Z",
+      "reports": 57,
       "dry_reports": 0,
       "lat": 30.14528,
       "lon": -15.87056,
       "history": {
-        "2026-11-26T21:00:00Z": {},
+        "2026-11-26T21:00:00Z": {
+          "6": {
+            "hours": 6,
+            "mm": 0,
+            "trace": false,
+            "contains_trace": false,
+            "method": "calculated",
+            "components": 6,
+            "lower_bound": false,
+            "uncertainty_mm": 3.0,
+            "quality": "VALID",
+            "provenance": [
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T15:00:00Z",
+                "end_utc": "2026-11-26T16:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T16:00:00Z",
+                "end_utc": "2026-11-26T17:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T17:00:00Z",
+                "end_utc": "2026-11-26T18:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T18:00:00Z",
+                "end_utc": "2026-11-26T19:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T19:00:00Z",
+                "end_utc": "2026-11-26T20:00:00Z"
+              },
+              {
+                "mm": 0.0,
+                "hours": 1,
+                "trace": false,
+                "method": "reported",
+                "group": "60005",
+                "section": 3,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T20:00:00Z",
+                "end_utc": "2026-11-26T21:00:00Z"
+              }
+            ],
+            "utc": "2026-11-26T21:00:00Z"
+          },
+          "12": {
+            "mm": 0.0,
+            "hours": 12,
+            "trace": false,
+            "method": "reported",
+            "group": "60002",
+            "section": 1,
+            "resolution_mm": 1.0,
+            "uncertainty_mm": 0.5,
+            "quality": "VALID",
+            "provenance": [
+              {
+                "mm": 0.0,
+                "hours": 12,
+                "trace": false,
+                "method": "reported",
+                "group": "60002",
+                "section": 1,
+                "resolution_mm": 1.0,
+                "uncertainty_mm": 0.5,
+                "start_utc": "2026-11-26T09:00:00Z",
+                "end_utc": "2026-11-26T21:00:00Z"
+              }
+            ],
+            "utc": "2026-11-26T21:00:00Z"
+          }
+        },
         "2026-11-26T18:00:00Z": {
           "6": {
             "hours": 6,
@@ -32698,7 +32924,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 32.6475,
@@ -36901,7 +37127,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 37.95444,
@@ -39468,7 +39694,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.13833,
@@ -42035,7 +42261,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 69,
       "dry_reports": 0,
       "lat": 40.1575,
@@ -43553,7 +43779,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.27417,
@@ -46265,7 +46491,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 39.83917,
@@ -48605,7 +48831,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "lat": 39.29417,
@@ -50773,7 +50999,7 @@
           "utc": "2026-11-26T21:00:00Z"
         }
       },
-      "latest_utc": "2026-11-26T21:00:00Z",
+      "latest_utc": "2026-11-26T22:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.79972,
@@ -53024,7 +53250,7 @@
       }
     }
   ],
-  "checked_utc": "2026-11-26T22:36:57.010659Z",
+  "checked_utc": "2026-11-26T23:37:00.170613Z",
   "decoder_version": 6,
   "references_utc": [
     "2026-11-26T21:00:00Z",
