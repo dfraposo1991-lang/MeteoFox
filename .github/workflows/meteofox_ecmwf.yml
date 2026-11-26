@@ -11,6 +11,7 @@ on:
       - 'descarregar_meteofox_48h.py'
       - 'gerar_meteofox_48h.py'
       - 'gerar_thetae.py'
+      - 'gerar_nuvens_neve.py'
       - 'verificar_ecmwf_48h.py'
       - 'mapa_chuva_meteofox_v15_16W_6W_run.py'
       - 'mapa_rajadas_meteofox_v4.py'
@@ -130,6 +131,11 @@ jobs:
         timeout-minutes: 20
         run: .venv/bin/python gerar_thetae.py
 
+      - name: Gerar nebulosidade e neve (opcional)
+        continue-on-error: true
+        timeout-minutes: 30
+        run: .venv/bin/python gerar_nuvens_neve.py
+
       - name: Guardar 32 cartas e animação como artefacto independente
         shell: bash
         run: |
@@ -161,6 +167,9 @@ jobs:
                   shutil.copy2(frame_file, out / frame_file.name)
           for frame_file in folder.glob("forecast_A_thetae_*.json"):
               shutil.copy2(frame_file, out / frame_file.name)
+          for product in ("cloud", "snow"):
+              for frame_file in folder.glob(f"forecast_A_{product}_*.json"):
+                  shutil.copy2(frame_file, out / frame_file.name)
           for frame_file in folder.glob("forecast_B_*.json"):
               shutil.copy2(frame_file, out / frame_file.name)
           (out / "cycle.txt").write_text(run + "\n", encoding="utf-8")
@@ -221,6 +230,9 @@ jobs:
                   shutil.copy2(frame_file, out / frame_file.name)
           for frame_file in source.glob("forecast_A_thetae_*.json"):
               shutil.copy2(frame_file, out / frame_file.name)
+          for product in ("cloud", "snow"):
+              for frame_file in source.glob(f"forecast_A_{product}_*.json"):
+                  shutil.copy2(frame_file, out / frame_file.name)
           for frame_file in source.glob("forecast_B_*.json"):
               shutil.copy2(frame_file, out / frame_file.name)
           animation = source / "MeteoFox_animacao_48h.html"
