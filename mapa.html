@@ -473,7 +473,31 @@ async function draw(){const seq=++drawSequence;if(!mode||!grid||!appMap)return;c
  for(const j of [i+1,i+2])if(j<d.frames.length){ensureFrame(d,j).catch(()=>{});localFrame(d,product,d.frames[j].step).catch(()=>{});}valid.textContent='Run '+grid.run_utc.slice(0,16)+' UTC | +'+f.step+'h | '+f.valid_utc.slice(0,16)+' UTC';if(!f[mode]&&!local?.[mode]){clear();renderedFrame=f;renderedLocal=local;status.textContent=mode==='gust'?'Rajadas indisponíveis neste prazo · barbelas: vento médio 10 m (kt)':'Acumulado 3h indisponível neste prazo';if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}return;}
 const pane=appMap.getPane('forecastGrid')||appMap.createPane('forecastGrid');pane.style.zIndex='610';pane.style.pointerEvents='none';
 const key=grid.run_utc+'|'+mode+'|'+f.step+'|'+(local?'B':'A')+'|'+(f.resampled?'legacy':'native');let raster=rasterCache.get(key);if(raster)cacheRaster(key,raster);if(!raster){const c=document.createElement('canvas');c.width=2400;c.height=1800;const ctx=c.getContext('2d'), x=f.x,y=f.y, west=x[0],east=x.at(-1),south=y[0],north=y.at(-1);const merc=v=>Math.log(Math.tan(Math.PI/4+v*Math.PI/360));const sy=merc(south),ny=merc(north);const px=v=>(v-west)/(east-west)*c.width,py=v=>(ny-merc(v))/(ny-sy)*c.height;
-function paint(field){if(!field[mode])return;const x=field.x,y=field.y;for(let j=0;j<y.length-1;j++)for(let i=0;i<x.length-1;i++){const v=field[mode][j][i];if(!Number.isFinite(v)||(mode==='rain'&&v<=.2))continue;let k=z.levels.findIndex(n=>v<n)-1;if(v>=z.levels.at(-1))k=z.colors.length-1;if(k<0)continue;ctx.fillStyle=z.colors[k];ctx.fillRect(px(x[i]),py(y[j+1]),px(x[i+1])-px(x[i])+.5,py(y[j])-py(y[j+1])+.5);}}
+function paint(field){
+ const values=field[mode];if(!values)return;
+ const x=field.x,y=field.y;
+ // Interpolate scalar values in geographic coordinates before classifying colours.
+ // Four visual subdivisions per native cell; never modify the source grid.
+ const n=4, palette=z.colors;
+ for(let j=0;j<y.length-1;j++)for(let i=0;i<x.length-1;i++){
+   const a=values[j][i],b=values[j][i+1],d=values[j+1][i],e=values[j+1][i+1];
+   if(![a,b,d,e].every(Number.isFinite))continue;
+   if(mode==='rain'&&Math.max(a,b,d,e)<=.2)continue;
+   for(let q=0;q<n;q++){
+     const t=(q+.5)/n,lo=a+(d-a)*t,hi=b+(e-b)*t;
+     const bottom=py(y[j]+(y[j+1]-y[j])*q/n),top=py(y[j]+(y[j+1]-y[j])*(q+1)/n);
+     for(let p=0;p<n;p++){
+       const v=lo+(hi-lo)*(p+.5)/n;
+       if(mode==='rain'&&v<=.2)continue;
+       let k=z.levels.findIndex(level=>v<level)-1;
+       if(v>=z.levels.at(-1))k=palette.length-1;
+       if(k<0)continue;
+       const left=px(x[i]+(x[i+1]-x[i])*p/n),right=px(x[i]+(x[i+1]-x[i])*(p+1)/n);
+       ctx.fillStyle=palette[k];ctx.fillRect(Math.round(left),Math.round(top),Math.round(right)-Math.round(left),Math.round(bottom)-Math.round(top));
+     }
+   }
+ }
+}
 paint(f);if(local){const lx=local.x,ly=local.y;const left=px(lx[0]),top=py(ly.at(-1)),width=px(lx.at(-1))-left,height=py(ly[0])-top;ctx.save();ctx.beginPath();ctx.rect(left,top,width,height);ctx.clip();ctx.clearRect(left,top,width,height);paint(local);ctx.restore();}
 raster=cacheRaster(key,{canvas:c,bounds:[[south,west],[north,east]]});}
 if(!layer)layer=new ForecastCanvas().addTo(appMap);layer.setRaster(raster);layer.setOpacity(+opacity.value/100);renderedFrame=f;renderedLocal=local;if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}status.textContent='ECMWF IFS · '+(local?'0,25° / 0,1° · ':'0,25° · ')+(f.resampled?'Região A reamostrada (run anterior) · ':'')+(mode==='gust'?'barbelas: vento médio 10 m (kt)':'precipitação 3h');}
