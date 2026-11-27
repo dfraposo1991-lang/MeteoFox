@@ -901,6 +901,17 @@ async function visLoad(force=false){
 $('visSimPrev').onclick=()=>{visStop();visShow(visAt-1)};
 $('visSimNext').onclick=()=>{visStop();visShow(visAt+1)};
 $('visSimSlider').oninput=e=>{visStop();visShow(+e.target.value)};
+ // Route arrows only while the simulated satellite is actually visible.
+ window.addEventListener('keydown',e=>{
+  if(!['ArrowLeft','ArrowRight'].includes(e.key)||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  if(e.target?.closest?.('textarea,input:not([type=range]),select,[contenteditable=true]'))return;
+  const image=$('visSimImage');
+  if(!visData||!image.getClientRects().length||getComputedStyle(image).visibility==='hidden')return;
+  if(e.target?.closest?.('input[type=range]')&&e.target!==$('visSimSlider'))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  visStop();visShow(visAt+(e.key==='ArrowLeft'?-1:1));
+ },true);
+
 
 $('visSimPlay').onclick=()=>{
  if(visTimer){visStop();return}
