@@ -2,105 +2,105 @@
   "product": "medium-simulated-vis",
   "projection": "opencharts_south_west_europe",
   "layer": "sim_image_vis_ch2",
-  "run_utc": "2026-11-26T12:00:00Z",
+  "run_utc": "2026-11-26T18:00:00Z",
   "credit": "© ECMWF · CC BY 4.0",
   "frames": [
     {
       "file": "VIS_009.png",
       "step_h": 9,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-26T21:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T03:00:00Z"
     },
     {
       "file": "VIS_012.png",
       "step_h": 12,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T00:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T06:00:00Z"
     },
     {
       "file": "VIS_015.png",
       "step_h": 15,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T03:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T09:00:00Z"
     },
     {
       "file": "VIS_018.png",
       "step_h": 18,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T06:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T12:00:00Z"
     },
     {
       "file": "VIS_021.png",
       "step_h": 21,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T09:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T15:00:00Z"
     },
     {
       "file": "VIS_024.png",
       "step_h": 24,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T12:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T18:00:00Z"
     },
     {
       "file": "VIS_027.png",
       "step_h": 27,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T15:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-27T21:00:00Z"
     },
     {
       "file": "VIS_030.png",
       "step_h": 30,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T18:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T00:00:00Z"
     },
     {
       "file": "VIS_033.png",
       "step_h": 33,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-27T21:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T03:00:00Z"
     },
     {
       "file": "VIS_036.png",
       "step_h": 36,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T00:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T06:00:00Z"
     },
     {
       "file": "VIS_039.png",
       "step_h": 39,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T03:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T09:00:00Z"
     },
     {
       "file": "VIS_042.png",
       "step_h": 42,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T06:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T12:00:00Z"
     },
     {
       "file": "VIS_045.png",
       "step_h": 45,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T09:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T15:00:00Z"
     },
     {
       "file": "VIS_048.png",
       "step_h": 48,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T12:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T18:00:00Z"
     },
     {
       "file": "VIS_051.png",
       "step_h": 51,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T15:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-28T21:00:00Z"
     },
     {
       "file": "VIS_054.png",
       "step_h": 54,
-      "run_utc": "2026-11-26T12:00:00Z",
-      "valid_utc": "2026-11-28T18:00:00Z"
+      "run_utc": "2026-11-26T18:00:00Z",
+      "valid_utc": "2026-11-29T00:00:00Z"
     }
   ],
-  "generated_utc": "2026-11-26T23:21:30Z"
+  "generated_utc": "2026-11-27T04:03:06Z"
 }
