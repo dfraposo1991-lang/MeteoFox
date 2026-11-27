@@ -93,29 +93,33 @@ def parse_description(desc):
     return bt, vt, int(m.group(3)), m.group(4).strip()
 
 
+# Fixed geometry derived from the stable +24..54h source chart layout.
+SOURCE_SIZE = (2000, 1800)
+CROP_BOX = (11, 248, 1989, 1237)
+FRAME_SIZE = (1978, 989)
+
 def crop_png(data):
-    im = Image.open(io.BytesIO(data)).convert('RGB')
-    w, h = im.size
-    pix = im.load()
-    stride = max(2, w // 400)
-    xx = range(0, w, stride)
-    ratio = [sum(min(pix[x, y]) < 228 for x in xx) / len(xx) for y in range(h)]
-    intervals=[]; begin=None
-    for y, value in enumerate(ratio + [0]):
-        if value >= .67 and begin is None: begin=y
-        if value < .67 and begin is not None:
-            if y-begin >= h*.12: intervals.append((begin,y))
-            begin=None
-    if not intervals: raise ValueError('Não foi possível identificar o retângulo do mapa (cabeçalho/legenda)')
-    y0,y1=max(intervals, key=lambda t:t[1]-t[0])
-    ys=list(range(y0+int((y1-y0)*.15),y1-int((y1-y0)*.15),max(1,(y1-y0)//180)))
-    if not ys: raise ValueError('Zona de mapa insuficiente')
-    xs=[x for x in range(w) if sum(min(pix[x,y])<228 for y in ys) / len(ys)>=.60]
-    if not xs: raise ValueError('Não foi possível identificar as margens laterais')
-    x0,x1=min(xs),max(xs)+1
-    if x1-x0 < w*.55 or y1-y0 < h*.2: raise ValueError('Recorte anormalmente pequeno')
-    dest=io.BytesIO();im.crop((x0,y0,x1,y1)).save(dest,format='PNG',optimize=True)
-    return dest.getvalue(), [x0,y0,x1,y1], [w,h]
+    with Image.open(io.BytesIO(data)) as source:
+        if source.size != SOURCE_SIZE:
+            raise ValueError(f'Geometria ECMWF alterada: {source.size}; esperado {SOURCE_SIZE}')
+        im = source.convert('RGB').crop(CROP_BOX)
+        if im.size != FRAME_SIZE:
+            raise ValueError('Dimensões de recorte inválidas')
+        dest = io.BytesIO()
+        im.save(dest, format='PNG', optimize=True)
+    return dest.getvalue(), list(CROP_BOX), list(SOURCE_SIZE)
+
+def geometry_valid(manifest):
+    try:
+        if manifest.get('crop_box') != list(CROP_BOX):
+            return False
+        for step in range(9,55,3):
+            with Image.open(OUT / f'VIS_{step:03d}.png') as im:
+                if im.size != FRAME_SIZE:
+                    return False
+        return True
+    except (OSError, ValueError):
+        return False
 
 
 def main():
@@ -140,7 +144,7 @@ def main():
         try:
             existing = json.loads(existing_manifest.read_text(encoding='utf-8'))
             existing_run = datetime.fromisoformat(existing['run_utc'].replace('Z', '+00:00'))
-            if base <= existing_run and [frame.get('step_h') for frame in existing.get('frames', [])] == list(range(9, 55, 3)):
+            if (base < existing_run or (base == existing_run and geometry_valid(existing))) and [frame.get('step_h') for frame in existing.get('frames', [])] == list(range(9, 55, 3)):
                 print('Conjunto já atualizado ou mais recente: ' + iso(existing_run) + '; pedido: ' + iso(base), flush=True)
                 return 0
         except (OSError, KeyError, ValueError, TypeError):
@@ -227,6 +231,7 @@ def main():
         if report['completed']:
             manifest={'product':report['product'],'projection':PROJECTION,'layer':LAYER,
                 'run_utc':iso(base),'credit':'© ECMWF · CC BY 4.0',
+                'crop_box':list(CROP_BOX),'width':FRAME_SIZE[0],'height':FRAME_SIZE[1],
                 'frames':[{'file':r['file'],'step_h':r['step_h'],'run_utc':r['run_utc'],'valid_utc':r['valid_utc']} for r in report['frames']]}
             manifest['generated_utc'] = iso(datetime.now(timezone.utc))
             (STAGING/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
