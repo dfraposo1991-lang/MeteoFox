@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'avisos.html'
       - 'space-weather.html'
       - 'fox_verified.js'
       - 'fox_verified.css'
@@ -76,7 +77,7 @@ jobs:
           public.mkdir(exist_ok=True)
 
           # Publicar todas as paginas e o JavaScript do mapa grande.
-          for name in ('index.html', 'mapa.html', 'space-weather.html', 'meteofox_satelite.js', 'meteofox_fog_mask.js', 'meteofox_ru_aviation.js', 'laboratorio.html', 'meteofox_conveccao.js', 'fox-verified-skewt.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
+          for name in ('avisos.html', 'index.html', 'mapa.html', 'space-weather.html', 'meteofox_satelite.js', 'meteofox_fog_mask.js', 'meteofox_ru_aviation.js', 'laboratorio.html', 'meteofox_conveccao.js', 'fox-verified-skewt.html', 'meteofox_meteograma.js', 'meteofox_meteograma.css', 'meteofox_keyboard.js', 'fox_verified.js', 'fox_verified.css'):
               source = Path(name)
               assert source.is_file() and source.stat().st_size > 0, f'{name} nao encontrado ou vazio'
               if name.endswith('.html'):
