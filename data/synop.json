@@ -354,7 +354,7 @@
         }
       },
       "latest_utc": "2026-11-27T06:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-27T06:00:00Z": {
@@ -1187,7 +1187,7 @@
         }
       },
       "latest_utc": "2026-11-27T06:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-27T06:00:00Z": {
@@ -2424,7 +2424,7 @@
       "name": "Montijo / BA6",
       "periods": {},
       "latest_utc": "2026-11-27T06:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-27T06:00:00Z": {},
@@ -3172,7 +3172,7 @@
       "name": "Beja / BA11",
       "periods": {},
       "latest_utc": "2026-11-27T06:00:00Z",
-      "reports": 24,
+      "reports": 23,
       "dry_reports": 0,
       "history": {
         "2026-11-27T06:00:00Z": {},
@@ -4060,7 +4060,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "history": {
@@ -5536,7 +5536,7 @@
         }
       },
       "latest_utc": "2026-11-27T06:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "history": {
         "2026-11-27T06:00:00Z": {
@@ -7107,7 +7107,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -8960,7 +8960,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -11439,7 +11439,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 73,
       "dry_reports": 6,
       "history": {
@@ -12470,7 +12470,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -14268,7 +14268,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -16805,7 +16805,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -17855,7 +17855,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -19653,7 +19653,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -22218,7 +22218,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -24783,7 +24783,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 73,
       "dry_reports": 0,
       "history": {
@@ -27262,7 +27262,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -29686,7 +29686,7 @@
       "station": "08558",
       "name": "Évora",
       "periods": {},
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -29854,7 +29854,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -31966,7 +31966,7 @@
       "name": "Santa Maria",
       "periods": {},
       "latest_utc": "2026-11-27T06:00:00Z",
-      "reports": 25,
+      "reports": 24,
       "dry_reports": 0,
       "lat": 36.95972,
       "lon": -25.17,
@@ -32024,7 +32024,7 @@
       "name": "Selvagem Grande",
       "periods": {},
       "latest_utc": "2026-11-27T01:00:00Z",
-      "reports": 54,
+      "reports": 53,
       "dry_reports": 0,
       "lat": 30.14528,
       "lon": -15.87056,
@@ -33163,7 +33163,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 32.6475,
@@ -37426,7 +37426,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 37.95444,
@@ -39993,7 +39993,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.13833,
@@ -42560,7 +42560,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 69,
       "dry_reports": 0,
       "lat": 40.1575,
@@ -44078,7 +44078,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.27417,
@@ -46790,7 +46790,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 39.83917,
@@ -49130,7 +49130,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "lat": 39.29417,
@@ -51384,7 +51384,7 @@
           "utc": "2026-11-27T06:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T07:00:00Z",
+      "latest_utc": "2026-11-27T08:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.79972,
@@ -53635,7 +53635,7 @@
       }
     }
   ],
-  "checked_utc": "2026-11-27T08:06:23.806071Z",
+  "checked_utc": "2026-11-27T09:18:20.128185Z",
   "decoder_version": 6,
   "references_utc": [
     "2026-11-27T06:00:00Z",
