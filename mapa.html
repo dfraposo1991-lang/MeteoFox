@@ -518,8 +518,18 @@ function paint(field){
    const j=yy.indices[q],t=yy.weights[q],row0=values[j],row1=values[j+1];
    for(let p=0;p<w;p++){
      const i=xx.indices[p],s=xx.weights[p],a=row0[i],b=row0[i+1],d=row1[i],e=row1[i+1];
-     if(!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||!Number.isFinite(e))continue;
-     const v=(a+(b-a)*s)*(1-t)+(d+(e-d)*s)*t;
+     let v;
+     if(mode==='ceiling'){
+       // Interpolate the cloud-presence mask separately from valid LCL heights.
+       const samples=[a,b,d,e],weights=[(1-s)*(1-t),s*(1-t),(1-s)*t,s*t];
+       let coverage=0,sum=0;
+       for(let k=0;k<4;k++)if(Number.isFinite(samples[k])){coverage+=weights[k];sum+=weights[k]*samples[k];}
+       if(coverage<.5)continue;
+       v=sum/coverage;
+     }else{
+       if(!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||!Number.isFinite(e))continue;
+       v=(a+(b-a)*s)*(1-t)+(d+(e-d)*s)*t;
+     }
      if((rain&&v<=.2)||v<levels[0])continue;
      let lo=0,hi=levels.length;while(hi-lo>1){const mid=(lo+hi)>>1;if(levels[mid]<=v)lo=mid;else hi=mid;}
      const rgb=palette[Math.min(lo,palette.length-1)],k=(q*w+p)*4;
