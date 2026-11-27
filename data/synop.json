@@ -4201,7 +4201,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "history": {
@@ -7377,7 +7377,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -9058,7 +9058,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -11482,9 +11482,9 @@
       "station": "08524",
       "name": "Porto Santo",
       "periods": {},
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 73,
-      "dry_reports": 8,
+      "dry_reports": 9,
       "history": {
         "2026-11-27T15:00:00Z": {},
         "2026-11-27T12:00:00Z": {
@@ -12372,7 +12372,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -13912,7 +13912,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -16191,7 +16191,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -16983,7 +16983,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -18609,7 +18609,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -21174,7 +21174,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -23739,7 +23739,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 73,
       "dry_reports": 0,
       "history": {
@@ -26304,7 +26304,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -28728,7 +28728,7 @@
       "station": "08558",
       "name": "Évora",
       "periods": {},
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -28896,7 +28896,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "history": {
@@ -31066,7 +31066,7 @@
       "name": "Selvagem Grande",
       "periods": {},
       "latest_utc": "2026-11-27T01:00:00Z",
-      "reports": 46,
+      "reports": 45,
       "dry_reports": 0,
       "lat": 30.14528,
       "lon": -15.87056,
@@ -32193,7 +32193,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 32.6475,
@@ -36358,7 +36358,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 37.95444,
@@ -38753,7 +38753,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.13833,
@@ -41235,7 +41235,7 @@
         }
       },
       "latest_utc": "2026-11-27T15:00:00Z",
-      "reports": 69,
+      "reports": 68,
       "dry_reports": 0,
       "lat": 40.1575,
       "lon": -8.46833,
@@ -42807,7 +42807,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.27417,
@@ -45233,7 +45233,7 @@
       "station": "08568",
       "name": "Penhas Douradas",
       "periods": {},
-      "latest_utc": "2026-11-27T14:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 56,
       "dry_reports": 0,
       "lat": 40.41667,
@@ -45404,7 +45404,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 39.83917,
@@ -47572,7 +47572,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 1,
       "lat": 39.29417,
@@ -50053,7 +50053,7 @@
           "utc": "2026-11-27T15:00:00Z"
         }
       },
-      "latest_utc": "2026-11-27T15:00:00Z",
+      "latest_utc": "2026-11-27T16:00:00Z",
       "reports": 74,
       "dry_reports": 0,
       "lat": 41.79972,
@@ -52390,7 +52390,7 @@
       }
     }
   ],
-  "checked_utc": "2026-11-27T16:14:00.662354Z",
+  "checked_utc": "2026-11-27T17:22:38.828712Z",
   "decoder_version": 6,
   "references_utc": [
     "2026-11-27T15:00:00Z",
