@@ -109,6 +109,24 @@ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:700 15px Inter,
 .map-legends-panel{top:calc(var(--mf-header-height,80px) + 8px)}
 #forecastPanel .fc-mobile-nav{display:none}
 @media(max-width:850px){#forecastPanel.is-collapsed{display:flex;align-items:center;gap:5px}#forecastPanel.is-collapsed .fc-mobile-nav{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}}
+
+/* Mobile map: compact brand and adjacent independent satellite controls. */
+@media(max-width:650px){
+ :root{--mf-mobile-brand-width:128px;--mf-mobile-controls-left:143px}
+ .map-header{inset:7px auto auto 7px;width:var(--mf-mobile-brand-width);padding:0;justify-content:flex-start;gap:0;flex-wrap:nowrap}
+ .map-header .header-buttons{display:none!important}
+ .map-header .map-brand{box-sizing:border-box;width:max-content;max-width:100%;padding:5px 7px;gap:5px;justify-content:flex-start;border-radius:9px}
+ .map-header .map-brand>span:not(.map-brand-icon){display:none!important}
+ .map-header .map-brand-icon,.map-header .map-brand-logo{width:30px;height:30px;flex-basis:30px}
+ .map-header .map-brand strong{font-size:15px}
+ #mapControlsPanel{box-sizing:border-box;top:7px;left:var(--mf-mobile-controls-left);right:7px;width:auto;max-width:none;max-height:45dvh;padding:39px 6px 6px;overflow:auto}
+ #toggleMapControls{top:7px;left:var(--mf-mobile-controls-left);width:32px;height:32px}
+ #mapMiniTimeline{top:7px;left:calc(var(--mf-mobile-controls-left) + 39px)}
+ #satTools{min-width:0;gap:5px}
+ #satTools input[type=range]{max-width:100%;min-width:0}
+ #satTools .mf-opacity-controls{box-sizing:border-box;width:100%;min-width:0}
+ #satTools .mf-opacity-item{flex-wrap:wrap;white-space:normal;max-width:100%}
+}
 </style></head><body>
 <header class="map-header"><a class="map-brand" href="./index.html" title="Voltar à página principal do MeteoFox"><span class="map-brand-icon"><img class="map-brand-logo" src="./MeteoFox_icon_v1_solid.svg" onerror="this.onerror=null;this.src='./meteofox-logo.png'" width="44" height="44" alt=""></span><strong>MeteoFox</strong><span>Mapa meteorológico</span></a><nav class="header-buttons" aria-label="Regiões e ferramentas do mapa">
 <button id="all" type="button">Portugal e Ilhas</button><button id="valencia" type="button">Valência</button><button id="mainland" type="button">Continente</button><button id="islands" type="button">Açores</button><button id="madeira" type="button">Madeira</button><button id="refresh" type="button">↻ Atualizar boletins</button><button id="showLegends" type="button" aria-expanded="false" aria-controls="mapLegends">☰ Legendas METAR e Voo</button>
