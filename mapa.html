@@ -425,6 +425,27 @@ initialize();
 (function(){
 const el=id=>document.getElementById(id), toggle=el('fcToggle'), body=el('fcBody'), time=el('fcTime'), status=el('fcStatus'), valid=el('fcValid'), opacity=el('fcOpacity');
 let grid=null, mode='', layer=null, timer=null, pending=null, barbs=null;
+const warningLocations={ER1:[37.32,-8.56],ER2:[41.28,-8.38],ER3:[39.18,-9.04],ER4:[32.73,-16.93],BA8:[40.86,-8.63],BA5:[39.85,-8.86],CFMTFA:[39.12,-8.99],UAL:[38.73,-9.22],CA:[38.72,-9.19],DGMFA:[38.90,-9.04],CT:[38.76,-8.96],BA1:[38.80,-9.38],BA6:[38.71,-8.97],BA11:[38.02,-7.86],BA4:[38.76,-27.10],PS:[33.06,-16.34]};
+let warningGroup=null,warningSignature='';
+function refreshWarnings(){
+ if(!appMap)return;
+ let records;try{records=JSON.parse(sessionStorage.getItem('meteofox.warning.records.v1')||'null');}catch(e){return;}
+ if(!Array.isArray(records)){if(warningGroup){warningGroup.clearLayers();warningSignature='';}return;}
+ const raw=mode&&grid?grid.frames?.[+time.value]?.valid_utc:null;
+ const frame=mode&&grid?grid.frames?.[+time.value]:null;
+ const stamp=raw||frame?.valid||null;
+ const forecastTime=stamp?Date.parse(String(stamp).replace(' ','T').replace(/(?:Z|[+-]\d\d:\d\d)$/,'let grid=null, mode='', layer=null, timer=null, pending=null, barbs=null;')+(/(?:Z|[+-]\d\d:\d\d)$/.test(String(stamp))?'':'Z')):NaN;
+ const observation=sat&&(sat.satOn||sat.radarOn)?sat.timeline?.[sat.index]:null;
+ const t=mode&&grid?(Number.isFinite(forecastTime)?forecastTime:Date.parse(grid.run_utc)+Number(frame?.step)*3600000):Number.isFinite(observation)?observation:Date.now();
+ if(!Number.isFinite(t))return;
+ const states=Object.entries(warningLocations).map(([id,coords])=>{const active=records.filter(r=>r.id===id&&r.start<=t&&t<r.end);return {id,coords,active,color:active.some(r=>r.type==='Gravoso')?'#dc2626':active.length?'#eab308':'#89939e',symbols:[...new Set(active.flatMap(r=>r.symbols||[]))].join(' ')};});
+ const sig=JSON.stringify(states);if(sig===warningSignature)return;warningSignature=sig;
+ if(!warningGroup){const pane=appMap.getPane('warningUnits')||appMap.createPane('warningUnits');pane.style.zIndex='690';warningGroup=L.layerGroup().addTo(appMap);}
+ warningGroup.clearLayers();
+ for(const s of states){const label=document.createElement('div');label.style.cssText='display:flex;align-items:center;gap:4px;white-space:nowrap;background:white;color:#16466f;border:1px solid #b9d2e2;border-radius:12px;padding:3px 6px;width:max-content;box-shadow:0 1px 4px #0003';const dot=document.createElement('span');dot.style.cssText='width:12px;height:12px;border-radius:50%;background:'+s.color;label.append(dot,document.createTextNode(s.id+' '+s.symbols));const marker=L.marker(s.coords,{pane:'warningUnits',icon:L.divIcon({className:'warning-unit-marker',html:label,iconSize:[1,1],iconAnchor:[0,0]})}).addTo(warningGroup);const detail=document.createElement('div');detail.style.whiteSpace='pre-wrap';detail.textContent=s.id+' · '+(s.active.some(r=>r.type==='Gravoso')?'Gravoso':s.active.length?'Bandeira':'Sem aviso')+'\n'+s.active.map(r=>r.phen+' · '+r.type+'\n'+new Date(r.start).toISOString()+' — '+new Date(r.end).toISOString()+'\n'+r.note).join('\n\n');marker.bindPopup(detail);}
+}
+setInterval(refreshWarnings,300);window.addEventListener('pageshow',refreshWarnings);
+
 const rasterCache=new Map();
 function cacheRaster(key,value){rasterCache.delete(key);rasterCache.set(key,value);while(rasterCache.size>8)rasterCache.delete(rasterCache.keys().next().value);return value;}
 function drawBarbs(f,local=null){const pane=appMap.getPane('forecastBarbs')||appMap.createPane('forecastBarbs');pane.style.zIndex='620';pane.style.pointerEvents='none';barbs=L.layerGroup().addTo(appMap);const occupied=[];const inside=(lat,lon)=>local&&lat>=local.y[0]&&lat<=local.y.at(-1)&&lon>=local.x[0]&&lon<=local.x.at(-1);for(const field of [local,f].filter(Boolean)){const x=field.x,y=field.y;const spacing=Math.max(1,Math.ceil(52/Math.max(1,Math.abs(appMap.latLngToContainerPoint([y[0],x[1]]).x-appMap.latLngToContainerPoint([y[0],x[0]]).x))));const bounds=appMap.getBounds().pad(.1);const first=(a,min)=>{const i=a.findIndex(v=>v>=min);return i<0?a.length:Math.ceil(i/spacing)*spacing;};for(let j=first(y,bounds.getSouth());j<y.length&&y[j]<=bounds.getNorth();j+=spacing)for(let i=first(x,bounds.getWest());i<x.length&&x[i]<=bounds.getEast();i+=spacing){if(field===f&&inside(y[j],x[i]))continue;const u=field.u?.[j]?.[i],v=field.v?.[j]?.[i];if(!Number.isFinite(u)||!Number.isFinite(v))continue;const pt=appMap.latLngToContainerPoint([y[j],x[i]]);if(occupied.some(q=>q.distanceTo(pt)<40))continue;occupied.push(pt);let k=Math.round(Math.hypot(u,v)*1.9438444924406/5)*5;const angle=Math.atan2(-u,v)*180/Math.PI;let paths=k===0?'<circle cx="0" cy="0" r="3" fill="none"/>':'<path d="M0 0V-25"/>';let p=-25;while(k>=50){paths+='<path d="M0 '+p+' L10 '+(p+4)+' L0 '+(p+8)+' Z" fill="#172B3D"/>';p+=8;k-=50;}while(k>=10){paths+='<path d="M0 '+p+' l10 -4"/>';p+=4;k-=10;}if(k===5){if(p===-25)p+=4;paths+='<path d="M0 '+p+' l5 -2"/>';}const svg='<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="-32 -32 64 64" style="opacity:'+opacity.value/100+'"><g transform="rotate('+angle+')" stroke="#172B3D" stroke-width="1.6" fill="none" stroke-linecap="round">'+paths+'</g></svg>';L.marker([y[j],x[i]],{pane:'forecastBarbs',interactive:false,keyboard:false,icon:L.divIcon({className:'mf-wind-barb',html:svg,iconSize:[64,64],iconAnchor:[32,32]})}).addTo(barbs);}}}
