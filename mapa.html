@@ -426,7 +426,9 @@ initialize();
 const el=id=>document.getElementById(id), toggle=el('fcToggle'), body=el('fcBody'), time=el('fcTime'), status=el('fcStatus'), valid=el('fcValid'), opacity=el('fcOpacity');
 let grid=null, mode='', layer=null, timer=null, pending=null, barbs=null;
 const warningLocations={ER1:[37.32,-8.56],ER2:[41.28,-8.38],ER3:[39.18,-9.04],ER4:[32.73,-16.93],BA8:[40.86,-8.63],BA5:[39.85,-8.86],CFMTFA:[39.12,-8.99],UAL:[38.73,-9.22],CA:[38.72,-9.19],DGMFA:[38.90,-9.04],CT:[38.76,-8.96],BA1:[38.80,-9.38],BA6:[38.71,-8.97],BA11:[38.02,-7.86],BA4:[38.76,-27.10],PS:[33.06,-16.34]};
-let warningGroup=null,warningSignature='',warningsOn=false;
+let warningGroup=null,warningSignature='',warningsOn=false,warningBase=0;
+function warningOnly(){return warningsOn&&!mode;}
+function setupWarningTime(){warningBase=Math.floor(Date.now()/3600000)*3600000;time.max=48;time.value=0;draw();}
 function refreshWarnings(){
  if(!appMap)return;
  if(!warningsOn){if(warningGroup)warningGroup.clearLayers();warningSignature='';return;}
@@ -437,7 +439,7 @@ function refreshWarnings(){
  const stamp=raw||frame?.valid||null;
  const forecastTime=stamp?Date.parse(String(stamp).replace(' ','T')+(/(?:Z|[+-]\d\d:\d\d)$/.test(String(stamp))?'':'Z')):NaN;
  const observation=sat&&(sat.satOn||sat.radarOn)?sat.timeline?.[sat.index]:null;
- const t=mode&&grid?(Number.isFinite(forecastTime)?forecastTime:Date.parse(grid.run_utc)+Number(frame?.step)*3600000):Number.isFinite(observation)?observation:Date.now();
+ const t=mode&&grid?(Number.isFinite(forecastTime)?forecastTime:Date.parse(grid.run_utc)+Number(frame?.step)*3600000):warningOnly()?warningBase+Number(time.value)*3600000:Number.isFinite(observation)?observation:Date.now();
  if(!Number.isFinite(t))return;
  const states=Object.entries(warningLocations).map(([id,coords])=>{const active=records.filter(r=>r.id===id&&r.start<=t&&t<r.end);return {id,coords,active,color:active.some(r=>r.type==='Gravoso')?'#dc2626':active.length?'#eab308':'#89939e',symbols:[...new Set(active.flatMap(r=>r.symbols||[]))].join(' ')};});
  const sig=JSON.stringify(states);if(sig===warningSignature)return;warningSignature=sig;
@@ -445,7 +447,7 @@ function refreshWarnings(){
  warningGroup.clearLayers();
  for(const s of states){const label=document.createElement('div');label.style.cssText='display:flex;align-items:center;gap:4px;white-space:nowrap;background:white;color:#16466f;border:1px solid #b9d2e2;border-radius:12px;padding:3px 6px;width:max-content;box-shadow:0 1px 4px #0003';const dot=document.createElement('span');dot.style.cssText='width:12px;height:12px;border-radius:50%;background:'+s.color;label.append(dot,document.createTextNode(s.id+' '+s.symbols));const marker=L.marker(s.coords,{pane:'warningUnits',icon:L.divIcon({className:'warning-unit-marker',html:label,iconSize:[1,1],iconAnchor:[0,0]})}).addTo(warningGroup);const detail=document.createElement('div');detail.style.whiteSpace='pre-wrap';detail.textContent=s.id+' · '+(s.active.some(r=>r.type==='Gravoso')?'Gravoso':s.active.length?'Bandeira':'Sem aviso')+'\n'+s.active.map(r=>r.phen+' · '+r.type+'\n'+new Date(r.start).toISOString()+' — '+new Date(r.end).toISOString()+'\n'+r.note).join('\n\n');marker.bindPopup(detail);}
 }
-const warningButton=document.getElementById('warningToggle');warningButton.addEventListener('click',()=>{warningsOn=!warningsOn;warningButton.setAttribute('aria-pressed',String(warningsOn));warningButton.textContent=warningsOn?'− Avisos':'+ Avisos';try{if(warningsOn&&!sessionStorage.getItem('meteofox.warning.records.v1')){warningsOn=false;warningButton.setAttribute('aria-pressed','false');warningButton.textContent='+ Avisos';alert('Importa primeiro o Excel no separador Avisos, nesta mesma janela.');}}catch(e){}refreshWarnings();});setInterval(()=>{if(warningsOn)refreshWarnings();},300);window.addEventListener('pageshow',refreshWarnings);
+const warningButton=document.getElementById('warningToggle');warningButton.addEventListener('click',()=>{warningsOn=!warningsOn;warningButton.setAttribute('aria-pressed',String(warningsOn));warningButton.textContent=warningsOn?'− Avisos':'+ Avisos';try{if(warningsOn&&!sessionStorage.getItem('meteofox.warning.records.v1')){warningsOn=false;warningButton.setAttribute('aria-pressed','false');warningButton.textContent='+ Avisos';alert('Importa primeiro o Excel no separador Avisos, nesta mesma janela.');}}catch(e){}if(warningOnly()){stop();setupWarningTime();if(body.hidden)toggle.click();}else if(!mode){stop();valid.textContent='';status.textContent='';}refreshWarnings();});setInterval(()=>{if(warningsOn)refreshWarnings();},300);window.addEventListener('pageshow',refreshWarnings);
 
 const rasterCache=new Map();
 function cacheRaster(key,value){rasterCache.delete(key);rasterCache.set(key,value);while(rasterCache.size>8)rasterCache.delete(rasterCache.keys().next().value);return value;}
@@ -509,7 +511,7 @@ function regionalFrame(f){
  return out;
 }
 let drawSequence=0;
-async function draw(){const seq=++drawSequence;if(!mode||!grid||!appMap)return;const d=grid,i=+time.value,product=mode;let f,local;
+async function draw(){const seq=++drawSequence;if(warningOnly()){const d=new Date(warningBase+Number(time.value)*3600000);valid.textContent=d.toISOString().slice(0,13).replace('T',' ')+'Z';status.textContent='Avisos · +'+time.value+'h';refreshWarnings();return;}if(!mode||!grid||!appMap)return;const d=grid,i=+time.value,product=mode;let f,local;
  try{f=regionalFrame(await ensureFrame(d,i));local=await localFrame(d,product,f.step);}catch(e){if(seq===drawSequence&&grid===d&&mode===product){stop();clear();valid.textContent='';status.textContent='Fotograma indisponível';}return;}
  if(seq!==drawSequence||grid!==d||mode!==product||+time.value!==i||!f)return;
  const z=scales[mode];
@@ -564,13 +566,13 @@ function paint(field){
 paint(f);if(local&&local[mode])paint(local);
 raster=cacheRaster(key,{canvas:c,bounds:[[south,west],[north,east]]});}
 if(!layer)layer=new ForecastCanvas().addTo(appMap);layer.setRaster(raster);layer.setOpacity(+opacity.value/100);renderedFrame=f;renderedLocal=local;if(mode==='gust'){refreshBarbs();appMap.off('moveend zoomend',refreshBarbs);appMap.on('moveend zoomend',refreshBarbs);}status.textContent=mode==='thetae'?'ECMWF IFS · Theta-E 850 hPa · 0,5° (subamostragem de 0,25°)': 'ECMWF IFS · '+(local?'0,25° / 0,1° · ':'0,25° · ')+(f.resampled?'Região A reamostrada (run anterior) · ':'')+(mode==='gust'?'barbelas: vento médio 10 m (kt)':mode==='tcucb'?'TCU/CB · índice ambiental experimental (0–100)':mode==='lightning'?'Lightning · índice ambiental experimental (0–100), não descargas':mode==='visibility'?'Proxy experimental de visibilidade por T−Td; não operacional':mode==='ceiling'?'Proxy experimental LCL com nuvens baixas; não equivale a BKN/OVC':'precipitação 3h');if(['tcucb','lightning','visibility','ceiling'].includes(mode)){const n=f[mode].reduce((s,row)=>s+row.filter(Number.isFinite).length,0),total=f.x.length*f.y.length;status.textContent+=' · '+d.frames.length+'/29 prazos · '+(100*n/total).toFixed(1)+'% pontos válidos';}}
-async function select(m){const oldStep=grid?.frames?.[+time.value]?.step;stop();mode=mode===m?'':m;if(sat){sat.forecastBordersOn=false;sat.syncSatelliteBorders();}el('fcRain').setAttribute('aria-pressed',String(mode==='rain'));el('fcGust').setAttribute('aria-pressed',String(mode==='gust'));el('fcTheta').setAttribute('aria-pressed',String(mode==='thetae'));el('fcExtra').value=['tcucb','lightning','visibility','ceiling'].includes(mode)?mode:'';clear();grid=null;valid.textContent='';el('fcLegend').replaceChildren();if(!mode){status.textContent='';valid.textContent='';return;}const z=scales[mode];for(let i=0;i<z.colors.length;i++){const a=document.createElement('span');a.style.cssText='background:'+z.colors[i]+';color:#172b3d;padding:2px 4px;border-radius:2px';a.textContent=z.levels[i]+' '+z.unit;el('fcLegend').append(a);}try{status.textContent='A carregar previsão…';const requested=mode;const d=await load(requested);if(mode!==requested)return;if(sat){sat.forecastBordersOn=true;sat.syncSatelliteBorders();}grid=d;time.max=d.frames.length-1;time.value=oldStep==null?Math.min(+time.value,+time.max):d.frames.reduce((best,f,i)=>Math.abs(f.step-oldStep)<Math.abs(d.frames[best].step-oldStep)?i:best,0);draw();}catch(e){if(!grid){valid.textContent='';status.textContent='Previsão indisponível: aguarda publicação do próximo run';}}}
+async function select(m){const oldStep=grid?.frames?.[+time.value]?.step;stop();mode=mode===m?'':m;if(sat){sat.forecastBordersOn=false;sat.syncSatelliteBorders();}el('fcRain').setAttribute('aria-pressed',String(mode==='rain'));el('fcGust').setAttribute('aria-pressed',String(mode==='gust'));el('fcTheta').setAttribute('aria-pressed',String(mode==='thetae'));el('fcExtra').value=['tcucb','lightning','visibility','ceiling'].includes(mode)?mode:'';clear();grid=null;valid.textContent='';el('fcLegend').replaceChildren();if(!mode){status.textContent='';valid.textContent='';if(warningsOn)setupWarningTime();return;}const z=scales[mode];for(let i=0;i<z.colors.length;i++){const a=document.createElement('span');a.style.cssText='background:'+z.colors[i]+';color:#172b3d;padding:2px 4px;border-radius:2px';a.textContent=z.levels[i]+' '+z.unit;el('fcLegend').append(a);}try{status.textContent='A carregar previsão…';const requested=mode;const d=await load(requested);if(mode!==requested)return;if(sat){sat.forecastBordersOn=true;sat.syncSatelliteBorders();}grid=d;time.max=d.frames.length-1;time.value=oldStep==null?0:d.frames.reduce((best,f,i)=>Math.abs(f.step-oldStep)<Math.abs(d.frames[best].step-oldStep)?i:best,0);draw();}catch(e){if(!grid){valid.textContent='';status.textContent='Previsão indisponível: aguarda publicação do próximo run';}}}
 let keyboardOwner='forecast',shiftCandidate=false;
 const forecastPanel=el('forecastPanel');
 forecastPanel.addEventListener('pointerdown',()=>keyboardOwner='forecast');
 forecastPanel.addEventListener('focusin',()=>keyboardOwner='forecast');
 for(const id of ['satTools','toggleMapControls']){el(id)?.addEventListener('pointerdown',()=>keyboardOwner='satellite');el(id)?.addEventListener('focusin',()=>keyboardOwner='satellite');}
-function stepForecast(delta){if(!mode||!grid)return;stop();time.value=Math.max(0,Math.min(+time.max,+time.value+delta));draw();}
+function stepForecast(delta){if(!warningOnly()&&(!mode||!grid))return;stop();time.value=Math.max(0,Math.min(+time.max,+time.value+delta));draw();}
 el('fcMobileBack').onclick=()=>stepForecast(-1);el('fcMobileNext').onclick=()=>stepForecast(1);
 const editing=e=>e.target?.closest?.('textarea,input:not([type=range]),[contenteditable=true]');
 window.addEventListener('keydown',e=>{
@@ -578,14 +580,14 @@ window.addEventListener('keydown',e=>{
  shiftCandidate=false;
  if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||editing(e)||!['ArrowLeft','ArrowRight'].includes(e.key))return;
  const delta=e.key==='ArrowLeft'?-1:1;
- if(mode&&grid&&(body.hidden||keyboardOwner==='forecast'||!(sat&&(sat.satOn||sat.radarOn)))){e.preventDefault();e.stopImmediatePropagation();stepForecast(delta);}
+ if((warningOnly()||mode&&grid)&&(body.hidden||keyboardOwner==='forecast'||!(sat&&(sat.satOn||sat.radarOn)))){e.preventDefault();e.stopImmediatePropagation();stepForecast(delta);}
  else if(sat&&(sat.satOn||sat.radarOn)){const button=delta<0?sat.back:sat.forward;if(button){e.preventDefault();e.stopImmediatePropagation();button.click();}}
 },true);
 window.addEventListener('keyup',e=>{if(e.key!=='Shift')return;const alone=shiftCandidate;shiftCandidate=false;if(!alone||editing(e)||e.altKey||e.ctrlKey||e.metaKey)return;const order=['rain','gust','thetae','visibility','ceiling','tcucb','lightning'];keyboardOwner='forecast';select(order[(order.indexOf(mode)+1)%order.length]);},true);
 window.addEventListener('blur',()=>shiftCandidate=false);
 const header=document.querySelector('.map-header');if(header){const resize=()=>document.documentElement.style.setProperty('--mf-header-height',header.getBoundingClientRect().height+'px');resize();new ResizeObserver(resize).observe(header);}
 
-el('fcExtra').onchange=()=>select(el('fcExtra').value||mode);el('fcTheta').onclick=()=>select('thetae');el('fcRain').onclick=()=>select('rain');el('fcGust').onclick=()=>select('gust');time.oninput=()=>{stop();draw();};el('fcBack').onclick=()=>{stop();time.value=Math.max(0,+time.value-1);draw();};el('fcNext').onclick=()=>{stop();time.value=Math.min(+time.max,+time.value+1);draw();};opacity.oninput=()=>{if(layer)layer.setOpacity(+opacity.value/100);refreshBarbs();};el('fcPlay').onclick=()=>{if(timer){stop();return;}if(!grid||!mode)return;el('fcPlay').textContent='⏸ Pausar';let busy=false;timer=setInterval(async()=>{if(busy||!grid||!mode)return;busy=true;try{time.value=(+time.value+1)%grid.frames.length;await draw();}finally{busy=false;}},900);};
+el('fcExtra').onchange=()=>select(el('fcExtra').value||mode);el('fcTheta').onclick=()=>select('thetae');el('fcRain').onclick=()=>select('rain');el('fcGust').onclick=()=>select('gust');time.oninput=()=>{stop();draw();};el('fcBack').onclick=()=>{stop();time.value=Math.max(0,+time.value-1);draw();};el('fcNext').onclick=()=>{stop();time.value=Math.min(+time.max,+time.value+1);draw();};opacity.oninput=()=>{if(layer)layer.setOpacity(+opacity.value/100);refreshBarbs();};el('fcPlay').onclick=()=>{if(timer){stop();return;}if(!warningOnly()&&(!grid||!mode))return;el('fcPlay').textContent='⏸ Pausar';let busy=false;timer=setInterval(async()=>{if(busy||(!warningOnly()&&(!grid||!mode)))return;busy=true;try{time.value=(+time.value+1)%(Number(time.max)+1);await draw();}finally{busy=false;}},900);};
 })();
 </script>
 </body></html>
