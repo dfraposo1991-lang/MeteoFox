@@ -1,88 +1,88 @@
 {
   "metar": {
     "LPAZ": {
-      "raw": "METAR LPAZ 280530Z 36003KT 340V040 9999 BKN048 13/11 Q1022=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPAZ 280630Z 33007KT 9999 BKN048 14/11 Q1022=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPBJ": {
-      "raw": "METAR LPBJ 280500Z 10003KT 4000 BR FEW006 08/07 Q1021=",
-      "utc": "2026-11-28T05:00:00Z"
+      "raw": "METAR LPBJ 280630Z NIL=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPCR": {
-      "raw": "METAR LPCR 280530Z AUTO 30010KT 280V340 9999 FEW042/// OVC048/// 14/06 Q1023=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPCR 280630Z AUTO 30007KT 9999 SCT039/// OVC048/// 14/06 Q1023=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPCS": {
-      "raw": "METAR LPCS 280500Z NIL=",
-      "utc": "2026-11-28T05:00:00Z"
+      "raw": "METAR LPCS 280630Z 09004KT 9999 FEW009 13/13 Q1022=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPFL": {
-      "raw": "METAR LPFL 280530Z NIL=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPFL 280630Z NIL=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPGR": {
-      "raw": "METAR LPGR 280530Z AUTO VRB02KT 9999 SCT020/// BKN026/// OVC033/// 11/09 Q1023=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPGR 280630Z AUTO 18004KT 9999 SCT059/// 11/09 Q1023=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPHR": {
-      "raw": "METAR LPHR 280530Z NIL=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPHR 280630Z VRB04KT 9999 FEW015 11/07 Q1023=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPLA": {
-      "raw": "METAR LPLA 280530Z NIL=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPLA 280630Z NIL=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPMA": {
-      "raw": "METAR LPMA 280530Z 27004KT 9999 SCT015 18/12 Q1019=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPMA 280630Z VRB02KT 9999 SCT015 18/13 Q1019=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPPD": {
-      "raw": "METAR LPPD 280530Z 35007KT 9999 FEW022 12/08 Q1022=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPPD 280630Z 36007KT 9999 FEW022 12/08 Q1022=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPPI": {
-      "raw": "METAR LPPI 280530Z AUTO 13005KT 050V190 9999 FEW018/// SCT042/// OVC048/// 12/09 Q1023=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPPI 280630Z AUTO 15006KT 9999 FEW037/// BKN047/// 12/08 Q1023=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPPR": {
-      "raw": "METAR LPPR 280530Z 16011KT 9999 FEW016 BKN027 15/13 Q1020=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPPR 280630Z 17011KT 9999 FEW014 SCT032 BKN045 15/13 Q1021=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPPS": {
-      "raw": "METAR LPPS 280530Z VRB02KT 9999 FEW014 17/14 Q1019=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPPS 280630Z VRB01KT 9999 FEW014 17/14 Q1019=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPPT": {
-      "raw": "METAR LPPT 280530Z 06003KT 320V090 0200 R02/0325N FG VV001 12/12 Q1021 NOSIG=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPPT 280630Z 03004KT 0200 R02/0400N FG VV001 12/12 Q1022 NOSIG=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPSJ": {
-      "raw": "METAR LPSJ 280530Z AUTO 03010KT 9999 NCD 12/08 Q1022=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPSJ 280630Z AUTO 03009KT 9999 NCD 12/08 Q1023=",
+      "utc": "2026-11-28T06:30:00Z"
     },
     "LPAR": {
       "raw": "METAR LPAR NIL=",
-      "utc": "2026-11-28T05:00:00Z"
+      "utc": "2026-11-28T06:00:00Z"
     },
     "LPMR": {
-      "raw": "METAR LPMR 280500Z 14005KT 9999 SCT030 13/12 Q1021=",
-      "utc": "2026-11-28T05:00:00Z"
+      "raw": "METAR LPMR 280600Z 14005KT 9999 SCT030 13/12 Q1021=",
+      "utc": "2026-11-28T06:00:00Z"
     },
     "LPMT": {
-      "raw": "METAR LPMT 280500Z 07002KT 2000 BR FEW005 12/11 Q1021=",
-      "utc": "2026-11-28T05:00:00Z"
+      "raw": "METAR LPMT 280600Z 10004KT 1000 BR OVC002 11/11 Q1021=",
+      "utc": "2026-11-28T06:00:00Z"
     },
     "LPOV": {
       "raw": "METAR LPOV NIL=",
-      "utc": "2026-11-28T05:00:00Z"
+      "utc": "2026-11-28T06:00:00Z"
     },
     "LPST": {
       "raw": "METAR LPST NIL=",
-      "utc": "2026-11-28T05:00:00Z"
+      "utc": "2026-11-28T06:00:00Z"
     },
     "LPFR": {
-      "raw": "METAR LPFR 280530Z 03005KT CAVOK 13/10 Q1021=",
-      "utc": "2026-11-28T05:30:00Z"
+      "raw": "METAR LPFR 280630Z 03006KT 020V110 CAVOK 13/10 Q1022=",
+      "utc": "2026-11-28T06:30:00Z"
     }
   },
   "speci": {
@@ -129,8 +129,8 @@
       "utc": "2026-11-28T05:02:00.000Z"
     },
     "LPOV": {
-      "raw": "TAF LPOV 271700Z 2718/2818 VRB02KT 9999 SCT040 BECMG 2722/2724 16008KT SCT008 BKN015 TEMPO 2804/2810 2000 -DZ BR SCT002",
-      "utc": "2026-11-27T17:00:00.000Z"
+      "raw": "TAF AMD LPOV 280601Z 2806/2906 16008KT 9999 FEW012 SCT030 TEMPO 2806/2901 3000 -RADZ BR SCT006 BKN012 BECMG 2904/2906 36008KT",
+      "utc": "2026-11-28T06:01:00.000Z"
     },
     "LPPD": {
       "raw": "TAF LPPD 280500Z 2806/2906 35008KT 9999 FEW020 BKN040 BECMG 2817/2819 03008KT BECMG 2900/2902 VRB05KT",
@@ -168,7 +168,7 @@
   "metar_source": "OGIMET getmetar",
   "speci_source": "OGIMET getmetar",
   "taf_source": "NOAA Aviation Weather Center",
-  "metar_checked_utc": "2026-11-28T05:38:36.374735Z",
-  "speci_checked_utc": "2026-11-28T05:38:36.374735Z",
-  "taf_checked_utc": "2026-11-28T05:38:36.458075Z"
+  "metar_checked_utc": "2026-11-28T06:39:39.566517Z",
+  "speci_checked_utc": "2026-11-28T06:39:39.566517Z",
+  "taf_checked_utc": "2026-11-28T06:39:39.681575Z"
 }
