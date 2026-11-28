@@ -1,10 +1,10 @@
 {
-  "checked_utc": "2026-11-28T13:09:12.176991Z",
+  "checked_utc": "2026-11-28T14:12:27.950000Z",
   "source": "NOAA Aviation Weather Center (worldwide cache)",
   "metar": {
     "LEVC": {
-      "raw": "METAR LEVC 281300Z 14002KT CAVOK 19/06 Q1022 NOSIG",
-      "utc": "2026-11-28T13:00:00.000Z"
+      "raw": "METAR LEVC 281400Z 09004KT 040V110 CAVOK 19/06 Q1021 NOSIG",
+      "utc": "2026-11-28T14:00:00.000Z"
     }
   },
   "speci": {},
